@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 
 class CircleRevealTransition extends StatefulWidget {
   final Offset startPosition;
@@ -185,7 +184,7 @@ class _RingPainter extends CustomPainter {
 
     // Draw shadow
     final shadowPaint = Paint()
-      ..color = Colors.lime.shade400.withOpacity(0.6)
+      ..color = Colors.lime.shade400.withValues(alpha: 0.6)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, isRing ? 40 : 20);
     
     if (isRing) {

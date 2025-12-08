@@ -33,7 +33,7 @@ class FoodSection extends StatelessWidget {
                     Shadow(
                       offset: Offset(2, 2),
                       blurRadius: 5,
-                      color: Colors.black.withOpacity(0.8),
+                      color: Colors.black.withValues(alpha: 0.8),
                     ),
                   ],
                 ),
@@ -50,7 +50,7 @@ class FoodSection extends StatelessWidget {
                     Shadow(
                       offset: Offset(2, 2),
                       blurRadius: 5,
-                      color: Colors.black.withOpacity(0.8),
+                      color: Colors.black.withValues(alpha: 0.8),
                     ),
                   ],
                 ),
@@ -59,7 +59,7 @@ class FoodSection extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                '\₹ ${price.toStringAsFixed(2)}',
+                '₹ ${price.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontFamily: 'Unbounded',
                   fontSize: 15,
@@ -69,7 +69,7 @@ class FoodSection extends StatelessWidget {
                     Shadow(
                       offset: Offset(2, 2),
                       blurRadius: 5,
-                      color: Colors.black.withOpacity(0.8),
+                      color: Colors.black.withValues(alpha: 0.8),
                     ),
                   ],
                 ),

@@ -13,7 +13,7 @@ class Header extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
         child: Container(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(10.0, 20.0, 10.0, 20.0),
             child: Row(

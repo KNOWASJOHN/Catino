@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'dart:ui';
 
 
@@ -342,13 +342,13 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                   decoration: BoxDecoration(
 
-                    color: const Color.fromARGB(0, 0, 0, 0).withOpacity(0.10),
+                    color: const Color.fromARGB(0, 0, 0, 0).withValues(alpha: 0.10),
 
                     borderRadius: BorderRadius.circular(40),
 
                     border: Border.all(
 
-                      color: const Color.fromARGB(0, 255, 255, 255).withOpacity(0.25),
+                      color: const Color.fromARGB(0, 255, 255, 255).withValues(alpha: 0.25),
 
                       width: 1.5,
 
@@ -392,11 +392,11 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
           colors: [
 
-            Colors.white.withOpacity(0.2),
+            Colors.white.withValues(alpha: 0.2),
 
-            Colors.white.withOpacity(0.1),
+            Colors.white.withValues(alpha: 0.1),
 
-            Colors.white.withOpacity(0.2),
+            Colors.white.withValues(alpha: 0.2),
 
           ],
 
@@ -448,7 +448,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                           transform: Matrix4.identity()
 
-                            ..scale(horizontalSquish, verticalSquish)
+                            ..scaleByVector3(Vector3(horizontalSquish, verticalSquish, 1.0))
 
                             ..rotateZ(rotation),
 
@@ -486,7 +486,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                                 BoxShadow(
 
-                                  color: Colors.lime.shade400.withOpacity(0.5),
+                                  color: Colors.lime.shade400.withValues(alpha: 0.5),
 
                                   blurRadius: 12,
 
@@ -522,7 +522,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                                       shape: BoxShape.circle,
 
-                                      color: Colors.white.withOpacity(0.3),
+                                      color: Colors.white.withValues(alpha: 0.3),
 
                                     ),
 
@@ -552,7 +552,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                                         border: Border.all(
 
-                                          color: Colors.white.withOpacity(0.2 * (1 - _bubbleAnimation.value.abs() * 2 - 0.5).abs()),
+                                          color: Colors.white.withValues(alpha: 0.2 * (1 - _bubbleAnimation.value.abs() * 2 - 0.5).abs()),
 
                                           width: 1.5,
 

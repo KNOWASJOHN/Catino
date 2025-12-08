@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:Cantino/main.dart';
+import 'package:cantino/main.dart';
 
 void main() {
   testWidgets('Canteen homepage loads correctly', (WidgetTester tester) async {

@@ -67,7 +67,7 @@ class _SearchMenuState extends State<SearchMenu>
     return GestureDetector(
       onTap: _closeSearch,
       child: Material(
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.black.withValues(alpha: 0.5),
         child: Center(
           child: ScaleTransition(
             scale: _scaleAnimation,
@@ -83,7 +83,7 @@ class _SearchMenuState extends State<SearchMenu>
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
+                      color: Colors.black.withValues(alpha: 0.3),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
@@ -201,7 +201,7 @@ class _SearchMenuState extends State<SearchMenu>
                                   border: Border.all(color: Colors.grey.shade300, width: 1),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.08),
+                                      color: Colors.black.withValues(alpha: 0.08),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -223,8 +223,8 @@ class _SearchMenuState extends State<SearchMenu>
                                             begin: Alignment.topCenter,
                                             end: Alignment.bottomCenter,
                                             colors: [
-                                              Colors.black.withOpacity(0.08),
-                                              Colors.black.withOpacity(0.65),
+                                              Colors.black.withValues(alpha: 0.08),
+                                              Colors.black.withValues(alpha: 0.65),
                                             ],
                                           ),
                                         ),

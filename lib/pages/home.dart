@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:Cantino/components/usercard.dart';
-import 'package:Cantino/page_components/foodsection.dart';
-import 'package:Cantino/components/scroll_card.dart';
+import 'package:cantino/components/usercard.dart';
+import 'package:cantino/page_components/foodsection.dart';
+import 'package:cantino/components/scroll_card.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
