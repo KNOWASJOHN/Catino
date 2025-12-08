@@ -9,7 +9,7 @@ class NotificationPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.7,
-      height: MediaQuery.of(context).size.height * 0.5,
+      height: MediaQuery.of(context).size.height * 0.4,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -25,61 +25,64 @@ class NotificationPanel extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Notifications',
-                      style: TextStyle(
-                        fontFamily: 'Unbounded',
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade300),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Notifications',
+                        style: TextStyle(
+                          decoration: TextDecoration.none,
+                          fontFamily: 'Unbounded',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: onClose,
-                    child: const Icon(Icons.close, size: 20),
-                  ),
-                ],
+                    GestureDetector(
+                      onTap: onClose,
+                      child: const Icon(Icons.close, size: 20),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            // Notifications List
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(5),
-                shrinkWrap: true,
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  _buildNotificationItem(
-                    'New Order Placed',
-                    'Your burger order has been confirmed',
-                    '5 min ago',
-                    Icons.shopping_bag,
-                    Colors.green,
-                  ),
-                  _buildNotificationItem(
-                    'Special Offer',
-                    '20% off on all pizzas today!',
-                    '1 hour ago',
-                    Icons.local_offer,
-                    Colors.orange,
-                  ),
-                ],
+              // Notifications List
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(5),
+                  shrinkWrap: true,
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    _buildNotificationItem(
+                      'New Order Placed',
+                      'Your burger order has been confirmed',
+                      '5 min ago',
+                      Icons.shopping_bag,
+                      Colors.green,
+                    ),
+                    _buildNotificationItem(
+                      'Special Offer',
+                      '20% off on all pizzas today!',
+                      '1 hour ago',
+                      Icons.local_offer,
+                      Colors.orange,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );
@@ -115,9 +118,10 @@ class NotificationPanel extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
+                    decoration: TextDecoration.none,
                     fontFamily: 'Unbounded',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -130,6 +134,7 @@ class NotificationPanel extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
+                    decoration: TextDecoration.none,
                     fontFamily: 'Unbounded',
                     fontSize: 11,
                     fontWeight: FontWeight.w300,
@@ -142,6 +147,7 @@ class NotificationPanel extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
+                    decoration: TextDecoration.none,
                     fontFamily: 'Unbounded',
                     fontSize: 9,
                     fontWeight: FontWeight.w300,
