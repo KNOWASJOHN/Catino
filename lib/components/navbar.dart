@@ -12,6 +12,8 @@ class CustomBottomNavBar extends StatefulWidget {
 
   final int currentIndex;
 
+  final bool isTransitioning;
+
   final Function(List<double>, double)? onPositionsUpdated;
 
 
@@ -23,6 +25,8 @@ class CustomBottomNavBar extends StatefulWidget {
     required this.onItemSelected,
 
     this.currentIndex = 0,
+
+    this.isTransitioning = false,
 
     this.onPositionsUpdated,
 
@@ -628,7 +632,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
         onTap: () {
 
-          if (_selectedIndex != index) {
+          if (_selectedIndex != index && !widget.isTransitioning) {
 
             setState(() {
 
@@ -642,9 +646,9 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
             _bubbleController.forward(from: 0.0);
 
-          }
+            widget.onItemSelected(index);
 
-          widget.onItemSelected(index);
+          }
 
         },
 

@@ -93,6 +93,7 @@ class _MainScreenState extends State<MainScreen> {
             ),
             bottomNavigationBar: CustomBottomNavBar(
               currentIndex: _selectedIndex,
+              isTransitioning: _isAnimating,
               onPositionsUpdated: (positions, verticalPos) {
                 setState(() {
                   _navItemPositions = positions;
@@ -101,7 +102,8 @@ class _MainScreenState extends State<MainScreen> {
               },
               onItemSelected: (index) {
                 if (index != _selectedIndex &&
-                    _navItemPositions[index] != 0.0) {
+                    _navItemPositions[index] != 0.0 &&
+                    !_isAnimating) {
                   setState(() {
                     _animationStartPosition = Offset(
                       _navItemPositions[index],
