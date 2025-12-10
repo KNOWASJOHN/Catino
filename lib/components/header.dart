@@ -49,14 +49,14 @@ class Header extends StatelessWidget {
                 Spacer(),
                 GestureDetector(
                   onTap: onSearchTap,
-                  child: Icon(Icons.search, size: 30, color: Colors.black),
+                  child: Icon(Icons.search, size: 25, color: Colors.black),
                 ),
                 SizedBox(width: 35),
                 GestureDetector(
                   onTap: onNotificationTap,
                   child: Icon(
                     Icons.notifications,
-                    size: 30,
+                    size: 25,
                     color: Colors.black,
                   ),
                 ),

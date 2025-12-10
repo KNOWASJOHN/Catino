@@ -29,11 +29,11 @@ class _SearchMenuState extends State<SearchMenu>
     _filteredItems = _foodItems;
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 600),
     );
     _scaleAnimation = CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeOutBack,
+      curve: Curves.easeInOut,
     );
     _animationController.forward();
   }
@@ -67,7 +67,7 @@ class _SearchMenuState extends State<SearchMenu>
     return GestureDetector(
       onTap: _closeSearch,
       child: Material(
-        color: Colors.black.withValues(alpha: 0.5),
+        color: Colors.black.withValues(alpha: 0.3),
         child: Center(
           child: ScaleTransition(
             scale: _scaleAnimation,
@@ -197,7 +197,7 @@ class _SearchMenuState extends State<SearchMenu>
                                 height: 80,
                                 margin: const EdgeInsets.only(bottom: 12),
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(20),
                                   border: Border.all(color: Colors.grey.shade300, width: 1),
                                   boxShadow: [
                                     BoxShadow(
