@@ -26,8 +26,7 @@ class Upload extends StatelessWidget {
                   Icon(
                     Icons.upload_file,
                     size: 30,
-                    color: Colors.limeAccent.shade700,
-
+                    color: Colors.black87,
                   ),
                   SizedBox(height: 4),
                   Text(

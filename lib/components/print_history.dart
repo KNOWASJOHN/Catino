@@ -103,7 +103,7 @@ class PrintHistory extends StatelessWidget {
                           Colors.white,
                           Colors.transparent,
                         ],
-                        stops: [0.0, 0.23, 0.80, 1.0],
+                        stops: [0.0, 0.20, 0.80, 1.0],
                       ).createShader(bounds);
                     },
                     blendMode: BlendMode.dstIn,
@@ -182,9 +182,9 @@ class PrintHistory extends StatelessWidget {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.limeAccent.shade700.withOpacity(0.1),
+        color: Colors.limeAccent.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.limeAccent.shade700, width: 2),
+        border: Border.all(color: Colors.limeAccent, width: 2),
       ),
       child: Center(
         child: Text(
