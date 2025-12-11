@@ -85,7 +85,7 @@ class PrintHistory extends StatelessWidget {
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: Colors.black,
-              decoration: TextDecoration.underline
+              decoration: TextDecoration.underline,
             ),
           ),
           // List of print jobs
@@ -116,6 +116,7 @@ class PrintHistory extends StatelessWidget {
                     ),
                   ),
           ),
+          SizedBox(height: 17),
         ],
       ),
     );
@@ -182,9 +183,9 @@ class PrintHistory extends StatelessWidget {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.limeAccent.withOpacity(0.1),
+        color: Colors.limeAccent.shade700.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.limeAccent, width: 2),
+        border: Border.all(color: Colors.limeAccent.shade700, width: 2),
       ),
       child: Center(
         child: Text(

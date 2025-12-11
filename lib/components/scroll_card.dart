@@ -84,7 +84,7 @@ class _ScrollcardState extends State<Scrollcard> {
 
   @override
   Widget build(BuildContext context) {
-    final cardHeight = MediaQuery.of(context).size.height * 0.25;
+    final cardHeight = MediaQuery.of(context).size.height * 0.4;
     return Column(
       children: [
         SizedBox(

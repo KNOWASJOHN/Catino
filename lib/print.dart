@@ -42,19 +42,22 @@ class PrintPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          const Upload(),
-          Expanded(
-            child: PrintHistory(
-              printJobs: _sampleJobs,
-              onJobTap: (job) {
-                // Handle when a print job is tapped
-                print('Tapped on job: ${job.code} - ${job.fileName}');
-              },
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const Upload(),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: PrintHistory(
+                printJobs: _sampleJobs,
+                onJobTap: (job) {
+                  // Handle when a print job is tapped
+                  print('Tapped on job: ${job.code} - ${job.fileName}');
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
