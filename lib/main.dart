@@ -60,7 +60,7 @@ class _MainScreenState extends State<MainScreen> {
             appBar: AppBar(
               backgroundColor: Colors.white.withOpacity(0),
               elevation: 0,
-              toolbarHeight: 40,
+              toolbarHeight: 69,
               scrolledUnderElevation: 0,
               flexibleSpace: Header(
                 onNotificationTap: () {

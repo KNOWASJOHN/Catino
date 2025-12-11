@@ -83,8 +83,20 @@ class FoodSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    int crossAxisCount;
+
+    if (screenWidth < 600) {
+      crossAxisCount = 2; // Small phones
+    } else if (screenWidth < 900) {
+      crossAxisCount = 3; // Tablets and large phones
+    } else if (screenWidth < 1200) {
+      crossAxisCount = 4; // Small desktops
+    } else {
+      crossAxisCount = 5; // Large screens
+    }
     return GridView.count(
-      crossAxisCount: 2,
+      crossAxisCount: crossAxisCount,
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(), // <-- REQUIRED
       mainAxisSpacing: 12,
@@ -92,6 +104,30 @@ class FoodSection extends StatelessWidget {
       childAspectRatio: 1,
       padding: const EdgeInsets.all(8.0),
       children: [
+        foodBox(
+          "Burger",
+          "assets/Elements/burger.jpg",
+          "Delicious beef burger",
+          12.99,
+        ),
+        foodBox(
+          "Pizza",
+          "assets/Elements/pizza.jpg",
+          "Cheesy pepperoni pizza",
+          15.99,
+        ),
+        foodBox(
+          "Juice",
+          "assets/Elements/juice.jpg",
+          "Fresh orange juice",
+          5.99,
+        ),
+        foodBox(
+          "Fruits",
+          "assets/Elements/burger.jpg",
+          "Mixed fruit platter",
+          8.99,
+        ),
         foodBox(
           "Burger",
           "assets/Elements/burger.jpg",

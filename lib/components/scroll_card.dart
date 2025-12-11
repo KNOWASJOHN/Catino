@@ -19,17 +19,17 @@ class _ScrollcardState extends State<Scrollcard> {
     {
       'image': 'assets/Elements/pizza.jpg',
       'title': 'Special Offer',
-      'description': 'Get 20% off on all burgers today!'
+      'description': 'Get 20% off on all burgers today!',
     },
     {
       'image': 'assets/Elements/burger.jpg',
       'title': 'New Menu',
-      'description': 'Try our fresh seasonal dishes'
+      'description': 'Try our fresh seasonal dishes',
     },
     {
       'image': 'assets/Elements/juice.jpg',
       'title': 'Happy Hours',
-      'description': 'Enjoy drinks at half price 5-7 PM'
+      'description': 'Enjoy drinks at half price 5-7 PM',
     },
   ];
 
@@ -84,10 +84,11 @@ class _ScrollcardState extends State<Scrollcard> {
 
   @override
   Widget build(BuildContext context) {
+    final cardHeight = MediaQuery.of(context).size.height * 0.25;
     return Column(
       children: [
         SizedBox(
-          height: 200,
+          height: cardHeight,
           child: GestureDetector(
             onPanStart: (_) => _onUserInteractionStart(),
             onPanEnd: (_) => _onUserInteractionEnd(),
@@ -102,10 +103,11 @@ class _ScrollcardState extends State<Scrollcard> {
               itemCount: _cards.length,
               itemBuilder: (context, index) {
                 final card = _cards[index];
-                final String image = card['image'] ?? 'assets/Elements/burger.jpg';
+                final String image =
+                    card['image'] ?? 'assets/Elements/burger.jpg';
                 final String title = card['title'] ?? 'Title';
                 final String description = card['description'] ?? 'Description';
-                
+
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 5),
                   decoration: BoxDecoration(

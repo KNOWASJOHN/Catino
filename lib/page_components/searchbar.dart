@@ -29,11 +29,11 @@ class _SearchMenuState extends State<SearchMenu>
     _filteredItems = _foodItems;
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 400),
     );
     _scaleAnimation = CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeInOut,
+      curve: Curves.linearToEaseOut,
     );
     _animationController.forward();
   }
