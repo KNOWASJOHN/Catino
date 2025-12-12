@@ -103,7 +103,7 @@ class PrintHistory extends StatelessWidget {
                           Colors.white,
                           Colors.transparent,
                         ],
-                        stops: [0.0, 0.08, 0.80, 1.0],
+                        stops: [0.0, 0.08, 0.9, 1.0],
                       ).createShader(bounds);
                     },
                     blendMode: BlendMode.dstIn,

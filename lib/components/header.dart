@@ -15,7 +15,7 @@ class Header extends StatelessWidget {
         child: Container(
           color: Colors.white.withOpacity(0.2),
           child: Padding(
-            padding: const EdgeInsets.all(15),
+            padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
             child: Row(
               children: [
                 SizedBox(width: 4),
