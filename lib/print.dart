@@ -45,6 +45,7 @@ class PrintPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            SizedBox(height: MediaQuery.of(context).size.height * 0.03),
             const Upload(),
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.6,

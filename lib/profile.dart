@@ -34,7 +34,7 @@ class _ProfileState extends State<Profile> {
         child: Column(
           children: [
             // Profile Header with Picture and Basic Info
-            const SizedBox(height: 85),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.15),
 
             _buildProfileHeader(),
 
@@ -140,7 +140,7 @@ class _ProfileState extends State<Profile> {
               ],
             ),
 
-            const SizedBox(height: 100),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
           ],
         ),
       ),
@@ -612,7 +612,6 @@ class _ProfileState extends State<Profile> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                // Perform logout action and exit app
                 SystemNavigator.pop();
               },
               child: const Text(

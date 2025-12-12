@@ -15,6 +15,8 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+
               /// TOP USER CARD
               const UserCard(),
 
@@ -24,7 +26,7 @@ class HomePage extends StatelessWidget {
               const FoodSection(),
               const SizedBox(height: 20),
               const Scrollcard(),
-              const SizedBox(height: 100),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.2),
             ],
           ),
         ),
