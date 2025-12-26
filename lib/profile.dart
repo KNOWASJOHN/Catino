@@ -472,7 +472,13 @@ class _ProfileState extends State<Profile> {
           ),
           Switch(
             value: value,
-            onChanged: onChanged,
+            onChanged: (newValue) async {
+              onChanged(newValue);
+              // Update in Firebase
+              await _authService.updateUserData({
+                'notificationsEnabled': newValue,
+              });
+            },
             activeColor: Colors.limeAccent.shade700,
           ),
         ],
@@ -532,10 +538,14 @@ class _ProfileState extends State<Profile> {
                 ),
               );
             }).toList(),
-            onChanged: (String? newValue) {
+            onChanged: (String? newValue) async {
               if (newValue != null) {
                 setState(() {
                   dietaryPreference = newValue;
+                });
+                // Update in Firebase
+                await _authService.updateUserData({
+                  'dietaryPreference': newValue,
                 });
               }
             },
