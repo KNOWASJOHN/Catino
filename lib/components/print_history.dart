@@ -41,25 +41,71 @@ enum PrintStatus {
         return Icons.cancel;
     }
   }
+
+  /// Convert from string
+  static PrintStatus fromString(String status) {
+    switch (status.toLowerCase()) {
+      case 'finished':
+        return PrintStatus.finished;
+      case 'pending':
+        return PrintStatus.pending;
+      case 'cancelled':
+        return PrintStatus.cancelled;
+      default:
+        return PrintStatus.pending;
+    }
+  }
 }
 
 /// Model class for a print job - easy to modify and extend
 class PrintJob {
+  final String id;
   final String code; // 2-digit unique
   final String fileName;
   final DateTime dateTime;
   final PrintStatus status;
+  final int pageCount;
+  final String fileUrl;
 
   const PrintJob({
+    required this.id,
     required this.code,
     required this.fileName,
     required this.dateTime,
     required this.status,
+    this.pageCount = 1,
+    this.fileUrl = '',
   });
 
   /// Format date and time for display
   String get formattedDateTime {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  /// Convert to Map for Firebase
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'code': code,
+      'fileName': fileName,
+      'timestamp': dateTime.millisecondsSinceEpoch,
+      'status': status.displayText.toLowerCase(),
+      'pageCount': pageCount,
+      'fileUrl': fileUrl,
+    };
+  }
+
+  /// Create from Firebase Map
+  factory PrintJob.fromMap(Map<dynamic, dynamic> map) {
+    return PrintJob(
+      id: map['id'] ?? '',
+      code: map['code'] ?? '00',
+      fileName: map['fileName'] ?? 'Unknown',
+      dateTime: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] ?? 0),
+      status: PrintStatus.fromString(map['status'] ?? 'pending'),
+      pageCount: map['pageCount'] ?? 1,
+      fileUrl: map['fileUrl'] ?? '',
+    );
   }
 }
 
