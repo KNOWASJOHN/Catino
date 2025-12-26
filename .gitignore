@@ -27,11 +27,14 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
 /coverage/
+pubspec.lock
 
 # Symbolication related
 app.*.symbols
@@ -43,3 +46,28 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase sensitive configuration files
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
+lib/config/firebase_config.dart
+
+# Web Firebase config
+web/firebase-config.js
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# macOS specific
+.DS_Store
+macos/Flutter/ephemeral/
+macos/Pods/
+
+# Windows specific
+windows/flutter/ephemeral/
+
+# Linux specific
+linux/flutter/ephemeral/

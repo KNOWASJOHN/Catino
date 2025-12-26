@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'services/auth_service.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -9,23 +10,48 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
-  // Sample user data - replace with real data from backend/database
-  String userName = 'John Doe';
-  String userEmail = 'john.doe@university.edu';
-  String userPhone = '+91 98765 43210';
-  String studentId = 'CS21B1234';
-  String branch = 'Computer Science';
-  String semester = '5th Semester';
-  String hostel = 'Hostel A - Room 204';
-  String profilePicUrl = ''; // Empty for default avatar
+  final AuthService _authService = AuthService();
+  
+  // User data - will be loaded from Firebase
+  String userName = 'Loading...';
+  String userEmail = 'Loading...';
+  String userPhone = 'Loading...';
+  String studentId = 'Loading...';
+  String branch = 'Loading...';
+  String semester = 'Loading...';
+  String hostel = 'Loading...';
+  String profilePicUrl = '';
 
   bool notificationsEnabled = true;
-  String dietaryPreference =
-      'Vegetarian'; // 'Vegetarian', 'Non-Vegetarian', 'Both'
+  String dietaryPreference = 'Both';
 
-  // Sample order data
-  String lastOrderedItem = 'Cheese Burger';
-  List<String> favoriteItems = ['Burger', 'Pizza', 'Juice'];
+  // Sample order data - will be replaced with real data later
+  String lastOrderedItem = 'No orders yet';
+  List<String> favoriteItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final userData = await _authService.getUserData();
+    if (userData != null && mounted) {
+      setState(() {
+        userName = userData['name'] ?? 'User';
+        userEmail = userData['email'] ?? '';
+        userPhone = userData['phone'] ?? '';
+        studentId = userData['studentId'] ?? '';
+        branch = userData['branch'] ?? '';
+        semester = userData['semester'] ?? '';
+        hostel = userData['hostel'] ?? '';
+        profilePicUrl = userData['profilePicUrl'] ?? '';
+        notificationsEnabled = userData['notificationsEnabled'] ?? true;
+        dietaryPreference = userData['dietaryPreference'] ?? 'Both';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -610,9 +636,9 @@ class _ProfileState extends State<Profile> {
               ),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                SystemNavigator.pop();
+                await _authService.signOut();
               },
               child: const Text(
                 'Logout',

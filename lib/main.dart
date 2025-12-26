@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'config/firebase_config.dart';
 import 'pages/home.dart';
 import 'components/navbar.dart';
 import 'components/header.dart';
@@ -10,8 +12,23 @@ import 'cart.dart';
 import 'pages/food.dart';
 import 'components/page_transition.dart';
 import 'components/circle_reveal_transition.dart';
+import 'pages/loginpage.dart';
+import 'services/auth_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: const FirebaseOptions(
+      apiKey: FirebaseConfig.apiKey,
+      authDomain: FirebaseConfig.authDomain,
+      databaseURL: FirebaseConfig.databaseURL,
+      projectId: FirebaseConfig.projectId,
+      storageBucket: FirebaseConfig.storageBucket,
+      messagingSenderId: FirebaseConfig.messagingSenderId,
+      appId: FirebaseConfig.appId,
+      measurementId: FirebaseConfig.measurementId,
+    ),
+  );
   runApp(const MyApp());
 }
 
@@ -20,7 +37,30 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: MainScreen());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: StreamBuilder(
+        stream: AuthService().authStateChanges,
+        builder: (context, snapshot) {
+          // Show loading while checking auth state
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+          
+          // Show login page if not authenticated
+          if (!snapshot.hasData) {
+            return const LoginPage();
+          }
+          
+          // Show main app if authenticated
+          return const MainScreen();
+        },
+      ),
+    );
   }
 }
 
