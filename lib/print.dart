@@ -18,6 +18,7 @@ class _PrintPageState extends State<PrintPage> {
   @override
   void initState() {
     super.initState();
+    _printService.startListeningToPrintJobs();
     _loadPrintJobs();
   }
 
@@ -44,10 +45,13 @@ class _PrintPageState extends State<PrintPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+      body: RefreshIndicator(
+        onRefresh: _loadPrintJobs,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
             const Upload(),
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.6,
@@ -114,7 +118,8 @@ class _PrintPageState extends State<PrintPage> {
                           },
                         ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

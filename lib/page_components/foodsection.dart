@@ -17,6 +17,7 @@ class _FoodSectionState extends State<FoodSection> {
   @override
   void initState() {
     super.initState();
+    _foodService.startListeningToFoodItems();
     _loadFoodItems();
   }
 

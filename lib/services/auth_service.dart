@@ -1,13 +1,29 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'profile_cache_service.dart';
 
 /// Authentication Service for handling user login, signup, and session management
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  final ProfileCacheService _cacheService = ProfileCacheService();
 
   // Get current user
   User? get currentUser => _auth.currentUser;
+
+  /// Start listening to user data changes in Firebase
+  void startListeningToUserData() {
+    if (currentUser == null) return;
+    
+    _database.child('users').child(currentUser!.uid).onValue.listen((event) {
+      if (event.snapshot.exists) {
+        final userData = Map<String, dynamic>.from(event.snapshot.value as Map);
+        // Update cache with fresh data
+        _cacheService.cacheProfileData(userData);
+        print('Profile data updated from Firebase listener');
+      }
+    });
+  }
 
   // Check if user is logged in
   bool get isLoggedIn => _auth.currentUser != null;
@@ -72,6 +88,9 @@ class AuthService {
         password: password,
       );
 
+      // Start listening to user data changes
+      startListeningToUserData();
+
       return {'success': true, 'user': userCredential.user};
     } on FirebaseAuthException catch (e) {
       return {
@@ -86,37 +105,82 @@ class AuthService {
     }
   }
 
-  /// Sign out
+  /// Sign out and clear cache
   Future<void> signOut() async {
     await _auth.signOut();
+    await _cacheService.clearCache();
   }
 
-  /// Get user data from Firebase
-  Future<Map<String, dynamic>?> getUserData() async {
+  /// Get user data from cache first, then from Firebase if needed
+  Future<Map<String, dynamic>?> getUserData({bool forceRefresh = false}) async {
     try {
       if (currentUser == null) return null;
 
+      // If not forcing refresh, try to get cached data first
+      if (!forceRefresh) {
+        final cachedData = await _cacheService.getCachedProfileData();
+        if (cachedData != null) {
+          // Return cached data immediately
+          // Optionally fetch fresh data in background if cache is stale
+          _refreshDataIfStale();
+          return cachedData;
+        }
+      }
+
+      // Fetch from Firebase
       DatabaseEvent event = await _database
           .child('users')
           .child(currentUser!.uid)
           .once();
 
       if (event.snapshot.exists) {
-        return Map<String, dynamic>.from(event.snapshot.value as Map);
+        final userData = Map<String, dynamic>.from(event.snapshot.value as Map);
+        // Cache the fresh data
+        await _cacheService.cacheProfileData(userData);
+        return userData;
       }
       return null;
     } catch (e) {
       print('Error fetching user data: $e');
-      return null;
+      // If Firebase fails, try to return cached data as fallback
+      return await _cacheService.getCachedProfileData();
     }
   }
 
-  /// Update user data
+  /// Refresh data in background if cache is stale
+  void _refreshDataIfStale() async {
+    try {
+      final isStale = await _cacheService.isCacheStale(
+        maxAge: const Duration(minutes: 30),
+      );
+      
+      if (isStale) {
+        // Fetch fresh data without waiting
+        getUserData(forceRefresh: true);
+      }
+    } catch (e) {
+      print('Error checking cache staleness: $e');
+    }
+  }
+
+  /// Update user data in Firebase and cache
   Future<bool> updateUserData(Map<String, dynamic> updates) async {
     try {
       if (currentUser == null) return false;
 
+      // Update in Firebase
       await _database.child('users').child(currentUser!.uid).update(updates);
+      
+      // Update cache with the new data
+      final cachedData = await _cacheService.getCachedProfileData();
+      if (cachedData != null) {
+        final updatedData = {...cachedData, ...updates};
+        await _cacheService.cacheProfileData(updatedData);
+      } else {
+        // If no cache exists, fetch and cache all data
+        await getUserData(forceRefresh: true);
+      }
+      
       return true;
     } catch (e) {
       print('Error updating user data: $e');

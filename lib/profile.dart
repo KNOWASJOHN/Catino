@@ -12,7 +12,7 @@ class Profile extends StatefulWidget {
 class _ProfileState extends State<Profile> {
   final AuthService _authService = AuthService();
   
-  // User data - will be loaded from Firebase
+  // User data - will be loaded from cache/Firebase
   String userName = 'Loading...';
   String userEmail = 'Loading...';
   String userPhone = 'Loading...';
@@ -33,10 +33,13 @@ class _ProfileState extends State<Profile> {
   void initState() {
     super.initState();
     _loadUserData();
+    // Start listening to real-time updates
+    _authService.startListeningToUserData();
   }
 
-  Future<void> _loadUserData() async {
-    final userData = await _authService.getUserData();
+  Future<void> _loadUserData({bool forceRefresh = false}) async {
+    // Load from cache first (or Firebase if forced refresh)
+    final userData = await _authService.getUserData(forceRefresh: forceRefresh);
     if (userData != null && mounted) {
       setState(() {
         userName = userData['name'] ?? 'User';
@@ -56,25 +59,30 @@ class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Profile Header with Picture and Basic Info
-            SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _loadUserData(forceRefresh: true);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              // Profile Header with Picture and Basic Info
+              SizedBox(height: MediaQuery.of(context).size.height * 0.15),
 
-            _buildProfileHeader(),
+              _buildProfileHeader(),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // User Info Section
-            _buildSection(
-              title: 'Personal Information',
-              children: [
-                _buildInfoTile(Icons.person, 'Name', userName),
-                _buildInfoTile(Icons.phone, 'Phone', userPhone),
-                _buildInfoTile(Icons.email, 'Email', userEmail),
-              ],
-            ),
+              // User Info Section
+              _buildSection(
+                title: 'Personal Information',
+                children: [
+                  _buildInfoTile(Icons.person, 'Name', userName),
+                  _buildInfoTile(Icons.phone, 'Phone', userPhone),
+                  _buildInfoTile(Icons.email, 'Email', userEmail),
+                ],
+              ),
 
             const SizedBox(height: 16),
 
@@ -167,7 +175,8 @@ class _ProfileState extends State<Profile> {
             ),
 
             SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-          ],
+            ],
+          ),
         ),
       ),
     );
