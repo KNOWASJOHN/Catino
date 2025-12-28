@@ -488,7 +488,7 @@ class _ProfileState extends State<Profile> {
                 'notificationsEnabled': newValue,
               });
             },
-            activeColor: Colors.limeAccent.shade700,
+            activeThumbColor: Colors.limeAccent.shade700,
           ),
         ],
       ),

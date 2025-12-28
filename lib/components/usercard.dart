@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class UserCard extends StatelessWidget {
-  const UserCard({super.key});
+  final String userName;
+  final String orderCode;
+
+  const UserCard({super.key, required this.userName, required this.orderCode});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +24,7 @@ class UserCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '👋 Hello, John!',
+              '👋 Hello, $userName!',
               style: TextStyle(
                 fontFamily: 'Unbounded',
                 fontSize: 24,
@@ -43,16 +47,18 @@ class UserCard extends StatelessWidget {
               alignment: Alignment.center,
               child: Column(
                 children: [
-                  Text('Latest Order:',
-                   style: TextStyle(
-                    fontFamily: 'Unbounded',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),),
+                  Text(
+                    'Latest Order:',
+                    style: TextStyle(
+                      fontFamily: 'Unbounded',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
                   SizedBox(height: 5),
                   Text(
-                    'Order ID: #1234567890',
+                    'Order Code: $orderCode',
                     style: TextStyle(
                       fontFamily: 'Unbounded',
                       fontSize: 12,
@@ -66,11 +72,10 @@ class UserCard extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(15),
                     ),
-                    child: Image.asset(
-                      'assets/Elements/QR.png',
-                      width: 180,
-                      height: 180,
-                      fit: BoxFit.cover,
+                    child: QrImageView(
+                      data: orderCode,
+                      version: QrVersions.auto,
+                      size: 180,
                     ),
                   ),
                   SizedBox(height: 13),

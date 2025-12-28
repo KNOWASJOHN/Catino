@@ -25,5 +25,5 @@ class FirebaseConfig {
   static const String appId = "1:262413753761:web:00a20bf12ee63784f27fe0";
   
   // Optional: Measurement ID (for Google Analytics)
-  static const String? measurementId = "G-EYF82VHY7X";
+  static const String measurementId = "G-EYF82VHY7X";
 }
