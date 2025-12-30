@@ -82,7 +82,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     const HomePage(),
-    const Food(),
+    const FoodListPage(),
     const PrintPage(),
     const Cart(),
     const Profile(),

@@ -16,9 +16,9 @@ class _SearchMenuState extends State<SearchMenu>
   late Animation<double> _scaleAnimation;
 
   final List<Map<String, dynamic>> _foodItems = [
-    {'name': 'Burger', 'price': 12.99, 'image': 'assets/Elements/burger.jpg'},
-    {'name': 'Pizza', 'price': 15.99, 'image': 'assets/Elements/pizza.jpg'},
-    {'name': 'Juice', 'price': 5.99, 'image': 'assets/Elements/juice.jpg'},
+    {'name': 'Burger', 'price': 12.99, 'image': ''}, // Fetch image URL from Firebase
+    {'name': 'Pizza', 'price': 15.99, 'image': ''}, // Fetch image URL from Firebase
+    {'name': 'Juice', 'price': 5.99, 'image': ''}, // Fetch image URL from Firebase
   ];
 
   List<Map<String, dynamic>> _filteredItems = [];

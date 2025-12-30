@@ -43,7 +43,6 @@ dev_dependencies:
 flutter:
   assets:
     - assets/icons/
-    - assets/Elements/
   uses-material-design: true
   
   fonts:

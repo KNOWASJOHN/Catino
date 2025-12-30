@@ -13,7 +13,7 @@ class FoodService {
     if (_isListening) return;
     _isListening = true;
     
-    _database.child('foodItems').onValue.listen((event) {
+    _database.child('foodPageItems').onValue.listen((event) {
       if (event.snapshot.exists && event.snapshot.value != null) {
         try {
           Map<dynamic, dynamic> foodsMap = event.snapshot.value as Map<dynamic, dynamic>;
@@ -54,7 +54,7 @@ class FoodService {
       
       print('Fetching all food items from database');
       
-      DatabaseEvent event = await _database.child('foodItems').once();
+      DatabaseEvent event = await _database.child('foodPageItems').once();
       
       print('Database snapshot exists: ${event.snapshot.exists}');
       
@@ -136,8 +136,8 @@ class FoodService {
       
       print('Fetching food items for category: $category');
       
-      DatabaseEvent event = await _database
-          .child('foodItems')
+        DatabaseEvent event = await _database
+          .child('foodPageItems')
           .orderByChild('category')
           .equalTo(category)
           .once();
@@ -205,8 +205,8 @@ class FoodService {
       
       print('Fetching vegetarian food items');
       
-      DatabaseEvent event = await _database
-          .child('foodItems')
+        DatabaseEvent event = await _database
+          .child('foodPageItems')
           .orderByChild('isVegetarian')
           .equalTo(true)
           .once();
@@ -265,7 +265,7 @@ class FoodService {
     try {
       print('Adding food item with id: ${foodItem.id}');
       
-      await _database.child('foodItems').child(foodItem.id).set(foodItem.toMap());
+      await _database.child('foodPageItems').child(foodItem.id).set(foodItem.toMap());
       
       print('Successfully added food item: ${foodItem.id}');
       
@@ -285,7 +285,7 @@ class FoodService {
     try {
       print('Updating food item with id: ${foodItem.id}');
       
-      await _database.child('foodItems').child(foodItem.id).update(foodItem.toMap());
+      await _database.child('foodPageItems').child(foodItem.id).update(foodItem.toMap());
       
       print('Successfully updated food item: ${foodItem.id}');
       
@@ -305,7 +305,7 @@ class FoodService {
     try {
       print('Deleting food item with id: $foodId');
       
-      await _database.child('foodItems').child(foodId).remove();
+      await _database.child('foodPageItems').child(foodId).remove();
       
       print('Successfully deleted food item: $foodId');
       

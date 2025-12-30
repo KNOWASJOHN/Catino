@@ -1,5 +1,30 @@
 import 'package:flutter/material.dart';
+
 import 'dart:async';
+import 'package:firebase_database/firebase_database.dart';
+
+class ScrollCardModel {
+  final String id;
+  final String image;
+  final String title;
+  final String description;
+
+  ScrollCardModel({
+    required this.id,
+    required this.image,
+    required this.title,
+    required this.description,
+  });
+
+  factory ScrollCardModel.fromMap(Map<dynamic, dynamic> map) {
+    return ScrollCardModel(
+      id: map['id'] ?? '',
+      image: map['image'] ?? '',
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+    );
+  }
+}
 
 class Scrollcard extends StatefulWidget {
   const Scrollcard({super.key});
@@ -15,34 +40,72 @@ class _ScrollcardState extends State<Scrollcard> {
   Timer? _resumeTimer;
   bool _isUserInteracting = false;
 
-  final List<Map<String, dynamic>> _cards = [
-    {
-      'image': 'assets/Elements/pizza.jpg',
-      'title': 'Special Offer',
-      'description': 'Get 20% off on all burgers today!',
-    },
-    {
-      'image': 'assets/Elements/burger.jpg',
-      'title': 'New Menu',
-      'description': 'Try our fresh seasonal dishes',
-    },
-    {
-      'image': 'assets/Elements/juice.jpg',
-      'title': 'Happy Hours',
-      'description': 'Enjoy drinks at half price 5-7 PM',
-    },
-  ];
+  List<ScrollCardModel> _cards = [];
+  List<ScrollCardModel> _cachedCards = [];
+  bool _loading = true;
+  String? _error;
+  StreamSubscription<DatabaseEvent>? _cardsSubscription;
+
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
-    _startAutoScroll();
+    _listenToScrollCards();
+  }
+
+  void _listenToScrollCards() {
+    final ref = FirebaseDatabase.instance.ref('scroll_cards');
+    _cardsSubscription = ref.onValue.listen((event) {
+      if (event.snapshot.exists) {
+        final List<ScrollCardModel> cards = [];
+        for (var item in event.snapshot.value as List<dynamic>) {
+          if (item != null) {
+            cards.add(ScrollCardModel.fromMap(item));
+          }
+        }
+        // Compare with cache
+        if (!_areCardListsEqual(cards, _cachedCards)) {
+          setState(() {
+            _cards = cards;
+            _cachedCards = List<ScrollCardModel>.from(cards);
+            _loading = false;
+            _error = null;
+          });
+          _startAutoScroll();
+        }
+      } else {
+        setState(() {
+          _loading = false;
+          _error = 'No cards found.';
+          _cards = [];
+          _cachedCards = [];
+        });
+      }
+    }, onError: (e) {
+      setState(() {
+        _loading = false;
+        _error = 'Failed to load cards: $e';
+      });
+    });
+  }
+
+  bool _areCardListsEqual(List<ScrollCardModel> a, List<ScrollCardModel> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id ||
+          a[i].image != b[i].image ||
+          a[i].title != b[i].title ||
+          a[i].description != b[i].description) {
+        return false;
+      }
+    }
+    return true;
   }
 
   void _startAutoScroll() {
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (_pageController.hasClients && !_isUserInteracting) {
+      if (_pageController.hasClients && !_isUserInteracting && _cards.isNotEmpty) {
         if (_currentPage < _cards.length - 1) {
           _currentPage++;
           _pageController.animateToPage(
@@ -78,6 +141,7 @@ class _ScrollcardState extends State<Scrollcard> {
   void dispose() {
     _timer?.cancel();
     _resumeTimer?.cancel();
+    _cardsSubscription?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -85,6 +149,24 @@ class _ScrollcardState extends State<Scrollcard> {
   @override
   Widget build(BuildContext context) {
     final cardHeight = MediaQuery.of(context).size.height * 0.4;
+    if (_loading) {
+      return SizedBox(
+        height: cardHeight,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_error != null) {
+      return SizedBox(
+        height: cardHeight,
+        child: Center(child: Text(_error!)),
+      );
+    }
+    if (_cards.isEmpty) {
+      return SizedBox(
+        height: cardHeight,
+        child: const Center(child: Text('No cards available.')),
+      );
+    }
     return Column(
       children: [
         SizedBox(
@@ -103,17 +185,26 @@ class _ScrollcardState extends State<Scrollcard> {
               itemCount: _cards.length,
               itemBuilder: (context, index) {
                 final card = _cards[index];
-                final String image =
-                    card['image'] ?? 'assets/Elements/burger.jpg';
-                final String title = card['title'] ?? 'Title';
-                final String description = card['description'] ?? 'Description';
+                final String image = card.image;
+                final String title = card.title;
+                final String description = card.description;
+
+                // Always fetch from Firebase (network), fallback to placeholder if empty
+                ImageProvider imageProvider;
+                if (image.isNotEmpty && (image.startsWith('http://') || image.startsWith('https://'))) {
+                  imageProvider = NetworkImage(image);
+                } else if (image.isNotEmpty && image.startsWith('assets/')) {
+                  imageProvider = AssetImage(image);
+                } else {
+                  imageProvider = const AssetImage('assets/Elements/placeholder.jpg');
+                }
 
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 5),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     image: DecorationImage(
-                      image: AssetImage(image),
+                      image: imageProvider,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -125,7 +216,7 @@ class _ScrollcardState extends State<Scrollcard> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withValues(alpha: 0.7),
+                          Colors.black.withOpacity(0.7),
                         ],
                       ),
                     ),

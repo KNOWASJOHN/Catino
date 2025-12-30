@@ -1,14 +1,34 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class UserCard extends StatelessWidget {
   final String userName;
   final String orderCode;
+  final List<Map<String, dynamic>> items; // Add items
+  final String status; // Add status
+  final int timestamp; // Add timestamp
 
-  const UserCard({super.key, required this.userName, required this.orderCode});
+  const UserCard({
+    super.key,
+    required this.userName,
+    required this.orderCode,
+    required this.items,
+    required this.status,
+    required this.timestamp,
+  });
+
 
   @override
   Widget build(BuildContext context) {
+
+      final qrData = jsonEncode({
+      'orderCode': orderCode,
+      'items': items,
+      'status': status,
+      'timestamp': timestamp,
+    });
+
     return Container(
       width: MediaQuery.of(context).size.width * 0.95,
       decoration: BoxDecoration(
@@ -73,7 +93,7 @@ class UserCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: QrImageView(
-                      data: orderCode,
+                      data: qrData,
                       version: QrVersions.auto,
                       size: 180,
                     ),

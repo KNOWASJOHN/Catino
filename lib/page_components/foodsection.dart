@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/food_item.dart';
 import '../services/food_service.dart';
+import 'dart:async';
 
 class FoodSection extends StatefulWidget {
   const FoodSection({super.key});
@@ -11,14 +12,43 @@ class FoodSection extends StatefulWidget {
 
 class _FoodSectionState extends State<FoodSection> {
   final FoodService _foodService = FoodService();
-  List<FoodItem> _foodItems = [];
+  List<FoodItem> _allFoodItems = [];
+  List<FoodItem> _displayedItems = [];
   bool _isLoading = true;
+  Timer? _rotationTimer;
+  static const int _maxDisplayItems = 6; // Show only 6 items at a time
 
   @override
   void initState() {
     super.initState();
     _foodService.startListeningToFoodItems();
     _loadFoodItems();
+    _startRotation();
+  }
+
+  @override
+  void dispose() {
+    _rotationTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startRotation() {
+    // Rotate items every 5 seconds
+    _rotationTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (_allFoodItems.isNotEmpty) {
+        _updateDisplayedItems();
+      }
+    });
+  }
+
+  void _updateDisplayedItems() {
+    if (_allFoodItems.isEmpty) return;
+    
+    setState(() {
+      // Shuffle and take first items for variety
+      final shuffled = List<FoodItem>.from(_allFoodItems)..shuffle();
+      _displayedItems = shuffled.take(_maxDisplayItems).toList();
+    });
   }
 
   Future<void> _loadFoodItems() async {
@@ -28,7 +58,8 @@ class _FoodSectionState extends State<FoodSection> {
       List<FoodItem> items = await _foodService.getAllFoodItems();
       
       setState(() {
-        _foodItems = items;
+        _allFoodItems = items;
+        _updateDisplayedItems();
         _isLoading = false;
       });
     } catch (e) {
@@ -187,7 +218,7 @@ class _FoodSectionState extends State<FoodSection> {
       );
     }
 
-    if (_foodItems.isEmpty) {
+    if (_displayedItems.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -207,15 +238,18 @@ class _FoodSectionState extends State<FoodSection> {
       );
     }
 
-    return GridView.count(
-      crossAxisCount: crossAxisCount,
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1,
+      ),
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1,
       padding: const EdgeInsets.all(8.0),
-      children: _foodItems.map((item) => foodBox(item)).toList(),
+      itemCount: _displayedItems.length,
+      itemBuilder: (context, index) => foodBox(_displayedItems[index]),
     );
   }
 }
