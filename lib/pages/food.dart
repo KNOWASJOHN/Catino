@@ -168,7 +168,7 @@ class CategorySection extends StatelessWidget {
     final isSmall = screenWidth < 420;
     final horizontalPadding = isSmall ? 12.0 : 16.0;
     final cardHeight = isSmall ? 210.0 : 230.0;
-    final cardWidth = isSmall ? screenWidth * 0.54 : 130.0;
+    final cardWidth = isSmall ? screenWidth * 0.54 : screenWidth * 0.40;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,28 +316,6 @@ class _FoodListPageState extends State<FoodListPage> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        title: const Text(
-          'Canteen Menu',
-          style: TextStyle(
-            fontFamily: 'Unbounded',
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-            fontSize: 18,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        elevation: 2,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.shopping_cart_checkout_outlined, color: Colors.black87),
-            onPressed: () {
-              widget.onCartPressed?.call();
-            },
-          ),
-        ],
-      ),
       body: StreamBuilder<Map<String, List<FoodItem>>>(
         stream: _foodService.getFoodItemsByCategory(),
         builder: (context, snapshot) {
@@ -530,7 +508,7 @@ class FoodItemCard extends StatelessWidget {
                           Flexible(
                             child: Text(
                               '₹${foodItem.price.toStringAsFixed(2)}',
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 12,
