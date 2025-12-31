@@ -146,6 +146,8 @@ class CategorySection extends StatelessWidget {
   final Function(String, int) onUpdateQuantity;
   final IconData icon;
 
+  final ScrollController? scrollController;
+
   const CategorySection({
     super.key,
     required this.category,
@@ -154,6 +156,7 @@ class CategorySection extends StatelessWidget {
     required this.onAddToCart,
     required this.onUpdateQuantity,
     required this.icon,
+    this.scrollController,
   });
 
   @override
@@ -162,82 +165,94 @@ class CategorySection extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmall = screenWidth < 420;
     final horizontalPadding = isSmall ? 12.0 : 16.0;
-    final cardHeight = isSmall ? 220.0 : 240.0;
-    final cardWidth = isSmall ? screenWidth * 0.72 : 180.0;
+    final cardHeight = isSmall ? 210.0 : 230.0;
+    final cardWidth = isSmall ? screenWidth * 0.54 : 130.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Category Header
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.black87,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF00C853),
-                  borderRadius: BorderRadius.circular(8),
+        GestureDetector(
+          onTap: () async {
+            // Smooth scroll to end when header tapped
+            if (scrollController != null && scrollController!.hasClients) {
+              await scrollController!.animateTo(
+                scrollController!.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeInOut,
+              );
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-                child: Icon(icon, color: Colors.white, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  category,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Unbounded',
-                    color: Colors.white,
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00C853),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    category,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Unbounded',
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.limeAccent,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'View All',
-                  style: const TextStyle(
-                    fontFamily: 'Unbounded',
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.limeAccent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'View All',
+                    style: const TextStyle(
+                      fontFamily: 'Unbounded',
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
 
         // Horizontal Scrollable Food Items (responsive)
         SizedBox(
-          height: cardHeight+30,
+          height: cardHeight,
           child: ListView.builder(
+            controller: scrollController,
             scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
+            padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
             itemCount: foodItems.length,
             itemBuilder: (context, index) {
               final foodItem = foodItems[index];
               final quantity = cart[foodItem.id] ?? 0;
-
               return Padding(
-padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
+                padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
                 child: SizedBox(
                   width: cardWidth,
                   child: FoodItemCard(
@@ -297,6 +312,18 @@ class _FoodListPageState extends State<FoodListPage> {
     });
   }
 
+  // Add a map of ScrollControllers for each category
+  final Map<String, ScrollController> _categoryScrollControllers = {};
+
+  @override
+  void dispose() {
+    // Dispose all scroll controllers
+    for (final controller in _categoryScrollControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -346,7 +373,11 @@ class _FoodListPageState extends State<FoodListPage> {
             itemBuilder: (context, index) {
               final category = categories[index];
               final foodItems = categorizedItems[category]!;
-              
+              // Get or create a ScrollController for this category
+              final controller = _categoryScrollControllers.putIfAbsent(
+                category,
+                () => ScrollController(),
+              );
               return CategorySection(
                 category: category,
                 foodItems: foodItems,
@@ -354,6 +385,7 @@ class _FoodListPageState extends State<FoodListPage> {
                 onAddToCart: _addToCart,
                 onUpdateQuantity: _updateQuantity,
                 icon: _categoryIcons[category] ?? Icons.restaurant_menu,
+                scrollController: controller,
               );
             },
           );
@@ -464,7 +496,7 @@ class FoodItemCard extends StatelessWidget {
               // Details - use remaining space and avoid overflow
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -474,19 +506,19 @@ class FoodItemCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Unbounded',
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         foodItem.description,
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 8,
                           fontFamily: 'Unbounded',
                           color: Colors.white70,
                           fontWeight: FontWeight.w300,
@@ -503,7 +535,7 @@ class FoodItemCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 15,
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: 'Unbounded',
                                 color: Colors.limeAccent,
@@ -513,7 +545,7 @@ class FoodItemCard extends StatelessWidget {
                           const Spacer(),
                           if (foodItem.tags.isNotEmpty)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: Colors.white24,
                                 borderRadius: BorderRadius.circular(8),
@@ -523,7 +555,7 @@ class FoodItemCard extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 9,
+                                  fontSize: 7,
                                   color: Colors.white70,
                                   fontFamily: 'Unbounded',
                                   fontWeight: FontWeight.w500,
@@ -533,17 +565,17 @@ class FoodItemCard extends StatelessWidget {
                         ],
                       ),
 
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
 
                       // Preparation time and quantity/button
                       Row(
                         children: [
-                          Icon(Icons.access_time, size: 13, color: Colors.white60),
-                          const SizedBox(width: 4),
+                          Icon(Icons.access_time, size: 10, color: Colors.white60),
+                          const SizedBox(width: 1),
                           Text(
                             '${foodItem.preparationTime} min',
                             style: const TextStyle(
-                              fontSize: 10,
+                              fontSize: 8,
                               color: Colors.white60,
                               fontFamily: 'Unbounded',
                               fontWeight: FontWeight.w300,
@@ -560,7 +592,7 @@ class FoodItemCard extends StatelessWidget {
                                 boxShadow: [
                                   BoxShadow(
                                     color: const Color(0xFF00C853).withOpacity(0.3),
-                                    blurRadius: 6,
+                                    blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   ),
                                 ],
@@ -571,14 +603,14 @@ class FoodItemCard extends StatelessWidget {
                                   backgroundColor: const Color(0xFF00C853),
                                   shadowColor: Colors.transparent,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  minimumSize: const Size(80, 34),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  minimumSize: const Size(0, 8),
+                                  padding: const EdgeInsets.fromLTRB(15, 8, 15, 8),
                                 ),
                                 child: const Text(
                                   'ADD',
                                   style: TextStyle(
                                     fontFamily: 'Unbounded',
-                                    fontSize: 11,
+                                    fontSize: 8,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
@@ -593,7 +625,7 @@ class FoodItemCard extends StatelessWidget {
                                 boxShadow: [
                                   BoxShadow(
                                     color: const Color(0xFF00C853).withOpacity(0.3),
-                                    blurRadius: 6,
+                                    blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   ),
                                 ],
@@ -602,12 +634,13 @@ class FoodItemCard extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                                    icon: const Icon(Icons.remove, color: Colors.white, size: 16),
+                                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                                    icon: const Icon(Icons.remove, color: Colors.white, size: 12),
+                                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                                     onPressed: () => onUpdateQuantity(quantity - 1),
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                                     decoration: BoxDecoration(
                                       color: Colors.white24,
                                       borderRadius: BorderRadius.circular(6),
@@ -617,14 +650,15 @@ class FoodItemCard extends StatelessWidget {
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                                        fontSize: 10,
                                         fontFamily: 'Unbounded',
                                       ),
                                     ),
                                   ),
                                   IconButton(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                                    icon: const Icon(Icons.add, color: Colors.white, size: 16),
+                                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                                    icon: const Icon(Icons.add, color: Colors.white, size: 12),
+                                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                                     onPressed: () => onUpdateQuantity(quantity + 1),
                                   ),
                                 ],
