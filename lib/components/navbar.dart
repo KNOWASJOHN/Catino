@@ -109,19 +109,17 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
 
   @override
-
   void didUpdateWidget(CustomBottomNavBar oldWidget) {
-
     super.didUpdateWidget(oldWidget);
-
+    if (oldWidget.currentIndex != widget.currentIndex) {
+      _previousIndex = _selectedIndex;
+      _selectedIndex = widget.currentIndex;
+      _bubbleController.forward(from: 0.0);
+    }
     // Recalculate positions on widget update (including orientation changes)
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-
       _updateItemPositions();
-
     });
-
   }
 
 

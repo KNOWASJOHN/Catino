@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
+import '../cart_provider.dart';
 
 // FoodItem model class
 class FoodItem {
@@ -276,7 +278,9 @@ class CategorySection extends StatelessWidget {
 
 // FoodListPage widget
 class FoodListPage extends StatefulWidget {
-  const FoodListPage({super.key});
+  final VoidCallback? onCartPressed;
+
+  const FoodListPage({super.key, this.onCartPressed});
 
   @override
   State<FoodListPage> createState() => _FoodListPageState();
@@ -284,7 +288,6 @@ class FoodListPage extends StatefulWidget {
 
 class _FoodListPageState extends State<FoodListPage> {
   final FoodService _foodService = FoodService();
-  final Map<String, int> _cart = {};
   final Map<String, IconData> _categoryIcons = {
     'Fast Food': Icons.fastfood,
     'Italian': Icons.local_pizza,
@@ -295,22 +298,6 @@ class _FoodListPageState extends State<FoodListPage> {
     'Main Course': Icons.dinner_dining,
     'Indian': Icons.restaurant,
   };
-
-  void _addToCart(String foodId) {
-    setState(() {
-      _cart[foodId] = (_cart[foodId] ?? 0) + 1;
-    });
-  }
-
-  void _updateQuantity(String foodId, int quantity) {
-    setState(() {
-      if (quantity > 0) {
-        _cart[foodId] = quantity;
-      } else {
-        _cart.remove(foodId);
-      }
-    });
-  }
 
   // Add a map of ScrollControllers for each category
   final Map<String, ScrollController> _categoryScrollControllers = {};
@@ -342,6 +329,14 @@ class _FoodListPageState extends State<FoodListPage> {
         backgroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.black87),
         elevation: 2,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.shopping_cart_checkout_outlined, color: Colors.black87),
+            onPressed: () {
+              widget.onCartPressed?.call();
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<Map<String, List<FoodItem>>>(
         stream: _foodService.getFoodItemsByCategory(),
@@ -368,6 +363,9 @@ class _FoodListPageState extends State<FoodListPage> {
           final categories = categorizedItems.keys.toList()
             ..sort((a, b) => a.compareTo(b));
 
+          final cartProvider = Provider.of<CartProvider>(context);
+          final cart = cartProvider.cart;
+
           return ListView.builder(
             itemCount: categories.length,
             itemBuilder: (context, index) {
@@ -381,9 +379,9 @@ class _FoodListPageState extends State<FoodListPage> {
               return CategorySection(
                 category: category,
                 foodItems: foodItems,
-                cart: _cart,
-                onAddToCart: _addToCart,
-                onUpdateQuantity: _updateQuantity,
+                cart: cart,
+                onAddToCart: (id) => cartProvider.addItem(id),
+                onUpdateQuantity: (id, qty) => cartProvider.updateQuantity(id, qty),
                 icon: _categoryIcons[category] ?? Icons.restaurant_menu,
                 scrollController: controller,
               );

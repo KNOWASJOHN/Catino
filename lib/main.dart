@@ -14,6 +14,8 @@ import 'components/page_transition.dart';
 import 'components/circle_reveal_transition.dart';
 import 'pages/loginpage.dart';
 import 'services/auth_service.dart';
+import 'package:provider/provider.dart';
+import 'cart_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,28 +39,31 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: StreamBuilder(
-        stream: AuthService().authStateChanges,
-        builder: (context, snapshot) {
-          // Show loading while checking auth state
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
-          
-          // Show login page if not authenticated
-          if (!snapshot.hasData) {
-            return const LoginPage();
-          }
-          
-          // Show main app if authenticated
-          return const MainScreen();
-        },
+    return ChangeNotifierProvider(
+      create: (_) => CartProvider(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: StreamBuilder(
+          stream: AuthService().authStateChanges,
+          builder: (context, snapshot) {
+            // Show loading while checking auth state
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+            
+            // Show login page if not authenticated
+            if (!snapshot.hasData) {
+              return const LoginPage();
+            }
+            
+            // Show main app if authenticated
+            return const MainScreen();
+          },
+        ),
       ),
     );
   }
@@ -80,13 +85,38 @@ class _MainScreenState extends State<MainScreen> {
   bool _showNotificationPanel = false;
   bool _showSearchMenu = false;
 
-  final List<Widget> _pages = [
-    const HomePage(),
-    const FoodListPage(),
-    const PrintPage(),
-    const Cart(),
-    const Profile(),
-  ];
+  late List<Widget> _pages;
+
+  void _switchToCart() {
+    if (_selectedIndex != 3 && !_isAnimating) {
+      setState(() {
+        _animationStartPosition = Offset(
+          _navItemPositions[3],
+          _navBarVerticalPosition,
+        );
+        _isAnimating = true;
+      });
+      Future.delayed(const Duration(milliseconds: 850), () {
+        if (mounted) {
+          setState(() {
+            _selectedIndex = 3;
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      const HomePage(),
+      FoodListPage(onCartPressed: _switchToCart),
+      const PrintPage(),
+      const Cart(),
+      const Profile(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {

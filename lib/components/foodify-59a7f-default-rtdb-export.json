@@ -358,6 +358,26 @@
       }
     }
   },
+  "scroll_cards": [
+    {
+      "description": "Get 20% off on all burgers today!",
+      "id": "card_001",
+      "image": "https://staticcookist.akamaized.net/wp-content/uploads/sites/22/2021/09/beef-burger-1200x675.jpg",
+      "title": "Special Offer"
+    },
+    {
+      "description": "Try our fresh seasonal dishes",
+      "id": "card_002",
+      "image": "https://cdn.prod.website-files.com/64931d2aee18510b47f4bb1f/64ecfa1fad20286493de9568_r094aj5e10gjt9vzy87jjw7s3dq9xvy1.jpeg",
+      "title": "New Menu"
+    },
+    {
+      "description": "Enjoy drinks at half price 5-7 PM",
+      "id": "card_003",
+      "image": "https://cdn.shopify.com/s/files/1/0773/7924/0225/files/50411316-ib205096-205096181930440-sm625910.jpg.rendition.1960.1960_480x480.jpg?v=1720072552",
+      "title": "Happy Hours"
+    }
+  ],
   "users": {
     "EFXkKcDrYYb62t01Sl0Q10qjKYN2": {
       "branch": "computer science",
@@ -385,25 +405,5 @@
       "semester": "S6",
       "studentId": "CCE24CS99"
     }
-  },
-  "scroll_cards": [
-    {
-      "description": "Get 20% off on all burgers today!",
-      "id": "card_001",
-      "image": "assets/Elements/pizza.jpg",
-      "title": "Special Offer"
-    },
-    {
-      "description": "Try our fresh seasonal dishes",
-      "id": "card_002",
-      "image": "assets/Elements/burger.jpg",
-      "title": "New Menu"
-    },
-    {
-      "description": "Enjoy drinks at half price 5-7 PM",
-      "id": "card_003",
-      "image": "assets/Elements/juice.jpg",
-      "title": "Happy Hours"
-    }
-  ]
+  }
 }
