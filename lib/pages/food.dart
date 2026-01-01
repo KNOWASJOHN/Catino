@@ -579,8 +579,8 @@ class FoodItemCard extends StatelessWidget {
                                   backgroundColor: const Color(0xFF00C853),
                                   shadowColor: Colors.transparent,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  minimumSize: const Size(0, 8),
-                                  padding: const EdgeInsets.fromLTRB(15, 8, 15, 8),
+                                  fixedSize: Size(8, 8),
+                                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                                 ),
                                 child: const Text(
                                   'ADD',

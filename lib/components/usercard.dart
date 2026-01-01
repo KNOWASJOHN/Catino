@@ -18,11 +18,22 @@ class UserCard extends StatelessWidget {
     required this.timestamp,
   });
 
+  IconData _getStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Icons.schedule;
+      case 'ordered':
+        return Icons.check_circle;
+      case 'cancelled':
+        return Icons.cancel;
+      default:
+        return Icons.help;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-
-      final qrData = jsonEncode({
+    final qrData = jsonEncode({
       'orderCode': orderCode,
       'items': items,
       'status': status,
@@ -71,26 +82,26 @@ class UserCard extends StatelessWidget {
                     'Latest Order:',
                     style: TextStyle(
                       fontFamily: 'Unbounded',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w300,
                       color: Colors.white,
                     ),
                   ),
                   SizedBox(height: 5),
                   Text(
-                    'Order Code: $orderCode',
+                    '$orderCode',
                     style: TextStyle(
                       fontFamily: 'Unbounded',
-                      fontSize: 12,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 5),
+                  SizedBox(height: 15),
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(5),
                     ),
                     child: QrImageView(
                       data: qrData,
@@ -98,7 +109,24 @@ class UserCard extends StatelessWidget {
                       size: 180,
                     ),
                   ),
-                  SizedBox(height: 13),
+                  SizedBox(height: 15),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(_getStatusIcon(status), color: Colors.white),
+                      SizedBox(width: 5),
+                      Text(
+                        status,
+                        style: TextStyle(
+                          fontFamily: 'Unbounded',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 15),
                 ],
               ),
             ),

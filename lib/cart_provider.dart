@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'pages/food.dart'; // For FoodItem
 
 class CartProvider with ChangeNotifier {
   Map<String, int> _cart = {};
@@ -53,7 +54,7 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void clearCart() {
+  void clear() {
     _cart.clear();
     _saveCart();
     notifyListeners();
@@ -63,5 +64,29 @@ class CartProvider with ChangeNotifier {
     final uid = userId;
     if (uid == null) return;
     _dbRef.child('users/$uid/cart').set(_cart);
+  }
+
+  Future<void> placeOrder(List<Map<String, dynamic>> cartItems) async {
+    final uid = userId;
+    if (uid == null) return;
+
+    final orderId = 'order_${DateTime.now().millisecondsSinceEpoch}';
+    final code = orderId; // Simple code, can be improved for uniqueness
+
+    final items = cartItems.map((e) => {
+      'id': (e['item'] as FoodItem).id,
+      'qty': e['qty']
+    }).toList();
+
+    final orderData = {
+      'code': code,
+      'items': items,
+      'qrCode': 'https://api.qrserver.com/v1/create-qr-code/?data=$code',
+      'status': 'pending',
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    };
+
+    await _dbRef.child('orders/$uid/$orderId').set(orderData);
+    clear();
   }
 }
