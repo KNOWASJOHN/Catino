@@ -163,10 +163,8 @@ class CategorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmall = screenWidth < 420;
-    final horizontalPadding = isSmall ? 12.0 : 16.0;
     final cardHeight = isSmall ? 210.0 : 230.0;
     final cardWidth = isSmall ? screenWidth * 0.54 : screenWidth * 0.40;
 
@@ -313,7 +311,6 @@ class _FoodListPageState extends State<FoodListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       body: StreamBuilder<Map<String, List<FoodItem>>>(

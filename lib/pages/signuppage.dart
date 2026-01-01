@@ -11,35 +11,95 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   final AuthService _authService = AuthService();
-  
+
   // Controllers
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _studentIdController = TextEditingController();
-  final _branchController = TextEditingController();
-  final _semesterController = TextEditingController();
+  final _admissionYearController = TextEditingController();
+  final _admissionRollNumberController = TextEditingController();
   final _hostelController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
+  // Dropdown selections
+  String _selectedBranch = '';
+  String _selectedSemester = '';
+
+  // Toggle
+  bool _isHosteler = true;
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   int _currentStep = 0;
+
+  // Branch and semester options
+  final List<String> branches = [
+    'Computer Science & Engineering',
+    'Computer Science & Engineering (Data Science)',
+    'Computer Science & Engineering (Business Studies)',
+    'Civil Engineering',
+    'Electrical & Electronics Engineering',
+    'Electronics & Communication Engineering',
+    'Mechanical Engineering',
+  ];
+
+  final List<String> semesters = [
+    'S1',
+    'S2',
+    'S3',
+    'S4',
+    'S5',
+    'S6',
+    'S7',
+    'S8',
+  ];
+
+  final Map<String, String> branchCodes = {
+    'Computer Science & Engineering': 'CSE',
+    'Computer Science & Engineering (Data Science)': 'CD',
+    'Computer Science & Engineering (Business Studies)': 'CB',
+    'Civil Engineering': 'CE',
+    'Electrical & Electronics Engineering': 'EEE',
+    'Electronics & Communication Engineering': 'ECE',
+    'Mechanical Engineering': 'ME',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    // Add listeners to update Student ID preview in real-time
+    _admissionYearController.addListener(() {
+      setState(() {});
+    });
+    _admissionRollNumberController.addListener(() {
+      setState(() {});
+    });
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _studentIdController.dispose();
-    _branchController.dispose();
-    _semesterController.dispose();
+    _admissionYearController.dispose();
+    _admissionRollNumberController.dispose();
     _hostelController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  String _generateStudentIdPreview() {
+    String branchCode = branchCodes[_selectedBranch] ?? '___';
+    String yearInput = _admissionYearController.text.trim();
+    String year = yearInput.isEmpty 
+        ? '__' 
+        : (yearInput.length == 4 ? yearInput.substring(2) : yearInput);
+    String roll = _admissionRollNumberController.text.trim();
+    String formattedRoll = roll.isEmpty ? '___' : roll.padLeft(3, '0');
+    return 'CCE$year$branchCode$formattedRoll';
   }
 
   Future<void> _handleSignUp() async {
@@ -47,16 +107,26 @@ class _SignUpPageState extends State<SignUpPage> {
 
     setState(() => _isLoading = true);
 
+    // Generate Student ID
+    String branchCode = branchCodes[_selectedBranch] ?? '';
+    String yearInput = _admissionYearController.text.trim();
+    // Normalize year to 2 digits
+    String year = yearInput.length == 4 ? yearInput.substring(2) : yearInput;
+    String roll = _admissionRollNumberController.text.trim().padLeft(3, '0');
+    String studentId = 'CCE$year$branchCode$roll';
+
     final result = await _authService.signUp(
       email: _emailController.text.trim(),
       password: _passwordController.text,
       userData: {
         'name': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
-        'studentId': _studentIdController.text.trim(),
-        'branch': _branchController.text.trim(),
-        'semester': _semesterController.text.trim(),
-        'hostel': _hostelController.text.trim(),
+        'studentId': studentId,
+        'admissionYear': year,
+        'admissionRollNumber': roll,
+        'branch': _selectedBranch,
+        'semester': _selectedSemester,
+        'hostel': _isHosteler ? _hostelController.text.trim() : 'HOMESCHOLAR',
         'profilePicUrl': '',
       },
     );
@@ -132,21 +202,21 @@ class _SignUpPageState extends State<SignUpPage> {
                       color: Colors.grey.shade600,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Step Indicator
                   _buildStepIndicator(),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Form Fields based on current step
                   if (_currentStep == 0) ..._buildPersonalInfoFields(),
                   if (_currentStep == 1) ..._buildAcademicInfoFields(),
                   if (_currentStep == 2) ..._buildAccountInfoFields(),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Navigation Buttons
                   Row(
                     children: [
@@ -161,7 +231,9 @@ class _SignUpPageState extends State<SignUpPage> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              side: BorderSide(color: Colors.limeAccent.shade700),
+                              side: BorderSide(
+                                color: Colors.limeAccent.shade700,
+                              ),
                             ),
                             child: const Text(
                               'Back',
@@ -178,15 +250,17 @@ class _SignUpPageState extends State<SignUpPage> {
                       Expanded(
                         flex: _currentStep == 0 ? 1 : 1,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : () {
-                            if (_currentStep < 2) {
-                              if (_validateCurrentStep()) {
-                                setState(() => _currentStep++);
-                              }
-                            } else {
-                              _handleSignUp();
-                            }
-                          },
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  if (_currentStep < 2) {
+                                    if (_validateCurrentStep()) {
+                                      setState(() => _currentStep++);
+                                    }
+                                  } else {
+                                    _handleSignUp();
+                                  }
+                                },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.limeAccent.shade700,
                             foregroundColor: Colors.black,
@@ -202,7 +276,9 @@ class _SignUpPageState extends State<SignUpPage> {
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.black,
+                                    ),
                                   ),
                                 )
                               : Text(
@@ -217,9 +293,9 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Login Link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -267,7 +343,9 @@ class _SignUpPageState extends State<SignUpPage> {
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isActive ? Colors.limeAccent.shade700 : Colors.grey.shade300,
+                color: isActive
+                    ? Colors.limeAccent.shade700
+                    : Colors.grey.shade300,
               ),
               child: Center(
                 child: Text(
@@ -284,7 +362,9 @@ class _SignUpPageState extends State<SignUpPage> {
               Container(
                 width: 40,
                 height: 2,
-                color: index < _currentStep ? Colors.limeAccent.shade700 : Colors.grey.shade300,
+                color: index < _currentStep
+                    ? Colors.limeAccent.shade700
+                    : Colors.grey.shade300,
               ),
           ],
         );
@@ -348,31 +428,122 @@ class _SignUpPageState extends State<SignUpPage> {
       ),
       const SizedBox(height: 16),
       _buildTextField(
-        controller: _studentIdController,
-        label: 'Student ID / Roll Number',
-        icon: Icons.badge,
-        validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
-      ),
-      const SizedBox(height: 16),
-      _buildTextField(
-        controller: _branchController,
-        label: 'Branch / Department',
-        icon: Icons.school,
-        validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
-      ),
-      const SizedBox(height: 16),
-      _buildTextField(
-        controller: _semesterController,
-        label: 'Semester',
+        controller: _admissionYearController,
+        label: 'Admission Year (e.g., 24 or 2024)',
         icon: Icons.calendar_today,
-        validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+        keyboardType: TextInputType.number,
+        onChanged: (value) => setState(() {}),
+        validator: (value) {
+          if (value?.isEmpty ?? true) return 'Required';
+          if (int.tryParse(value!) == null) return 'Invalid year';
+          if (value.length != 2 && value.length != 4)
+            return 'Enter 2 or 4 digit year';
+          return null;
+        },
       ),
       const SizedBox(height: 16),
       _buildTextField(
-        controller: _hostelController,
-        label: 'Hostel & Room Number',
-        icon: Icons.home,
+        controller: _admissionRollNumberController,
+        label: 'Admission Roll Number',
+        icon: Icons.confirmation_number,
+        keyboardType: TextInputType.number,
+        onChanged: (value) => setState(() {}),
+        validator: (value) {
+          if (value?.isEmpty ?? true) return 'Required';
+          if (int.tryParse(value!) == null) return 'Invalid roll number';
+          return null;
+        },
+      ),
+      const SizedBox(height: 16),
+      _buildDropdownField(
+        label: 'Branch',
+        icon: Icons.school,
+        value: _selectedBranch,
+        items: branches,
+        onChanged: (value) => setState(() => _selectedBranch = value!),
         validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+      ),
+      const SizedBox(height: 16),
+      _buildDropdownField(
+        label: 'Semester',
+        icon: Icons.calendar_view_month,
+        value: _selectedSemester,
+        items: semesters,
+        onChanged: (value) => setState(() => _selectedSemester = value!),
+        validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+      ),
+      const SizedBox(height: 16),
+      Row(
+        children: [
+          const Icon(Icons.home, color: Colors.grey),
+          const SizedBox(width: 16),
+          const Text(
+            'Hosteler',
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const Spacer(),
+          Switch(
+            value: _isHosteler,
+            onChanged: (value) => setState(() => _isHosteler = value),
+            activeColor: Colors.limeAccent.shade700,
+          ),
+        ],
+      ),
+      if (_isHosteler) ...[
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _hostelController,
+          label: 'Hostel & Room Number',
+          icon: Icons.home,
+          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+        ),
+      ],
+      const SizedBox(height: 24),
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black26, width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(Icons.badge, color: Colors.grey, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'Your Student ID',
+                  style: TextStyle(
+                    fontFamily: 'Unbounded',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _generateStudentIdPreview(),
+              style: TextStyle(
+                fontFamily: 'Unbounded',
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
+        ),
       ),
     ];
   }
@@ -391,13 +562,20 @@ class _SignUpPageState extends State<SignUpPage> {
       TextFormField(
         controller: _passwordController,
         obscureText: _obscurePassword,
+        style: const TextStyle(
+          fontFamily: 'Unbounded',
+          fontWeight: FontWeight.w300,
+        ),
         decoration: InputDecoration(
           labelText: 'Password',
           labelStyle: const TextStyle(fontFamily: 'Unbounded', fontSize: 13),
           prefixIcon: const Icon(Icons.lock),
           suffixIcon: IconButton(
-            icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+            icon: Icon(
+              _obscurePassword ? Icons.visibility : Icons.visibility_off,
+            ),
+            onPressed: () =>
+                setState(() => _obscurePassword = !_obscurePassword),
           ),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           focusedBorder: OutlineInputBorder(
@@ -407,7 +585,8 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
         validator: (value) {
           if (value?.isEmpty ?? true) return 'Required';
-          if (value!.length < 6) return 'Password must be at least 6 characters';
+          if (value!.length < 6)
+            return 'Password must be at least 6 characters';
           return null;
         },
       ),
@@ -415,13 +594,21 @@ class _SignUpPageState extends State<SignUpPage> {
       TextFormField(
         controller: _confirmPasswordController,
         obscureText: _obscureConfirmPassword,
+        style: const TextStyle(
+          fontFamily: 'Unbounded',
+          fontWeight: FontWeight.w300,
+        ),
         decoration: InputDecoration(
           labelText: 'Confirm Password',
           labelStyle: const TextStyle(fontFamily: 'Unbounded', fontSize: 13),
           prefixIcon: const Icon(Icons.lock_outline),
           suffixIcon: IconButton(
-            icon: Icon(_obscureConfirmPassword ? Icons.visibility : Icons.visibility_off),
-            onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+            icon: Icon(
+              _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+            ),
+            onPressed: () => setState(
+              () => _obscureConfirmPassword = !_obscureConfirmPassword,
+            ),
           ),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           focusedBorder: OutlineInputBorder(
@@ -431,7 +618,8 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
         validator: (value) {
           if (value?.isEmpty ?? true) return 'Required';
-          if (value != _passwordController.text) return 'Passwords do not match';
+          if (value != _passwordController.text)
+            return 'Passwords do not match';
           return null;
         },
       ),
@@ -444,10 +632,16 @@ class _SignUpPageState extends State<SignUpPage> {
     required IconData icon,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    Function(String)? onChanged,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      onChanged: onChanged,
+      style: const TextStyle(
+        fontFamily: 'Unbounded',
+        fontWeight: FontWeight.w300,
+      ),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(fontFamily: 'Unbounded', fontSize: 13),
@@ -459,6 +653,63 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       ),
       validator: validator,
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required IconData icon,
+    required String value,
+    required List<String> items,
+    required Function(String?) onChanged,
+    String? Function(String?)? validator,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value.isEmpty ? null : value,
+      isExpanded: true,
+      items: items
+          .map(
+            (item) => DropdownMenuItem(
+              value: item,
+              child: Text(
+                item,
+                style: const TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontWeight: FontWeight.w300,
+                  fontSize: 15,
+                ),
+                maxLines: 2,
+              ),
+            ),
+          )
+          .toList(),
+      selectedItemBuilder: (BuildContext context) {
+        return items.map((item) {
+          return Text(
+            item,
+            style: const TextStyle(
+              fontFamily: 'Unbounded',
+              fontWeight: FontWeight.w300,
+              fontSize: 12,
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          );
+        }).toList();
+      },
+      onChanged: onChanged,
+      validator: validator,
+      itemHeight: 50,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontFamily: 'Unbounded', fontSize: 13),
+        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.limeAccent.shade700, width: 2),
+        ),
+      ),
     );
   }
 

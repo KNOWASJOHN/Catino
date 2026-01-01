@@ -4,406 +4,238 @@
       "category": "Fast Food",
       "description": "Delicious beef burger with cheese and veggies",
       "id": "food_001",
-      "imageUrl": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": false,
       "name": "Beef Burger",
       "preparationTime": 10,
       "price": 80,
-      "tags": [
-        "Popular",
-        "Fast Food"
-      ]
+      "tags": ["Popular", "Fast Food"]
     },
     "food_002": {
       "category": "Fast Food",
       "description": "Healthy veggie burger with fresh vegetables",
       "id": "food_002",
-      "imageUrl": "https://images.unsplash.com/photo-1520072959219-c595dc870360?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1520072959219-c595dc870360?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Veg Burger",
       "preparationTime": 10,
       "price": 10.99,
-      "tags": [
-        "Vegetarian",
-        "Healthy"
-      ]
+      "tags": ["Vegetarian", "Healthy"]
     },
     "food_003": {
       "category": "Italian",
       "description": "Cheesy pepperoni pizza with extra toppings",
       "id": "food_003",
-      "imageUrl": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": false,
       "name": "Pepperoni Pizza",
       "preparationTime": 20,
       "price": 15.99,
-      "tags": [
-        "Popular",
-        "Italian"
-      ]
+      "tags": ["Popular", "Italian"]
     },
     "food_004": {
       "category": "Beverages",
       "description": "Fresh orange juice, 100% natural",
       "id": "food_004",
-      "imageUrl": "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1600271886742-f049cd451bba?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Orange Juice",
       "preparationTime": 5,
       "price": 5.99,
-      "tags": [
-        "Drinks",
-        "Healthy"
-      ]
+      "tags": ["Drinks", "Healthy"]
     },
     "food_005": {
       "category": "Healthy",
       "description": "Mixed fruit platter with seasonal fruits",
       "id": "food_005",
-      "imageUrl": "https://images.unsplash.com/photo-1546548970-71785318a17b?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1546548970-71785318a17b?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Fruit Platter",
       "preparationTime": 5,
       "price": 8.99,
-      "tags": [
-        "Healthy",
-        "Fresh"
-      ]
+      "tags": ["Healthy", "Fresh"]
     },
     "food_006": {
       "category": "Italian",
       "description": "Classic cheese pizza with basil",
       "id": "food_006",
-      "imageUrl": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Margherita Pizza",
       "preparationTime": 20,
       "price": 13.99,
-      "tags": [
-        "Vegetarian",
-        "Italian"
-      ]
+      "tags": ["Vegetarian", "Italian"]
     },
     "food_007": {
       "category": "Beverages",
       "description": "Fresh apple juice, no added sugar",
       "id": "food_007",
-      "imageUrl": "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Apple Juice",
       "preparationTime": 5,
       "price": 5.99,
-      "tags": [
-        "Drinks",
-        "Healthy"
-      ]
+      "tags": ["Drinks", "Healthy"]
     },
     "food_008": {
       "category": "Healthy",
       "description": "Fresh garden salad with dressing",
       "id": "food_008",
-      "imageUrl": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Mixed Salad",
       "preparationTime": 5,
       "price": 7.99,
-      "tags": [
-        "Healthy",
-        "Salad"
-      ]
+      "tags": ["Healthy", "Salad"]
     },
     "food_009": {
       "category": "Snacks",
       "description": "Crispy potato french fries with ketchup",
       "id": "food_009",
-      "imageUrl": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "French Fries",
       "preparationTime": 8,
       "price": 4.99,
-      "tags": [
-        "Snack",
-        "Crispy"
-      ]
+      "tags": ["Snack", "Crispy"]
     },
     "food_010": {
       "category": "Beverages",
       "description": "Iced cold coffee with cream",
       "id": "food_010",
-      "imageUrl": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Cold Coffee",
       "preparationTime": 7,
       "price": 6.99,
-      "tags": [
-        "Cold",
-        "Caffeinated"
-      ]
+      "tags": ["Cold", "Caffeinated"]
     },
     "food_011": {
       "category": "Italian",
       "description": "Creamy pasta with white sauce",
       "id": "food_011",
-      "imageUrl": "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Alfredo Pasta",
       "preparationTime": 15,
       "price": 12.99,
-      "tags": [
-        "Pasta",
-        "Creamy"
-      ]
+      "tags": ["Pasta", "Creamy"]
     },
     "food_012": {
       "category": "Desserts",
       "description": "Chocolate brownie with ice cream",
       "id": "food_012",
-      "imageUrl": "https://www.hersheyland.ca/content/dam/hersheyland_canada/en_ca/recipe-logos/recipe-images/oh-henry-brownie-sundaes-recipe.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Brownie Sundae",
       "preparationTime": 10,
       "price": 8.99,
-      "tags": [
-        "Sweet",
-        "Chocolate"
-      ]
+      "tags": ["Sweet", "Chocolate"]
     },
     "food_013": {
       "category": "Main Course",
       "description": "Butter chicken with naan bread",
       "id": "food_013",
-      "imageUrl": "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": false,
       "name": "Butter Chicken",
       "preparationTime": 25,
       "price": 18.99,
-      "tags": [
-        "Spicy",
-        "Indian"
-      ]
+      "tags": ["Spicy", "Indian"]
     },
     "food_014": {
       "category": "Snacks",
       "description": "Crispy vegetable spring rolls",
       "id": "food_014",
-      "imageUrl": "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Spring Rolls",
       "preparationTime": 12,
       "price": 7.99,
-      "tags": [
-        "Crispy",
-        "Chinese"
-      ]
+      "tags": ["Crispy", "Chinese"]
     },
     "food_015": {
       "category": "Beverages",
       "description": "Fresh watermelon juice",
       "id": "food_015",
-      "imageUrl": "https://parveenskitchen.com/wp-content/uploads/2020/09/DSC_0333_edited.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1621961458348-f013d219b50c?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Watermelon Juice",
       "preparationTime": 5,
       "price": 4.99,
-      "tags": [
-        "Fresh",
-        "Summer"
-      ]
+      "tags": ["Fresh", "Summer"]
     },
     "food_016": {
       "category": "Desserts",
       "description": "Chocolate chip cookies, freshly baked",
       "id": "food_016",
-      "imageUrl": "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Chocolate Cookies",
       "preparationTime": 15,
       "price": 5.99,
-      "tags": [
-        "Sweet",
-        "Baked"
-      ]
+      "tags": ["Sweet", "Baked"]
     },
     "food_017": {
       "category": "Main Course",
       "description": "Vegetable biryani with raita",
       "id": "food_017",
-      "imageUrl": "https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=400",
+      "imageUrl": "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": true,
       "name": "Veg Biryani",
       "preparationTime": 30,
       "price": 14.99,
-      "tags": [
-        "Rice",
-        "Spicy"
-      ]
+      "tags": ["Rice", "Spicy"]
     },
     "food_018": {
       "category": "Fast Food",
       "description": "Chicken sandwich with mayo",
       "id": "food_018",
-      "imageUrl": "https://www.spicebangla.com/wp-content/uploads/2019/05/Cream-Cheese-Chicken-Sandwich.webp",
+      "imageUrl": "https://images.unsplash.com/photo-1550317138-10000687a72b?auto=format&fit=crop&w=400&q=80",
       "isAvailable": true,
       "isVegetarian": false,
       "name": "Chicken Sandwich",
       "preparationTime": 12,
       "price": 9.99,
-      "tags": [
-        "Sandwich",
-        "Quick"
-      ]
+      "tags": ["Sandwich", "Quick"]
     }
   },
-  "orders": {
-    "EFXkKcDrYYb62t01Sl0Q10qjKYN2": {
-      "order_001": {
-        "code": "ORD-20251228-001",
-        "items": [
-          {
-            "id": "food_001",
-            "qty": 2
-          },
-          {
-            "id": "food_003",
-            "qty": 1
-          }
-        ],
-        "qrCode": "https://api.qrserver.com/v1/create-qr-code/?data=ORD-20251228-001",
-        "status": "pending",
-        "timestamp": 1766647122568
-      }
-    },
-    "FkduwY1k0FRmcEoWJESAQcstpk93": {
-      "order_001": {
-        "code": "ORD-20251228-001",
-        "items": [
-          {
-            "id": "food_001",
-            "qty": 2
-          },
-          {
-            "id": "food_003",
-            "qty": 1
-          }
-        ],
-        "qrCode": "https://api.qrserver.com/v1/create-qr-code/?data=ORD-20251228-001",
-        "status": "pending",
-        "timestamp": 1766647122568
-      }
-    }
-  },
-  "printJobs": {
-    "EFXkKcDrYYb62t01Sl0Q10qjKYN2": {
-      "print_001": {
-        "code": "01",
-        "fileName": "Assignment_Chapter5.pdf",
-        "fileUrl": "",
-        "id": "print_001",
-        "pageCount": 15,
-        "status": "Finished",
-        "timestamp": 1766560722568
-      },
-      "print_002": {
-        "code": "02",
-        "fileName": "Resume_Final.docx",
-        "fileUrl": "",
-        "id": "print_002",
-        "pageCount": 2,
-        "status": "pending",
-        "timestamp": 1766647122568
-      },
-      "print_003": {
-        "code": "03",
-        "fileName": "Project_Report.pdf",
-        "fileUrl": "",
-        "id": "print_003",
-        "pageCount": 45,
-        "status": "cancelled",
-        "timestamp": 1766474322568
-      },
-      "print_004": {
-        "code": "04",
-        "fileName": "Thesis_Draft_v3.pdf",
-        "fileUrl": "",
-        "id": "print_004",
-        "pageCount": 120,
-        "status": "finished",
-        "timestamp": 1766387922568
-      },
-      "print_005": {
-        "code": "05",
-        "fileName": "Notes_Lecture12.pdf",
-        "fileUrl": "",
-        "id": "print_005",
-        "pageCount": 8,
-        "status": "finished",
-        "timestamp": 1766301522568
-      }
-    }
-  },
+
   "scroll_cards": [
     {
-      "description": "Get 20% off on all burgers today!",
       "id": "card_001",
-      "image": "https://staticcookist.akamaized.net/wp-content/uploads/sites/22/2021/09/beef-burger-1200x675.jpg",
-      "title": "Special Offer"
+      "title": "Special Offer",
+      "description": "Get 20% off on all burgers today!",
+      "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=900&q=80"
     },
     {
-      "description": "Try our fresh seasonal dishes",
       "id": "card_002",
-      "image": "https://cdn.prod.website-files.com/64931d2aee18510b47f4bb1f/64ecfa1fad20286493de9568_r094aj5e10gjt9vzy87jjw7s3dq9xvy1.jpeg",
-      "title": "New Menu"
+      "title": "New Menu",
+      "description": "Try our fresh seasonal dishes",
+      "image": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80"
     },
     {
-      "description": "Enjoy drinks at half price 5-7 PM",
       "id": "card_003",
-      "image": "https://cdn.shopify.com/s/files/1/0773/7924/0225/files/50411316-ib205096-205096181930440-sm625910.jpg.rendition.1960.1960_480x480.jpg?v=1720072552",
-      "title": "Happy Hours"
+      "title": "Happy Hours",
+      "description": "Enjoy drinks at half price 5-7 PM",
+      "image": "https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?auto=format&fit=crop&w=900&q=80"
     }
-  ],
-  "users": {
-    "EFXkKcDrYYb62t01Sl0Q10qjKYN2": {
-      "branch": "computer science",
-      "createdAt": 1766733053958,
-      "dietaryPreference": "Vegetarian",
-      "email": "2005techreview@gmail.com",
-      "hostel": "111",
-      "name": "stephin",
-      "notificationsEnabled": true,
-      "phone": "1234567890",
-      "profilePicUrl": "",
-      "semester": "S4",
-      "studentId": "CCE24CD22"
-    },
-    "FkduwY1k0FRmcEoWJESAQcstpk93": {
-      "branch": "COMPUTER SCIENCE",
-      "createdAt": 1766821209157,
-      "dietaryPreference": "Both",
-      "email": "fake@gmail.com",
-      "hostel": "101",
-      "name": "kiran",
-      "notificationsEnabled": false,
-      "phone": "1234567890",
-      "profilePicUrl": "",
-      "semester": "S6",
-      "studentId": "CCE24CS99"
-    }
-  }
+  ]
 }

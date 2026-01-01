@@ -14,7 +14,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
-  
+
   bool _isLoading = false;
   bool _obscurePassword = true;
 
@@ -64,7 +64,7 @@ class _LoginPageState extends State<LoginPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 60),
-                  
+
                   // Logo and Title
                   Icon(
                     Icons.storefront,
@@ -92,16 +92,23 @@ class _LoginPageState extends State<LoginPage> {
                       color: Colors.grey.shade600,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 48),
-                  
+
                   // Email Field
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(
+                      fontFamily: 'Unbounded',
+                      fontWeight: FontWeight.w300,
+                    ),
                     decoration: InputDecoration(
                       labelText: 'Email',
-                      labelStyle: const TextStyle(fontFamily: 'Unbounded'),
+                      labelStyle: const TextStyle(
+                        fontFamily: 'Unbounded',
+                        fontWeight: FontWeight.w300,
+                      ),
                       prefixIcon: const Icon(Icons.email),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -124,20 +131,30 @@ class _LoginPageState extends State<LoginPage> {
                       return null;
                     },
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Password Field
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    style: const TextStyle(
+                      fontFamily: 'Unbounded',
+                      fontWeight: FontWeight.w300,
+                    ),
+
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      labelStyle: const TextStyle(fontFamily: 'Unbounded'),
+                      labelStyle: const TextStyle(
+                        fontFamily: 'Unbounded',
+                        fontWeight: FontWeight.w300,
+                      ),
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                         ),
                         onPressed: () {
                           setState(() => _obscurePassword = !_obscurePassword);
@@ -164,9 +181,9 @@ class _LoginPageState extends State<LoginPage> {
                       return null;
                     },
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Forgot Password
                   Align(
                     alignment: Alignment.centerRight,
@@ -184,9 +201,9 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Login Button
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleLogin,
@@ -205,7 +222,9 @@ class _LoginPageState extends State<LoginPage> {
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.black,
+                              ),
                             ),
                           )
                         : const Text(
@@ -217,9 +236,9 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Sign Up Link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -264,7 +283,7 @@ class _LoginPageState extends State<LoginPage> {
 
   void _showForgotPasswordDialog() {
     final TextEditingController emailController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -281,10 +300,7 @@ class _LoginPageState extends State<LoginPage> {
           children: [
             const Text(
               'Enter your email to receive a password reset link',
-              style: TextStyle(
-                fontFamily: 'Unbounded',
-                fontSize: 12,
-              ),
+              style: TextStyle(fontFamily: 'Unbounded', fontSize: 12),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -323,15 +339,17 @@ class _LoginPageState extends State<LoginPage> {
                 );
                 return;
               }
-              
+
               Navigator.pop(context);
               final result = await _authService.resetPassword(email);
-              
+
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(result['message']),
-                    backgroundColor: result['success'] ? Colors.green : Colors.red,
+                    backgroundColor: result['success']
+                        ? Colors.green
+                        : Colors.red,
                   ),
                 );
               }

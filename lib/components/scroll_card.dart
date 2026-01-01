@@ -58,12 +58,13 @@ class _ScrollcardState extends State<Scrollcard> {
     final ref = FirebaseDatabase.instance.ref('scroll_cards');
     _cardsSubscription = ref.onValue.listen((event) {
       if (event.snapshot.exists) {
+        final Map<dynamic, dynamic> data = event.snapshot.value as Map<dynamic, dynamic>;
         final List<ScrollCardModel> cards = [];
-        for (var item in event.snapshot.value as List<dynamic>) {
-          if (item != null) {
-            cards.add(ScrollCardModel.fromMap(item));
+        data.forEach((key, value) {
+          if (value != null) {
+            cards.add(ScrollCardModel.fromMap(value));
           }
-        }
+        });
         // Compare with cache
         if (!_areCardListsEqual(cards, _cachedCards)) {
           setState(() {
