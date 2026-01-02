@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'services/fcm_service.dart';
 import 'pages/food.dart'; // For FoodItem
 
 class CartProvider with ChangeNotifier {
@@ -70,23 +71,36 @@ class CartProvider with ChangeNotifier {
     final uid = userId;
     if (uid == null) return;
 
-    final orderId = 'order_${DateTime.now().millisecondsSinceEpoch}';
-    final code = orderId; // Simple code, can be improved for uniqueness
+    try {
+      final orderId = 'order_${DateTime.now().millisecondsSinceEpoch}';
+      final code = orderId.substring(6); // Shorter code for display
 
-    final items = cartItems.map((e) => {
-      'id': (e['item'] as FoodItem).id,
-      'qty': e['qty']
-    }).toList();
+      final items = cartItems.map((e) => {
+        'id': (e['item'] as FoodItem).id,
+        'qty': e['qty']
+      }).toList();
 
-    final orderData = {
-      'code': code,
-      'items': items,
-      'qrCode': 'https://api.qrserver.com/v1/create-qr-code/?data=$code',
-      'status': 'pending',
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-    };
+      final orderData = {
+        'code': code,
+        'items': items,
+        'qrCode': 'https://api.qrserver.com/v1/create-qr-code/?data=$code',
+        'status': 'pending',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      };
 
-    await _dbRef.child('orders/$uid/$orderId').set(orderData);
-    clear();
+      // Store order in Realtime Database
+      await _dbRef.child('orders/$uid/$orderId').set(orderData);
+      
+      // Show client-side order confirmation notification immediately
+      await FCMService().showOrderConfirmationNotification(code);
+
+      // Clear cart after successful order placement
+      clear();
+      
+      print('Order placed successfully: $code');
+    } catch (e) {
+      print('Error placing order: $e');
+      throw e; // Re-throw to handle in UI
+    }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'config/firebase_config.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
 import 'pages/home.dart';
 import 'components/navbar.dart';
 import 'components/header.dart';
@@ -14,23 +15,21 @@ import 'components/page_transition.dart';
 import 'components/circle_reveal_transition.dart';
 import 'pages/loginpage.dart';
 import 'services/auth_service.dart';
+import 'services/fcm_service.dart';
 import 'package:provider/provider.dart';
 import 'cart_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase with options for all platforms
   await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: FirebaseConfig.apiKey,
-      authDomain: FirebaseConfig.authDomain,
-      databaseURL: FirebaseConfig.databaseURL,
-      projectId: FirebaseConfig.projectId,
-      storageBucket: FirebaseConfig.storageBucket,
-      messagingSenderId: FirebaseConfig.messagingSenderId,
-      appId: FirebaseConfig.appId,
-      measurementId: FirebaseConfig.measurementId,
-    ),
+    options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize FCM background message handler BEFORE runApp
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   runApp(const MyApp());
 }
 
@@ -116,6 +115,18 @@ class _MainScreenState extends State<MainScreen> {
       const Cart(),
       const Profile(),
     ];
+    
+    // Initialize FCM after user is authenticated
+    _initializeFCM();
+  }
+
+  void _initializeFCM() async {
+    try {
+      await FCMService().initialize();
+      print('FCM initialized successfully');
+    } catch (e) {
+      print('Error initializing FCM: $e');
+    }
   }
 
   @override

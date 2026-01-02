@@ -436,8 +436,9 @@ class _SignUpPageState extends State<SignUpPage> {
         validator: (value) {
           if (value?.isEmpty ?? true) return 'Required';
           if (int.tryParse(value!) == null) return 'Invalid year';
-          if (value.length != 2 && value.length != 4)
+          if (value.length != 2 && value.length != 4) {
             return 'Enter 2 or 4 digit year';
+          }
           return null;
         },
       ),
@@ -489,7 +490,7 @@ class _SignUpPageState extends State<SignUpPage> {
           Switch(
             value: _isHosteler,
             onChanged: (value) => setState(() => _isHosteler = value),
-            activeColor: Colors.limeAccent.shade700,
+            activeThumbColor: Colors.limeAccent.shade700,
           ),
         ],
       ),
@@ -585,8 +586,9 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
         validator: (value) {
           if (value?.isEmpty ?? true) return 'Required';
-          if (value!.length < 6)
+          if (value!.length < 6) {
             return 'Password must be at least 6 characters';
+          }
           return null;
         },
       ),
@@ -618,8 +620,9 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
         validator: (value) {
           if (value?.isEmpty ?? true) return 'Required';
-          if (value != _passwordController.text)
+          if (value != _passwordController.text) {
             return 'Passwords do not match';
+          }
           return null;
         },
       ),
@@ -665,7 +668,7 @@ class _SignUpPageState extends State<SignUpPage> {
     String? Function(String?)? validator,
   }) {
     return DropdownButtonFormField<String>(
-      value: value.isEmpty ? null : value,
+      initialValue: value.isEmpty ? null : value,
       isExpanded: true,
       items: items
           .map(

@@ -89,7 +89,7 @@ class UserCard extends StatelessWidget {
                   ),
                   SizedBox(height: 5),
                   Text(
-                    '$orderCode',
+                    orderCode,
                     style: TextStyle(
                       fontFamily: 'Unbounded',
                       fontSize: 15,

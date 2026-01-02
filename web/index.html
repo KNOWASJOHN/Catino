@@ -31,27 +31,19 @@
 
   <title>flutter_application_1</title>
   <link rel="manifest" href="manifest.json">
+
+  <script>
+    // This script installs service_worker.js to provide PWA functionality to
+    // application. For more information, see:
+    // https://developers.google.com/web/fundamentals/primers/service-workers
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('flutter-first-frame', function () {
+        navigator.serviceWorker.register('flutter_service_worker.js');
+      });
+    }
+  </script>
 </head>
 <body>
-  <!-- Firebase JavaScript SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
-  
-  <!-- Initialize Firebase -->
-  <script>
-    firebase.initializeApp({
-      apiKey: "AIzaSyAj7bSm012lKFPnFK0Jm9ardO3sNNK9gbU",
-      authDomain: "foodify-59a7f.firebaseapp.com",
-      databaseURL: "https://foodify-59a7f-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "foodify-59a7f",
-      storageBucket: "foodify-59a7f.firebasestorage.app",
-      messagingSenderId: "262413753761",
-      appId: "1:262413753761:web:00a20bf12ee63784f27fe0",
-      measurementId: "G-EYF82VHY7X"
-    });
-  </script>
-  
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
