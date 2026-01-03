@@ -22,11 +22,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase with options for all platforms
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Initialize FCM background message handler BEFORE runApp
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
@@ -49,17 +47,15 @@ class MyApp extends StatelessWidget {
             // Show loading while checking auth state
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(),
-                ),
+                body: Center(child: CircularProgressIndicator()),
               );
             }
-            
+
             // Show login page if not authenticated
             if (!snapshot.hasData) {
               return const LoginPage();
             }
-            
+
             // Show main app if authenticated
             return const MainScreen();
           },
@@ -111,9 +107,9 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _pages = [
       const HomePage(),
-      FoodListPage(onCartPressed: _switchToCart),
-      const PrintPage(),
+      const FoodListPage(),
       const Cart(),
+      const PrintPage(),
       const Profile(),
     ];
     _loadSelectedIndex();
@@ -143,100 +139,100 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-      return Stack(
-        children: [
-          Scaffold(
-            backgroundColor: Colors.transparent,
-            extendBodyBehindAppBar: true,
-            extendBody: true,
-            appBar: AppBar(
-              backgroundColor: Colors.white.withOpacity(0),
-              elevation: 0,
-              toolbarHeight: 60,
-              scrolledUnderElevation: 0,
-              flexibleSpace: Header(
-                onNotificationTap: () {
-                  setState(() {
-                    _showNotificationPanel = !_showNotificationPanel;
-                  });
-                },
-                onSearchTap: () {
-                  setState(() {
-                    _showSearchMenu = true;
-                  });
-                },
-              ),
-            ),
-            body: Stack(
-              children: [
-                PageTransition(
-                  index: _selectedIndex,
-                  child: _pages[_selectedIndex],
-                ),
-                CircleRevealTransition(
-                  startPosition: _animationStartPosition,
-                  isAnimating: _isAnimating,
-                  onComplete: () {
-                    setState(() {
-                      _isAnimating = false;
-                    });
-                  },
-                ),
-              ],
-            ),
-            bottomNavigationBar: CustomBottomNavBar(
-              currentIndex: _selectedIndex,
-              isTransitioning: _isAnimating,
-              onPositionsUpdated: (positions, verticalPos) {
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          extendBodyBehindAppBar: true,
+          extendBody: true,
+          appBar: AppBar(
+            backgroundColor: Colors.white.withOpacity(0),
+            elevation: 0,
+            toolbarHeight: 60,
+            scrolledUnderElevation: 0,
+            flexibleSpace: Header(
+              onNotificationTap: () {
                 setState(() {
-                  _navItemPositions = positions;
-                  _navBarVerticalPosition = verticalPos;
+                  _showNotificationPanel = !_showNotificationPanel;
                 });
               },
-              onItemSelected: (index) {
-                if (index != _selectedIndex &&
-                    _navItemPositions[index] != 0.0 &&
-                    !_isAnimating) {
-                  _saveSelectedIndex(index);  // Add this line
-                  setState(() {
-                    _animationStartPosition = Offset(
-                      _navItemPositions[index],
-                      _navBarVerticalPosition,
-                    );
-                    _isAnimating = true;
-                  });
-                  Future.delayed(const Duration(milliseconds: 850), () {
-                    if (mounted) {
-                      setState(() {
-                        _selectedIndex = index;
-                      });
-                    }
-                  });
-                }
+              onSearchTap: () {
+                setState(() {
+                  _showSearchMenu = true;
+                });
               },
             ),
           ),
-          if (_showNotificationPanel)
-            Positioned(
-              right: 5,
-              top: 30,
-              child: NotificationPanel(
-                onClose: () {
+          body: Stack(
+            children: [
+              PageTransition(
+                index: _selectedIndex,
+                child: _pages[_selectedIndex],
+              ),
+              CircleRevealTransition(
+                startPosition: _animationStartPosition,
+                isAnimating: _isAnimating,
+                onComplete: () {
                   setState(() {
-                    _showNotificationPanel = false;
+                    _isAnimating = false;
                   });
                 },
               ),
-            ),
-          if (_showSearchMenu)
-            SearchMenu(
+            ],
+          ),
+          bottomNavigationBar: CustomBottomNavBar(
+            currentIndex: _selectedIndex,
+            isTransitioning: _isAnimating,
+            onPositionsUpdated: (positions, verticalPos) {
+              setState(() {
+                _navItemPositions = positions;
+                _navBarVerticalPosition = verticalPos;
+              });
+            },
+            onItemSelected: (index) {
+              if (index != _selectedIndex &&
+                  _navItemPositions[index] != 0.0 &&
+                  !_isAnimating) {
+                _saveSelectedIndex(index); // Add this line
+                setState(() {
+                  _animationStartPosition = Offset(
+                    _navItemPositions[index],
+                    _navBarVerticalPosition,
+                  );
+                  _isAnimating = true;
+                });
+                Future.delayed(const Duration(milliseconds: 850), () {
+                  if (mounted) {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                  }
+                });
+              }
+            },
+          ),
+        ),
+        if (_showNotificationPanel)
+          Positioned(
+            right: 5,
+            top: 30,
+            child: NotificationPanel(
               onClose: () {
                 setState(() {
-                  _showSearchMenu = false;
+                  _showNotificationPanel = false;
                 });
               },
             ),
-        ],
+          ),
+        if (_showSearchMenu)
+          SearchMenu(
+            onClose: () {
+              setState(() {
+                _showSearchMenu = false;
+              });
+            },
+          ),
+      ],
     );
   }
 }
