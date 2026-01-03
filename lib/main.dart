@@ -18,6 +18,7 @@ import 'services/auth_service.dart';
 import 'services/fcm_service.dart';
 import 'package:provider/provider.dart';
 import 'cart_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -115,9 +116,20 @@ class _MainScreenState extends State<MainScreen> {
       const Cart(),
       const Profile(),
     ];
-    
-    // Initialize FCM after user is authenticated
+    _loadSelectedIndex();
     _initializeFCM();
+  }
+
+  Future<void> _loadSelectedIndex() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _selectedIndex = prefs.getInt('selectedIndex') ?? 0;
+    });
+  }
+
+  Future<void> _saveSelectedIndex(int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('selectedIndex', index);
   }
 
   void _initializeFCM() async {
@@ -131,8 +143,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Stack(
+      return Stack(
         children: [
           Scaffold(
             backgroundColor: Colors.transparent,
@@ -186,6 +197,7 @@ class _MainScreenState extends State<MainScreen> {
                 if (index != _selectedIndex &&
                     _navItemPositions[index] != 0.0 &&
                     !_isAnimating) {
+                  _saveSelectedIndex(index);  // Add this line
                   setState(() {
                     _animationStartPosition = Offset(
                       _navItemPositions[index],
@@ -225,7 +237,6 @@ class _MainScreenState extends State<MainScreen> {
               },
             ),
         ],
-      ),
     );
   }
 }

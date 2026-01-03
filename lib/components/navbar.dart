@@ -594,9 +594,9 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                     _buildNavItem(1, Icons.fastfood, 'Food', _navItemKeys[1]),
 
-                    _buildNavItem(2, Icons.print, 'Print', _navItemKeys[2]),
+                    _buildNavItem(2, Icons.shopping_cart_checkout_outlined, 'Cart', _navItemKeys[2]),
 
-                    _buildNavItem(3, Icons.shopping_cart_checkout_outlined, 'Cart', _navItemKeys[3]),
+                    _buildNavItem(3, Icons.print, 'Print', _navItemKeys[3]),
 
                     _buildNavItem(4, Icons.person_outline, 'Profile', _navItemKeys[4]),
                   ],
