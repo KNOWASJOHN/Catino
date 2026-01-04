@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'components/upload.dart';
 import 'components/print_history.dart';
 import 'services/print_service.dart';
+import 'pages/pdf_viewer_page.dart';
 
 class PrintPage extends StatefulWidget {
   const PrintPage({super.key});
@@ -149,7 +150,7 @@ class _PrintPageState extends State<PrintPage> {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => _openFile(job.fileUrl),
+                      onPressed: () => _openFile(job.fileUrl, job.fileName),
                       icon: Icon(Icons.open_in_new, size: 16),
                       label: Text(
                         'View File',
@@ -231,13 +232,29 @@ class _PrintPageState extends State<PrintPage> {
     );
   }
 
-  Future<void> _openFile(String fileUrl) async {
+  Future<void> _openFile(String fileUrl, [String? fileName]) async {
     try {
-      final uri = Uri.parse(fileUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      // Check if it's a PDF file by URL extension or content type
+      if (fileUrl.toLowerCase().endsWith('.pdf') || 
+          fileUrl.contains('application/pdf') ||
+          fileUrl.contains('.pdf')) {
+        // Open PDF in-app
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => PDFViewerPage(
+              url: fileUrl,
+              title: fileName ?? 'Document Viewer',
+            ),
+          ),
+        );
       } else {
-        _showErrorSnackBar('Cannot open file. Please check your internet connection.');
+        // For non-PDF files, still try to launch externally
+        final uri = Uri.parse(fileUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          _showErrorSnackBar('Cannot open file. No app available to handle this file type.');
+        }
       }
     } catch (e) {
       _showErrorSnackBar('Error opening file: ${e.toString()}');
