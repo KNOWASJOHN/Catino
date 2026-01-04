@@ -83,25 +83,6 @@ class _MainScreenState extends State<MainScreen> {
 
   late List<Widget> _pages;
 
-  void _switchToCart() {
-    if (_selectedIndex != 3 && !_isAnimating) {
-      setState(() {
-        _animationStartPosition = Offset(
-          _navItemPositions[3],
-          _navBarVerticalPosition,
-        );
-        _isAnimating = true;
-      });
-      Future.delayed(const Duration(milliseconds: 850), () {
-        if (mounted) {
-          setState(() {
-            _selectedIndex = 3;
-          });
-        }
-      });
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -112,15 +93,7 @@ class _MainScreenState extends State<MainScreen> {
       const PrintPage(),
       const Profile(),
     ];
-    _loadSelectedIndex();
     _initializeFCM();
-  }
-
-  Future<void> _loadSelectedIndex() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _selectedIndex = prefs.getInt('selectedIndex') ?? 0;
-    });
   }
 
   Future<void> _saveSelectedIndex(int index) async {

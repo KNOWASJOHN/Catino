@@ -211,7 +211,7 @@ class FCMService {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      final notificationRef = _database.ref('notifications/${user.uid}').push();
+      final notificationRef = _database.ref('users/${user.uid}/notifications').push();
       
       final notification = NotificationModel(
         id: notificationRef.key ?? '',
@@ -226,7 +226,9 @@ class FCMService {
       await notificationRef.set(notification.toMap());
       
       // Add to cache and increment unread count
-      await _cacheService.addNotificationToCache(notification);
+      final cachedNotifications = await _cacheService.getCachedNotifications() ?? [];
+      cachedNotifications.add(notification);
+      await _cacheService.cacheNotifications(cachedNotifications);
       await _cacheService.incrementUnreadCount();
     } catch (e) {
       print('Error storing order notification: $e');
@@ -239,7 +241,7 @@ class FCMService {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      final notificationRef = _database.ref('notifications/${user.uid}').push();
+      final notificationRef = _database.ref('users/${user.uid}/notifications').push();
       
       final notification = NotificationModel(
         id: notificationRef.key ?? '',
@@ -254,7 +256,9 @@ class FCMService {
       await notificationRef.set(notification.toMap());
       
       // Add to cache and increment unread count
-      await _cacheService.addNotificationToCache(notification);
+      final cachedNotifications = await _cacheService.getCachedNotifications() ?? [];
+      cachedNotifications.add(notification);
+      await _cacheService.cacheNotifications(cachedNotifications);
       await _cacheService.incrementUnreadCount();
     } catch (e) {
       print('Error storing announcement notification: $e');
@@ -286,7 +290,7 @@ class FCMService {
     }
 
     // Step 2: Stream from Firebase and update cache on changes
-    await for (final event in _database.ref('notifications/${user.uid}').onValue) {
+    await for (final event in _database.ref('users/${user.uid}/notifications').onValue) {
       try {
         if (event.snapshot.value == null) {
           print('No notifications found in database for user: ${user.uid}');
@@ -348,7 +352,7 @@ class FCMService {
       
       // Update Firebase
       await _database
-          .ref('notifications/${user.uid}/$notificationId')
+          .ref('users/${user.uid}/notifications/$notificationId')
           .update({'isRead': true});
       
       // Update cache: find notification and update it
@@ -360,7 +364,8 @@ class FCMService {
           if (!notification.isRead) {
             // Only decrement if it was unread
             final updatedNotification = notification.copyWith(isRead: true);
-            await _cacheService.updateCachedNotification(updatedNotification);
+            cachedNotifications[notificationIndex] = updatedNotification;
+            await _cacheService.cacheNotifications(cachedNotifications);
             await _cacheService.decrementUnreadCount();
           }
         }
@@ -376,7 +381,7 @@ class FCMService {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      await _database.ref('notifications/${user.uid}').remove();
+      await _database.ref('users/${user.uid}/notifications').remove();
       await _cacheService.clearCache();
     } catch (e) {
       print('Error clearing notifications: $e');

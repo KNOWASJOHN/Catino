@@ -204,7 +204,7 @@ class CartProvider with ChangeNotifier {
       };
 
       // Store order in Realtime Database
-      await _dbRef.child('orders/$uid/$orderId').set(orderData);
+      await _dbRef.child('users/$uid/orders/$orderId').set(orderData);
       
       // Show client-side order confirmation notification immediately
       await FCMService().showOrderConfirmationNotification(code);

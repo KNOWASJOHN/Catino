@@ -1,17 +1,41 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/food_item.dart';
+import 'user_session_cache.dart';
 
-/// Service for caching food items locally
+/// Service for caching food items locally (global data but user-session aware)
 class FoodCacheService {
   static const String _allFoodCacheKey = 'cached_all_food_items';
   static const String _categoryPrefix = 'cached_food_category_';
   static const String _vegCacheKey = 'cached_vegetarian_items';
   static const String _lastUpdateKey = 'food_cache_last_update';
+  static const String _userIdKey = 'food_cache_user_id';
+  
+  final UserSessionCache _userSession = UserSessionCache();
+
+  /// Validate user session (food data is global but we track user sessions)
+  Future<void> _validateUserSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentUserId = await _userSession.getCurrentUserId();
+      final cachedUserId = prefs.getString(_userIdKey);
+      
+      // Update user session tracking without clearing global food data
+      if (currentUserId != cachedUserId) {
+        if (currentUserId != null) {
+          await prefs.setString(_userIdKey, currentUserId);
+        }
+      }
+    } catch (e) {
+      print('Error validating user session: $e');
+    }
+  }
   
   /// Cache all food items
   Future<void> cacheAllFoodItems(List<FoodItem> items) async {
     try {
+      await _validateUserSession();
+      
       final prefs = await SharedPreferences.getInstance();
       final jsonList = items.map((item) => item.toMap()).toList();
       await prefs.setString(_allFoodCacheKey, jsonEncode(jsonList));
@@ -24,6 +48,8 @@ class FoodCacheService {
   /// Get cached all food items
   Future<List<FoodItem>?> getCachedAllFoodItems() async {
     try {
+      await _validateUserSession();
+      
       final prefs = await SharedPreferences.getInstance();
       final cachedData = prefs.getString(_allFoodCacheKey);
       
@@ -125,6 +151,17 @@ class FoodCacheService {
       }
     } catch (e) {
       print('Error clearing food cache: $e');
+    }
+  }
+
+  /// Clear food cache for all users (called on logout/app reset)
+  Future<void> clearAllUsersCache() async {
+    try {
+      await clearCache();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_userIdKey);
+    } catch (e) {
+      print('Error clearing all users food cache: $e');
     }
   }
 

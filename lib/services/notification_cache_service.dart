@@ -1,22 +1,92 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/notification_model.dart';
+import 'user_session_cache.dart';
 
-/// Cache service for notifications to reduce Firebase reads and enable offline access
+/// Cache service for notifications to reduce Firebase reads and enable offline access (user-specific)
 /// Follows the established caching pattern from FoodCacheService and PrintCacheService
 class NotificationCacheService {
-  // Cache keys
-  static const String _cacheKey = 'cached_notifications';
-  static const String _lastUpdateKey = 'notifications_last_update';
-  static const String _unreadCountKey = 'notifications_unread_count';
+  // Base cache keys
+  static const String _baseCacheKey = 'cached_notifications';
+  static const String _baseLastUpdateKey = 'notifications_last_update';
+  static const String _baseUnreadCountKey = 'notifications_unread_count';
+  static const String _userIdKey = 'notification_cache_user_id';
+  
+  final UserSessionCache _userSession = UserSessionCache();
   
   // Cache configuration
   static const int _maxCachedNotifications = 50; // Prune to last 50 notifications
   static const Duration _defaultMaxAge = Duration(minutes: 10); // 10-min staleness
 
+  /// Get user-specific cache key
+  Future<String?> _getCacheKey() async {
+    final userId = await _userSession.getCurrentUserId();
+    return userId != null ? '${_baseCacheKey}_$userId' : null;
+  }
+
+  /// Get user-specific last update key
+  Future<String?> _getLastUpdateKey() async {
+    final userId = await _userSession.getCurrentUserId();
+    return userId != null ? '${_baseLastUpdateKey}_$userId' : null;
+  }
+
+  /// Get user-specific unread count key
+  Future<String?> _getUnreadCountKey() async {
+    final userId = await _userSession.getCurrentUserId();
+    return userId != null ? '${_baseUnreadCountKey}_$userId' : null;
+  }
+
+  /// Validate and clear cache if user has changed
+  Future<void> _validateUserCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentUserId = await _userSession.getCurrentUserId();
+      final cachedUserId = prefs.getString(_userIdKey);
+      
+      if (currentUserId != cachedUserId) {
+        // User changed - clear old cache
+        await _clearAllUserCaches();
+        if (currentUserId != null) {
+          await prefs.setString(_userIdKey, currentUserId);
+        }
+      }
+    } catch (e) {
+      print('Error validating user cache: $e');
+    }
+  }
+
+  /// Clear all user-specific cache data
+  Future<void> _clearAllUserCaches() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final keys = prefs.getKeys();
+      
+      for (String key in keys) {
+        if (key.startsWith(_baseCacheKey) || 
+            key.startsWith(_baseLastUpdateKey) ||
+            key.startsWith(_baseUnreadCountKey)) {
+          await prefs.remove(key);
+        }
+      }
+    } catch (e) {
+      print('Error clearing user caches: $e');
+    }
+  }
+
   /// Cache a list of notifications (overwrites existing cache)
   Future<void> cacheNotifications(List<NotificationModel> notifications) async {
     try {
+      await _validateUserCache();
+      
+      final cacheKey = await _getCacheKey();
+      final lastUpdateKey = await _getLastUpdateKey();
+      final unreadCountKey = await _getUnreadCountKey();
+      
+      if (cacheKey == null || lastUpdateKey == null || unreadCountKey == null) {
+        print('User not authenticated - cannot cache notifications');
+        return;
+      }
+      
       final prefs = await SharedPreferences.getInstance();
       
       // Prune to last 50 notifications to keep cache size manageable
@@ -34,12 +104,12 @@ class NotificationCacheService {
       final jsonString = jsonEncode(jsonList);
       
       // Store in SharedPreferences
-      await prefs.setString(_cacheKey, jsonString);
-      await prefs.setInt(_lastUpdateKey, DateTime.now().millisecondsSinceEpoch);
+      await prefs.setString(cacheKey, jsonString);
+      await prefs.setInt(lastUpdateKey, DateTime.now().millisecondsSinceEpoch);
       
       // Update unread count
       final unreadCount = notificationsToCache.where((n) => !n.isRead).length;
-      await prefs.setInt(_unreadCountKey, unreadCount);
+      await prefs.setInt(unreadCountKey, unreadCount);
       
       print('Cached ${notificationsToCache.length} notifications (unread: $unreadCount)');
     } catch (e) {
@@ -50,8 +120,16 @@ class NotificationCacheService {
   /// Get cached notifications, returns null if no cache exists
   Future<List<NotificationModel>?> getCachedNotifications() async {
     try {
+      await _validateUserCache();
+      
+      final cacheKey = await _getCacheKey();
+      if (cacheKey == null) {
+        print('User not authenticated - cannot retrieve cached notifications');
+        return null;
+      }
+      
       final prefs = await SharedPreferences.getInstance();
-      final jsonString = prefs.getString(_cacheKey);
+      final jsonString = prefs.getString(cacheKey);
       
       if (jsonString == null) {
         print('No cached notifications found');
@@ -74,8 +152,11 @@ class NotificationCacheService {
   /// Check if cache is stale based on maxAge
   Future<bool> isCacheStale({Duration maxAge = _defaultMaxAge}) async {
     try {
+      final lastUpdateKey = await _getLastUpdateKey();
+      if (lastUpdateKey == null) return true;
+      
       final prefs = await SharedPreferences.getInstance();
-      final lastUpdate = prefs.getInt(_lastUpdateKey);
+      final lastUpdate = prefs.getInt(lastUpdateKey);
       
       if (lastUpdate == null) {
         print('No cache timestamp found - cache is stale');
@@ -95,59 +176,27 @@ class NotificationCacheService {
     }
   }
 
-  /// Check if cache has data
+  /// Check if cache has data for current user
   Future<bool> hasCachedData() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.containsKey(_cacheKey);
-  }
-
-  /// Add a single notification to cache (prepends to list)
-  Future<void> addNotificationToCache(NotificationModel notification) async {
     try {
-      final cachedNotifications = await getCachedNotifications() ?? [];
+      final cacheKey = await _getCacheKey();
+      if (cacheKey == null) return false;
       
-      // Prepend new notification (newest first)
-      cachedNotifications.insert(0, notification);
-      
-      // Cache the updated list
-      await cacheNotifications(cachedNotifications);
-      
-      print('Added notification to cache: ${notification.id}');
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.containsKey(cacheKey);
     } catch (e) {
-      print('Error adding notification to cache: $e');
-    }
-  }
-
-  /// Update a specific notification in cache (e.g., when marking as read)
-  Future<void> updateCachedNotification(NotificationModel updatedNotification) async {
-    try {
-      final cachedNotifications = await getCachedNotifications();
-      
-      if (cachedNotifications == null) {
-        print('No cache to update');
-        return;
-      }
-      
-      // Find and update the notification
-      final index = cachedNotifications.indexWhere((n) => n.id == updatedNotification.id);
-      
-      if (index != -1) {
-        cachedNotifications[index] = updatedNotification;
-        await cacheNotifications(cachedNotifications);
-        print('Updated notification in cache: ${updatedNotification.id}');
-      } else {
-        print('Notification not found in cache: ${updatedNotification.id}');
-      }
-    } catch (e) {
-      print('Error updating notification in cache: $e');
+      return false;
     }
   }
 
   /// Get cached unread count (fast badge display without Firebase query)
   Future<int> getUnreadCount() async {
     try {
+      final unreadCountKey = await _getUnreadCountKey();
+      if (unreadCountKey == null) return 0;
+      
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getInt(_unreadCountKey) ?? 0;
+      return prefs.getInt(unreadCountKey) ?? 0;
     } catch (e) {
       print('Error getting unread count: $e');
       return 0;
@@ -157,9 +206,12 @@ class NotificationCacheService {
   /// Increment unread count (called when new notification arrives)
   Future<void> incrementUnreadCount() async {
     try {
+      final unreadCountKey = await _getUnreadCountKey();
+      if (unreadCountKey == null) return;
+      
       final prefs = await SharedPreferences.getInstance();
-      final currentCount = prefs.getInt(_unreadCountKey) ?? 0;
-      await prefs.setInt(_unreadCountKey, currentCount + 1);
+      final currentCount = prefs.getInt(unreadCountKey) ?? 0;
+      await prefs.setInt(unreadCountKey, currentCount + 1);
       print('Incremented unread count to ${currentCount + 1}');
     } catch (e) {
       print('Error incrementing unread count: $e');
@@ -169,10 +221,13 @@ class NotificationCacheService {
   /// Decrement unread count (called when marking notification as read)
   Future<void> decrementUnreadCount() async {
     try {
+      final unreadCountKey = await _getUnreadCountKey();
+      if (unreadCountKey == null) return;
+      
       final prefs = await SharedPreferences.getInstance();
-      final currentCount = prefs.getInt(_unreadCountKey) ?? 0;
+      final currentCount = prefs.getInt(unreadCountKey) ?? 0;
       if (currentCount > 0) {
-        await prefs.setInt(_unreadCountKey, currentCount - 1);
+        await prefs.setInt(unreadCountKey, currentCount - 1);
         print('Decremented unread count to ${currentCount - 1}');
       }
     } catch (e) {
@@ -180,24 +235,45 @@ class NotificationCacheService {
     }
   }
 
-  /// Clear all cached notifications
+  /// Clear cached notifications for current user
   Future<void> clearCache() async {
     try {
+      final cacheKey = await _getCacheKey();
+      final lastUpdateKey = await _getLastUpdateKey();
+      final unreadCountKey = await _getUnreadCountKey();
+      
+      if (cacheKey == null || lastUpdateKey == null || unreadCountKey == null) return;
+      
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_cacheKey);
-      await prefs.remove(_lastUpdateKey);
-      await prefs.remove(_unreadCountKey);
+      await prefs.remove(cacheKey);
+      await prefs.remove(lastUpdateKey);
+      await prefs.remove(unreadCountKey);
       print('Cleared notification cache');
     } catch (e) {
       print('Error clearing cache: $e');
     }
   }
 
+  /// Clear notification cache for all users (called on logout/app reset)
+  Future<void> clearAllUsersCache() async {
+    try {
+      await _clearAllUserCaches();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_userIdKey);
+      print('Cleared all users notification cache');
+    } catch (e) {
+      print('Error clearing all users notification cache: $e');
+    }
+  }
+
   /// Invalidate cache (forces refresh on next read)
   Future<void> invalidateCache() async {
     try {
+      final lastUpdateKey = await _getLastUpdateKey();
+      if (lastUpdateKey == null) return;
+      
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_lastUpdateKey);
+      await prefs.remove(lastUpdateKey);
       print('Invalidated notification cache');
     } catch (e) {
       print('Error invalidating cache: $e');

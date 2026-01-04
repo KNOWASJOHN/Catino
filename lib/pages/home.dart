@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage> {
     });
 
     // Listen to orders changes
-    _ordersSubscription = _database.child('orders/$userId').onValue.listen((event) {
+    _ordersSubscription = _database.child('users/$userId/orders').onValue.listen((event) {
       _updateUserCardData(userId);
     });
 
@@ -96,7 +96,7 @@ class _HomePageState extends State<HomePage> {
       final userData = Map<String, dynamic>.from(userSnap.value as Map);
 
       // Fetch orders
-      final ordersSnap = await _database.child('orders/$userId').get();
+      final ordersSnap = await _database.child('users/$userId/orders').get();
       
       Map<String, dynamic> userCardData;
       

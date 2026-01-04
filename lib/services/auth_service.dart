@@ -1,12 +1,22 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'profile_cache_service.dart';
+import 'print_cache_service.dart';
+import 'food_cache_service.dart';
+import 'notification_cache_service.dart';
+import 'usercard_cache_service.dart';
+import 'user_session_cache.dart';
 
 /// Authentication Service for handling user login, signup, and session management
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
-  final ProfileCacheService _cacheService = ProfileCacheService();
+  final ProfileCacheService _profileCacheService = ProfileCacheService();
+  final PrintCacheService _printCacheService = PrintCacheService();
+  final FoodCacheService _foodCacheService = FoodCacheService();
+  final NotificationCacheService _notificationCacheService = NotificationCacheService();
+  final UserCardCacheService _userCardCacheService = UserCardCacheService();
+  final UserSessionCache _userSessionCache = UserSessionCache();
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -19,7 +29,7 @@ class AuthService {
       if (event.snapshot.exists) {
         final userData = Map<String, dynamic>.from(event.snapshot.value as Map);
         // Update cache with fresh data
-        _cacheService.cacheProfileData(userData);
+        _profileCacheService.cacheProfileData(userData);
         print('Profile data updated from Firebase listener');
       }
     });
@@ -105,10 +115,31 @@ class AuthService {
     }
   }
 
-  /// Sign out and clear cache
+  /// Sign out and clear all cache services
   Future<void> signOut() async {
-    await _auth.signOut();
-    await _cacheService.clearCache();
+    try {
+      // Sign out from Firebase
+      await _auth.signOut();
+      
+      // Clear all cache services for all users
+      await Future.wait([
+        _profileCacheService.clearAllUsersCache(),
+        _printCacheService.clearAllUsersCache(),
+        _foodCacheService.clearAllUsersCache(),
+        _notificationCacheService.clearAllUsersCache(),
+        _userCardCacheService.clearAllUsersCache(),
+      ]);
+      
+      // Clear user session cache
+      _userSessionCache.clearUserSession();
+      
+      print('User signed out and all caches cleared');
+    } catch (e) {
+      print('Error during sign out: $e');
+      // Still sign out even if cache clearing fails
+      await _auth.signOut();
+      _userSessionCache.clearUserSession();
+    }
   }
 
   /// Get user data from cache first, then from Firebase if needed
@@ -118,7 +149,7 @@ class AuthService {
 
       // If not forcing refresh, try to get cached data first
       if (!forceRefresh) {
-        final cachedData = await _cacheService.getCachedProfileData();
+        final cachedData = await _profileCacheService.getCachedProfileData();
         if (cachedData != null) {
           // Return cached data immediately
           // Optionally fetch fresh data in background if cache is stale
@@ -136,21 +167,21 @@ class AuthService {
       if (event.snapshot.exists) {
         final userData = Map<String, dynamic>.from(event.snapshot.value as Map);
         // Cache the fresh data
-        await _cacheService.cacheProfileData(userData);
+        await _profileCacheService.cacheProfileData(userData);
         return userData;
       }
       return null;
     } catch (e) {
       print('Error fetching user data: $e');
       // If Firebase fails, try to return cached data as fallback
-      return await _cacheService.getCachedProfileData();
+      return await _profileCacheService.getCachedProfileData();
     }
   }
 
   /// Refresh data in background if cache is stale
   void _refreshDataIfStale() async {
     try {
-      final isStale = await _cacheService.isCacheStale(
+      final isStale = await _profileCacheService.isCacheStale(
         maxAge: const Duration(minutes: 30),
       );
       
@@ -172,10 +203,10 @@ class AuthService {
       await _database.child('users').child(currentUser!.uid).update(updates);
       
       // Update cache with the new data
-      final cachedData = await _cacheService.getCachedProfileData();
+      final cachedData = await _profileCacheService.getCachedProfileData();
       if (cachedData != null) {
         final updatedData = {...cachedData, ...updates};
-        await _cacheService.cacheProfileData(updatedData);
+        await _profileCacheService.cacheProfileData(updatedData);
       } else {
         // If no cache exists, fetch and cache all data
         await getUserData(forceRefresh: true);

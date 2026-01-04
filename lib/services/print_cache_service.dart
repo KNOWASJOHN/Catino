@@ -1,19 +1,80 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../components/print_history.dart';
+import 'user_session_cache.dart';
 
-/// Service for caching print jobs locally
+/// Service for caching print jobs locally (user-specific)
 class PrintCacheService {
-  static const String _cacheKey = 'cached_print_jobs';
-  static const String _lastUpdateKey = 'print_cache_last_update';
+  static const String _baseCacheKey = 'cached_print_jobs';
+  static const String _baseLastUpdateKey = 'print_cache_last_update';
+  static const String _userIdKey = 'print_cache_user_id';
+  
+  final UserSessionCache _userSession = UserSessionCache();
+
+  /// Get user-specific cache key
+  Future<String?> _getCacheKey() async {
+    final userId = await _userSession.getCurrentUserId();
+    return userId != null ? '${_baseCacheKey}_$userId' : null;
+  }
+
+  /// Get user-specific last update key
+  Future<String?> _getLastUpdateKey() async {
+    final userId = await _userSession.getCurrentUserId();
+    return userId != null ? '${_baseLastUpdateKey}_$userId' : null;
+  }
+
+  /// Validate and clear cache if user has changed
+  Future<void> _validateUserCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentUserId = await _userSession.getCurrentUserId();
+      final cachedUserId = prefs.getString(_userIdKey);
+      
+      if (currentUserId != cachedUserId) {
+        // User changed - clear old cache
+        await _clearAllUserCaches();
+        if (currentUserId != null) {
+          await prefs.setString(_userIdKey, currentUserId);
+        }
+      }
+    } catch (e) {
+      print('Error validating user cache: $e');
+    }
+  }
+
+  /// Clear all user-specific cache data
+  Future<void> _clearAllUserCaches() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final keys = prefs.getKeys();
+      
+      for (String key in keys) {
+        if (key.startsWith(_baseCacheKey) || key.startsWith(_baseLastUpdateKey)) {
+          await prefs.remove(key);
+        }
+      }
+    } catch (e) {
+      print('Error clearing user caches: $e');
+    }
+  }
   
   /// Cache print jobs
   Future<void> cachePrintJobs(List<PrintJob> jobs) async {
     try {
+      await _validateUserCache();
+      
+      final cacheKey = await _getCacheKey();
+      final lastUpdateKey = await _getLastUpdateKey();
+      
+      if (cacheKey == null || lastUpdateKey == null) {
+        print('User not authenticated - cannot cache print jobs');
+        return;
+      }
+      
       final prefs = await SharedPreferences.getInstance();
       final jsonList = jobs.map((job) => job.toMap()).toList();
-      await prefs.setString(_cacheKey, jsonEncode(jsonList));
-      await prefs.setInt(_lastUpdateKey, DateTime.now().millisecondsSinceEpoch);
+      await prefs.setString(cacheKey, jsonEncode(jsonList));
+      await prefs.setInt(lastUpdateKey, DateTime.now().millisecondsSinceEpoch);
     } catch (e) {
       print('Error caching print jobs: $e');
     }
@@ -22,8 +83,16 @@ class PrintCacheService {
   /// Get cached print jobs
   Future<List<PrintJob>?> getCachedPrintJobs() async {
     try {
+      await _validateUserCache();
+      
+      final cacheKey = await _getCacheKey();
+      if (cacheKey == null) {
+        print('User not authenticated - cannot retrieve cached print jobs');
+        return null;
+      }
+      
       final prefs = await SharedPreferences.getInstance();
-      final cachedData = prefs.getString(_cacheKey);
+      final cachedData = prefs.getString(cacheKey);
       
       if (cachedData != null) {
         final List<dynamic> jsonList = jsonDecode(cachedData);
@@ -79,8 +148,11 @@ class PrintCacheService {
   /// Get last cache update time
   Future<DateTime?> getLastUpdateTime() async {
     try {
+      final lastUpdateKey = await _getLastUpdateKey();
+      if (lastUpdateKey == null) return null;
+      
       final prefs = await SharedPreferences.getInstance();
-      final timestamp = prefs.getInt(_lastUpdateKey);
+      final timestamp = prefs.getInt(lastUpdateKey);
       
       if (timestamp != null) {
         return DateTime.fromMillisecondsSinceEpoch(timestamp);
@@ -91,14 +163,30 @@ class PrintCacheService {
     }
   }
 
-  /// Clear all print cache
+  /// Clear print cache for current user
   Future<void> clearCache() async {
     try {
+      final cacheKey = await _getCacheKey();
+      final lastUpdateKey = await _getLastUpdateKey();
+      
+      if (cacheKey == null || lastUpdateKey == null) return;
+      
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_cacheKey);
-      await prefs.remove(_lastUpdateKey);
+      await prefs.remove(cacheKey);
+      await prefs.remove(lastUpdateKey);
     } catch (e) {
       print('Error clearing print cache: $e');
+    }
+  }
+
+  /// Clear print cache for all users (called on logout/app reset)
+  Future<void> clearAllUsersCache() async {
+    try {
+      await _clearAllUserCaches();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_userIdKey);
+    } catch (e) {
+      print('Error clearing all users print cache: $e');
     }
   }
 
@@ -111,11 +199,14 @@ class PrintCacheService {
     return DateTime.now().difference(lastUpdate) > maxAge;
   }
 
-  /// Check if cache exists
+  /// Check if cache exists for current user
   Future<bool> hasCachedData() async {
     try {
+      final cacheKey = await _getCacheKey();
+      if (cacheKey == null) return false;
+      
       final prefs = await SharedPreferences.getInstance();
-      return prefs.containsKey(_cacheKey);
+      return prefs.containsKey(cacheKey);
     } catch (e) {
       return false;
     }

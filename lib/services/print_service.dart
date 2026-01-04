@@ -16,7 +16,7 @@ class PrintService {
     if (userId == null || _isListening) return;
     _isListening = true;
     
-    _database.child('printJobs').child(userId).onValue.listen((event) {
+    _database.child('users').child(userId).child('printJobs').onValue.listen((event) {
       if (event.snapshot.exists && event.snapshot.value != null) {
         try {
           Map<dynamic, dynamic> jobsMap = event.snapshot.value as Map<dynamic, dynamic>;
@@ -67,8 +67,9 @@ class PrintService {
       }
 
       DatabaseEvent event = await _database
-          .child('printJobs')
+          .child('users')
           .child(userId)
+          .child('printJobs')
           .once();
 
       print('Database snapshot exists: ${event.snapshot.exists}');
@@ -146,8 +147,9 @@ class PrintService {
       if (userId == null) return false;
 
       await _database
-          .child('printJobs')
+          .child('users')
           .child(userId)
+          .child('printJobs')
           .child(job.id)
           .set(job.toMap());
 
@@ -168,8 +170,9 @@ class PrintService {
       if (userId == null) return false;
 
       await _database
-          .child('printJobs')
+          .child('users')
           .child(userId)
+          .child('printJobs')
           .child(jobId)
           .update({'status': status.displayText.toLowerCase()});
 
@@ -198,25 +201,26 @@ class PrintService {
     }
   }
 
-  /// Delete a print job
-  Future<bool> deletePrintJob(String jobId) async {
-    try {
-      final userId = _auth.currentUser?.uid;
-      if (userId == null) return false;
+/// Delete a print job
+Future<bool> deletePrintJob(String jobId) async {
+  try {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return false;
 
-      await _database
-          .child('printJobs')
-          .child(userId)
-          .child(jobId)
-          .remove();
+    await _database
+        .child('users')
+        .child(userId)
+        .child('printJobs')
+        .child(jobId)
+        .remove();
 
-      // Remove from cache
-      await _cacheService.removeJobFromCache(jobId);
+    // Remove from cache
+    await _cacheService.removeJobFromCache(jobId);
 
-      return true;
-    } catch (e) {
-      print('Error deleting print job: $e');
-      return false;
-    }
+    return true;
+  } catch (e) {
+    print('Error deleting print job: $e');
+    return false;
   }
+}
 }
