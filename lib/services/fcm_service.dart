@@ -47,10 +47,22 @@ class FCMService {
       description: 'Local notifications for orders and FCM for announcements',
       importance: Importance.high,
     );
+    
+    // Create print notifications channel
+    const printChannel = AndroidNotificationChannel(
+      'print_notifications',
+      'Print Notifications',
+      description: 'Notifications for print job status updates',
+      importance: Importance.high,
+    );
 
     await _localNotifications
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(androidChannel);
+        
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(printChannel);
   }
 
   /// Request notification permissions
@@ -157,7 +169,26 @@ class FCMService {
   /// Handle local notification taps
   void _onNotificationTapped(NotificationResponse response) {
     print('Local notification tapped: ${response.id}');
+    
     // Handle navigation based on payload
+    final payload = response.payload;
+    if (payload != null) {
+      if (payload.startsWith('print_job:')) {
+        // Extract print job ID and navigate to print page
+        final printJobId = payload.replaceFirst('print_job:', '');
+        print('Navigating to print job: $printJobId');
+        // TODO: Add navigation logic to print page with specific job highlighted
+        // Navigator.of(context).pushNamed('/print', arguments: printJobId);
+      } else if (payload == 'announcement') {
+        // Navigate to notifications/announcements page
+        print('Navigating to announcements');
+        // TODO: Add navigation logic to announcements page
+      } else if (payload == 'order') {
+        // Navigate to order history/details
+        print('Navigating to orders');
+        // TODO: Add navigation logic to orders page
+      }
+    }
   }
 
   /// Show local notification (used for both orders and announcements)
@@ -385,6 +416,126 @@ class FCMService {
       await _cacheService.clearCache();
     } catch (e) {
       print('Error clearing notifications: $e');
+    }
+  }
+
+  /// Show local notification for print job status update
+  Future<void> showPrintNotification({
+    required String printJobId,
+    required String fileName,
+    required String status,
+    required String message,
+  }) async {
+    try {
+      int notificationId = printJobId.hashCode;
+      
+      String title;
+      String body;
+      
+      switch (status.toLowerCase()) {
+        case 'finished':
+          title = '🎉 Print Job Complete!';
+          body = '$fileName is ready for pickup';
+          break;
+        case 'pending':
+          title = '⏳ Print Job Queued';
+          body = '$fileName has been added to the print queue';
+          break;
+        case 'cancelled':
+          title = '❌ Print Job Cancelled';
+          body = '$fileName print job was cancelled';
+          break;
+        default:
+          title = '📄 Print Job Update';
+          body = '$fileName: $message';
+      }
+
+      const androidDetails = AndroidNotificationDetails(
+        'print_notifications',
+        'Print Notifications',
+        channelDescription: 'Notifications for print job status updates',
+        importance: Importance.high,
+        priority: Priority.high,
+        icon: '@drawable/ic_notification',
+      );
+
+      const notificationDetails = NotificationDetails(android: androidDetails);
+
+      await _localNotifications.show(
+        notificationId,
+        title,
+        body,
+        notificationDetails,
+        payload: 'print_job:$printJobId',
+      );
+
+      print('Print notification shown: $title - $body');
+    } catch (e) {
+      print('Error showing print notification: $e');
+    }
+  }
+
+  /// Create notification record in Firebase for print job updates
+  Future<void> createPrintJobNotification({
+    required String printJobId,
+    required String fileName,
+    required String status,
+    required String code,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+
+      String title = 'Print Job Update';
+      String message = '$fileName ($code)';
+      
+      switch (status.toLowerCase()) {
+        case 'finished':
+          title = 'Print Job Complete';
+          message = '$fileName ($code) is ready for pickup';
+          break;
+        case 'pending':
+          title = 'Print Job Queued';
+          message = '$fileName ($code) added to print queue';
+          break;
+        case 'cancelled':
+          title = 'Print Job Cancelled';
+          message = '$fileName ($code) print job cancelled';
+          break;
+      }
+
+      final notification = NotificationModel(
+        id: '${DateTime.now().millisecondsSinceEpoch}_print',
+        title: title,
+        message: message,
+        type: 'print',
+        userId: user.uid,
+        createdAt: DateTime.now(),
+        data: {
+          'printJobId': printJobId,
+          'fileName': fileName,
+          'status': status,
+          'code': code,
+        },
+      );
+
+      // Store in Firebase
+      await _database
+          .ref('users/${user.uid}/notifications/${notification.id}')
+          .set(notification.toMap());
+
+      print('Print notification record created in Firebase');
+
+      // Also show local notification
+      await showPrintNotification(
+        printJobId: printJobId,
+        fileName: fileName,
+        status: status,
+        message: message,
+      );
+
+    } catch (e) {
+      print('Error creating print job notification: $e');
     }
   }
 

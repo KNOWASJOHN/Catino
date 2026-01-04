@@ -16,6 +16,7 @@ import 'components/circle_reveal_transition.dart';
 import 'pages/loginpage.dart';
 import 'services/auth_service.dart';
 import 'services/fcm_service.dart';
+import 'services/print_notification_service.dart';
 import 'services/supabase_config.dart';
 import 'package:provider/provider.dart';
 import 'cart_provider.dart';
@@ -33,6 +34,15 @@ void main() async {
   } catch (e) {
     print('Supabase initialization failed: $e');
     // Continue without Supabase for now - the app should still work
+  }
+
+  // Initialize Print Notification Service
+  try {
+    await PrintNotificationService().initialize();
+    print('Print notification service initialized successfully');
+  } catch (e) {
+    print('Print notification service initialization failed: $e');
+    // Continue even if notification service fails
   }
 
   // Initialize FCM background message handler BEFORE runApp

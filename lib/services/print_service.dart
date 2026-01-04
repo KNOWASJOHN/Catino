@@ -3,12 +3,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../components/print_history.dart';
 import 'print_cache_service.dart';
 import 'file_upload_service.dart';
+import 'print_notification_service.dart';
 
 /// Service for managing print jobs in Firebase
 class PrintService {
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final PrintCacheService _cacheService = PrintCacheService();
+  final PrintNotificationService _notificationService = PrintNotificationService();
   bool _isListening = false;
   String? _lastCacheUpdate; // Track last cache update to prevent duplicates
 
@@ -172,6 +174,10 @@ class PrintService {
           .set(job.toMap());
 
       print('Print job added to Firebase: ${job.id}');
+      
+      // Send notification for new print job
+      await _notificationService.notifyPrintJobAdded(job);
+      
       return true;
     } catch (e) {
       print('Error adding print job: $e');
@@ -192,12 +198,14 @@ class PrintService {
           .child(jobId)
           .update({'status': status.displayText.toLowerCase()});
 
-      // Update in cache
+      // Get job details for notification
       final cachedJobs = await _cacheService.getCachedPrintJobs();
+      PrintJob? updatedJob;
+      
       if (cachedJobs != null) {
         final jobIndex = cachedJobs.indexWhere((job) => job.id == jobId);
         if (jobIndex != -1) {
-          final updatedJob = PrintJob(
+          updatedJob = PrintJob(
             id: cachedJobs[jobIndex].id,
             code: cachedJobs[jobIndex].code,
             fileName: cachedJobs[jobIndex].fileName,
@@ -208,6 +216,15 @@ class PrintService {
           );
           await _cacheService.updateCachedJob(updatedJob);
         }
+      }
+
+      // Send notification for status update (especially for 'finished' status)
+      if (updatedJob != null && status == PrintStatus.finished) {
+        await _notificationService.notifyPrintJobCompleted(updatedJob);
+      } else if (updatedJob != null && status == PrintStatus.cancelled) {
+        await _notificationService.notifyPrintJobCancelled(updatedJob);
+      } else if (updatedJob != null) {
+        await _notificationService.notifyPrintJobStatusChanged(updatedJob);
       }
 
       return true;
