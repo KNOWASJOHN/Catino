@@ -4,7 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'services/fcm_service.dart';
+import 'services/order_service.dart';
+import 'models/order_model.dart';
 import 'pages/food.dart'; // For FoodItem
 
 class CartProvider with ChangeNotifier {
@@ -12,6 +13,7 @@ class CartProvider with ChangeNotifier {
   Map<String, int> get cart => _cart;
 
   final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
+  final OrderService _orderService = OrderService();
   String? _currentUserId;
   StreamSubscription<DatabaseEvent>? _cartSubscription;
   StreamSubscription<User?>? _authSubscription;
@@ -22,6 +24,7 @@ class CartProvider with ChangeNotifier {
 
   CartProvider() {
     _listenToAuthChanges();
+    _orderService.startListeningToOrders();
   }
 
   /// Listen to authentication state changes and manage cart accordingly
@@ -190,29 +193,32 @@ class CartProvider with ChangeNotifier {
       final orderId = 'order_${DateTime.now().millisecondsSinceEpoch}';
       final code = orderId.substring(6); // Shorter code for display
 
-      final items = cartItems.map((e) => {
-        'id': (e['item'] as FoodItem).id,
-        'qty': e['qty']
-      }).toList();
+      // Convert cart items to OrderItem objects
+      final orderItems = cartItems.map((e) => OrderItem(
+        id: (e['item'] as FoodItem).id,
+        quantity: e['qty'] as int,
+      )).toList();
 
-      final orderData = {
-        'code': code,
-        'items': items,
-        'qrCode': 'https://api.qrserver.com/v1/create-qr-code/?data=$code',
-        'status': 'pending',
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      };
+      // Create Order object with proper model structure
+      final order = Order(
+        id: orderId,
+        code: code,
+        items: orderItems,
+        qrCode: 'https://api.qrserver.com/v1/create-qr-code/?data=$code',
+        status: OrderStatus.pending,
+        dateTime: DateTime.now(),
+      );
 
-      // Store order in Realtime Database
-      await _dbRef.child('users/$uid/orders/$orderId').set(orderData);
+      // Use OrderService for proper status management and automatic notifications
+      final success = await _orderService.addOrder(order);
       
-      // Show client-side order confirmation notification immediately
-      await FCMService().showOrderConfirmationNotification(code);
-
-      // Clear cart after successful order placement
-      clear();
-      
-      print('Order placed successfully: $code');
+      if (success) {
+        // Clear cart after successful order placement
+        clear();
+        print('Order placed successfully: $code');
+      } else {
+        throw Exception('Failed to place order');
+      }
     } catch (e) {
       print('Error placing order: $e');
       throw e; // Re-throw to handle in UI
@@ -223,6 +229,7 @@ class CartProvider with ChangeNotifier {
   void dispose() {
     _cancelCartSubscription();
     _authSubscription?.cancel();
+    _orderService.stopListeningToOrders();
     super.dispose();
   }
 }

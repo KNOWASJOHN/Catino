@@ -178,6 +178,11 @@ class FCMService {
         final printJobId = payload.replaceFirst('print_job:', '');
         print('Navigating to print job: $printJobId');
         // TODO: Add navigation logic to print page with specific job highlighted
+      } else if (payload.startsWith('order:')) {
+        // Extract order ID and navigate to orders page
+        final orderId = payload.replaceFirst('order:', '');
+        print('Navigating to order: $orderId');
+        // TODO: Add navigation logic to orders page with specific order highlighted
         // Navigator.of(context).pushNamed('/print', arguments: printJobId);
       } else if (payload == 'announcement') {
         // Navigate to notifications/announcements page
@@ -419,6 +424,22 @@ class FCMService {
     }
   }
 
+  /// Delete individual notification
+  Future<void> deleteNotification(String notificationId) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+      
+      // Remove from Firebase
+      await _database.ref('users/${user.uid}/notifications/$notificationId').remove();
+      
+      // Update cache by removing the notification
+      await _cacheService.removeNotificationFromCache(notificationId);
+    } catch (e) {
+      print('Error deleting notification: $e');
+    }
+  }
+
   /// Show local notification for print job status update
   Future<void> showPrintNotification({
     required String printJobId,
@@ -536,6 +557,126 @@ class FCMService {
 
     } catch (e) {
       print('Error creating print job notification: $e');
+    }
+  }
+
+  /// Show local notification for order status update
+  Future<void> showOrderNotification({
+    required String orderId,
+    required String orderCode,
+    required String status,
+    required String message,
+  }) async {
+    try {
+      int notificationId = orderId.hashCode;
+      
+      String title;
+      String body;
+      
+      switch (status.toLowerCase()) {
+        case 'completed':
+          title = '✅ Order Complete!';
+          body = 'Order $orderCode is ready for pickup';
+          break;
+        case 'pending':
+          title = '⏳ Order Placed';
+          body = 'Order $orderCode has been placed successfully';
+          break;
+        case 'cancelled':
+          title = '❌ Order Cancelled';
+          body = 'Order $orderCode has been cancelled';
+          break;
+        default:
+          title = '🛍️ Order Update';
+          body = 'Order $orderCode: $message';
+      }
+
+      const androidDetails = AndroidNotificationDetails(
+        'catino_notifications',
+        'Catino Notifications',
+        channelDescription: 'Local notifications for orders and FCM for announcements',
+        importance: Importance.high,
+        priority: Priority.high,
+        icon: '@drawable/ic_notification',
+      );
+
+      const notificationDetails = NotificationDetails(android: androidDetails);
+
+      await _localNotifications.show(
+        notificationId,
+        title,
+        body,
+        notificationDetails,
+        payload: 'order:$orderId',
+      );
+
+      print('Order notification shown: $title - $body');
+    } catch (e) {
+      print('Error showing order notification: $e');
+    }
+  }
+
+  /// Create notification record in Firebase for order updates
+  Future<void> createOrderNotification({
+    required String orderId,
+    required String orderCode,
+    required String status,
+    required int itemCount,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+
+      String title = 'Order Update';
+      String message = 'Order $orderCode';
+      
+      switch (status.toLowerCase()) {
+        case 'completed':
+          title = 'Order Complete';
+          message = 'Order $orderCode ($itemCount items) is ready for pickup';
+          break;
+        case 'pending':
+          title = 'Order Placed';
+          message = 'Order $orderCode ($itemCount items) has been placed successfully';
+          break;
+        case 'cancelled':
+          title = 'Order Cancelled';
+          message = 'Order $orderCode has been cancelled';
+          break;
+      }
+
+      final notification = NotificationModel(
+        id: '${DateTime.now().millisecondsSinceEpoch}_order',
+        title: title,
+        message: message,
+        type: 'order',
+        userId: user.uid,
+        createdAt: DateTime.now(),
+        data: {
+          'orderId': orderId,
+          'orderCode': orderCode,
+          'status': status,
+          'itemCount': itemCount,
+        },
+      );
+
+      // Store in Firebase
+      await _database
+          .ref('users/${user.uid}/notifications/${notification.id}')
+          .set(notification.toMap());
+
+      print('Order notification record created in Firebase');
+
+      // Also show local notification
+      await showOrderNotification(
+        orderId: orderId,
+        orderCode: orderCode,
+        status: status,
+        message: message,
+      );
+
+    } catch (e) {
+      print('Error creating order notification: $e');
     }
   }
 

@@ -23,29 +23,8 @@ class PrintService {
     _database.child('users').child(userId).child('printJobs').onValue.listen((event) {
       if (event.snapshot.exists && event.snapshot.value != null) {
         try {
-          Map<dynamic, dynamic> jobsMap = event.snapshot.value as Map<dynamic, dynamic>;
-          List<PrintJob> jobs = [];
-          
-          jobsMap.forEach((key, value) {
-            if (value is Map) {
-              jobs.add(PrintJob.fromMap(value));
-            }
-          });
-          
-          // Sort by date descending
-          jobs.sort((a, b) => b.dateTime.compareTo(a.dateTime));
-          
-          // Create a hash of the jobs to detect changes
-          final jobsHash = jobs.map((job) => job.id).join(',');
-          
-          // Only update cache if the data has actually changed
-          if (_lastCacheUpdate != jobsHash) {
-            _lastCacheUpdate = jobsHash;
-            _cacheService.cachePrintJobs(jobs);
-            print('Print jobs cache updated from Firebase listener (${jobs.length} jobs)');
-          } else {
-            print('Skipping cache update - no changes detected');
-          }
+          print('Print job data changed, processing for status notifications...');
+          _processJobChanges(event.snapshot.value as Map<dynamic, dynamic>);
         } catch (e) {
           print('Error processing print jobs update: $e');
         }
@@ -58,6 +37,83 @@ class PrintService {
         }
       }
     });
+    
+    print('Started listening to print job changes for user: $userId');
+  }
+
+  /// Process print job changes and trigger notifications for status updates
+  Future<void> _processJobChanges(Map<dynamic, dynamic> jobsMap) async {
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) return;
+
+      // Get cached jobs for comparison
+      final cachedJobs = await _cacheService.getCachedPrintJobs();
+      final cachedJobsMap = <String, PrintJob>{};
+      
+      if (cachedJobs != null) {
+        for (final job in cachedJobs) {
+          cachedJobsMap[job.id] = job;
+        }
+      }
+
+      // Convert Firebase data to PrintJob objects
+      final currentJobs = <PrintJob>[];
+      jobsMap.forEach((key, value) {
+        if (value is Map) {
+          try {
+            final job = PrintJob.fromMap(value);
+            currentJobs.add(job);
+            
+            // Check for status changes
+            final cachedJob = cachedJobsMap[job.id];
+            if (cachedJob != null && cachedJob.status != job.status) {
+              // Status changed - send immediate notification
+              print('Print job status changed: ${job.code} - ${cachedJob.status.displayText} -> ${job.status.displayText}');
+              _triggerStatusChangeNotification(job, cachedJob.status);
+            } else if (cachedJob == null) {
+              // New job - notification already sent in addPrintJob
+              print('New print job detected: ${job.code}');
+            }
+          } catch (e) {
+            print('Error parsing print job $key: $e');
+          }
+        }
+      });
+
+      // Sort by date descending
+      currentJobs.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+      
+      // Update cache with current jobs
+      await _cacheService.cachePrintJobs(currentJobs);
+      _lastCacheUpdate = currentJobs.map((job) => job.id).join(',');
+      print('Print jobs cache updated with status change detection (${currentJobs.length} jobs)');
+      
+    } catch (e) {
+      print('Error in _processJobChanges: $e');
+    }
+  }
+
+  /// Trigger immediate notification for status change
+  Future<void> _triggerStatusChangeNotification(PrintJob job, PrintStatus previousStatus) async {
+    try {
+      switch (job.status) {
+        case PrintStatus.finished:
+          await _notificationService.notifyPrintJobCompleted(job);
+          break;
+        case PrintStatus.cancelled:
+          await _notificationService.notifyPrintJobCancelled(job);
+          break;
+        case PrintStatus.pending:
+          // Only notify if it was changed back to pending (rare case)
+          if (previousStatus != PrintStatus.pending) {
+            await _notificationService.notifyPrintJobStatusChanged(job);
+          }
+          break;
+      }
+    } catch (e) {
+      print('Error triggering status change notification: $e');
+    }
   }
 
   /// Get current user's print jobs from cache first, then Firebase if needed

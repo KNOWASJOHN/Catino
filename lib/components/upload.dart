@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../services/file_upload_service.dart';
 import '../services/print_service.dart';
 import 'print_history.dart';
@@ -17,11 +19,29 @@ class Upload extends StatefulWidget {
 class _UploadState extends State<Upload> {
   final FileUploadService _fileUploadService = FileUploadService();
   final PrintService _printService = PrintService();
+  final Connectivity _connectivity = Connectivity();
   
   bool _isUploading = false;
   double _uploadProgress = 0.0;
-  String? _selectedFileName;
   PlatformFile? _selectedFile;
+
+  /// Check if device has internet connectivity
+  Future<bool> _hasInternetConnection() async {
+    try {
+      final List<ConnectivityResult> connectivityResults = await _connectivity.checkConnectivity();
+      
+      // Check if any connection is available
+      if (connectivityResults.contains(ConnectivityResult.none)) {
+        return false;
+      }
+      
+      // Additional check: try to ping a reliable server
+      final result = await InternetAddress.lookup('google.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +266,6 @@ class _UploadState extends State<Upload> {
       if (file != null) {
         setState(() {
           _selectedFile = file;
-          _selectedFileName = file.name;
         });
       }
     } catch (e) {
@@ -256,6 +275,13 @@ class _UploadState extends State<Upload> {
 
   Future<void> _uploadAndCreateJob() async {
     if (_selectedFile == null || _isUploading) return; // Prevent multiple uploads
+
+    // Check internet connectivity first
+    final hasInternet = await _hasInternetConnection();
+    if (!hasInternet) {
+      _showNoInternetDialog();
+      return;
+    }
 
     setState(() {
       _isUploading = true;
@@ -334,8 +360,62 @@ class _UploadState extends State<Upload> {
   void _clearSelection() {
     setState(() {
       _selectedFile = null;
-      _selectedFileName = null;
     });
+  }
+
+  void _showNoInternetDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.wifi_off, color: Colors.orange, size: 24),
+            SizedBox(width: 8),
+            Text(
+              'No Internet Connection',
+              style: TextStyle(
+                fontFamily: 'Unbounded',
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Please check your internet connection and try again. File upload requires an active internet connection.',
+          style: TextStyle(
+            fontFamily: 'Unbounded',
+            fontSize: 12,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _uploadAndCreateJob(); // Retry the upload
+            },
+            child: Text(
+              'Retry',
+              style: TextStyle(
+                fontFamily: 'Unbounded',
+                color: Color(0xFF00C853),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'OK',
+              style: TextStyle(
+                fontFamily: 'Unbounded',
+                color: Colors.grey[600],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showErrorDialog(String title, String message) {

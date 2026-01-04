@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import '../services/fcm_service.dart';
 import '../models/notification_model.dart';
 
-class NotificationPanel extends StatelessWidget {
+class NotificationPanel extends StatefulWidget {
   final VoidCallback onClose;
 
   const NotificationPanel({super.key, required this.onClose});
+
+  @override
+  State<NotificationPanel> createState() => _NotificationPanelState();
+}
+
+class _NotificationPanelState extends State<NotificationPanel> {
+  bool _isClearing = false;
+  final Set<String> _deletingNotifications = <String>{};
 
   @override
   Widget build(BuildContext context) {
@@ -52,9 +60,38 @@ class NotificationPanel extends StatelessWidget {
                         ),
                       ),
                     ),
-                    GestureDetector(
-                      onTap: onClose,
-                      child: const Icon(Icons.close, size: 20),
+                    Row(
+                      children: [
+                        // Clear All button
+                        if (_isClearing)
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                            ),
+                          )
+                        else
+                          GestureDetector(
+                            onTap: _showClearAllDialog,
+                            child: Text(
+                              'Clear All',
+                              style: TextStyle(
+                                decoration: TextDecoration.none,
+                                fontFamily: 'Unbounded',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.red.shade600,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: widget.onClose,
+                          child: const Icon(Icons.close, size: 20),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -145,14 +182,51 @@ class NotificationPanel extends StatelessWidget {
                         itemCount: notifications.length,
                         itemBuilder: (context, index) {
                           final notification = notifications[index];
-                          return _buildNotificationItem(
-                            notification.title,
-                            notification.message,
-                            _getTimeAgo(notification.createdAt),
-                            _getNotificationIcon(notification.type),
-                            _getNotificationColor(notification.type),
-                            notification.isRead,
-                            () => _markAsRead(notification.id),
+                          final isDeleting = _deletingNotifications.contains(notification.id);
+                          
+                          return Dismissible(
+                            key: Key(notification.id),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              margin: const EdgeInsets.symmetric(vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Container(
+                                width: 60,
+                                height: 60,
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade100,
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red.shade700,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                            confirmDismiss: (direction) async {
+                              return await _deleteNotification(notification.id);
+                            },
+                            child: AnimatedOpacity(
+                              opacity: isDeleting ? 0.5 : 1.0,
+                              duration: const Duration(milliseconds: 200),
+                              child: _buildNotificationItem(
+                                notification.title,
+                                notification.message,
+                                _getTimeAgo(notification.createdAt),
+                                _getNotificationIcon(notification.type),
+                                _getNotificationColor(notification.type),
+                                notification.isRead,
+                                () => _markAsRead(notification.id),
+                                isDeleting,
+                              ),
+                            ),
                           );
                         },
                       );
@@ -193,14 +267,51 @@ class NotificationPanel extends StatelessWidget {
                       itemCount: notifications.length,
                       itemBuilder: (context, index) {
                         final notification = notifications[index];
-                        return _buildNotificationItem(
-                          notification.title,
-                          notification.message,
-                          _getTimeAgo(notification.createdAt),
-                          _getNotificationIcon(notification.type),
-                          _getNotificationColor(notification.type),
-                          notification.isRead,
-                          () => _markAsRead(notification.id),
+                        final isDeleting = _deletingNotifications.contains(notification.id);
+                        
+                        return Dismissible(
+                          key: Key(notification.id),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            margin: const EdgeInsets.symmetric(vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade100,
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              child: Icon(
+                                Icons.delete_outline,
+                                color: Colors.red.shade700,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                          confirmDismiss: (direction) async {
+                            return await _deleteNotification(notification.id);
+                          },
+                          child: AnimatedOpacity(
+                            opacity: isDeleting ? 0.5 : 1.0,
+                            duration: const Duration(milliseconds: 200),
+                            child: _buildNotificationItem(
+                              notification.title,
+                              notification.message,
+                              _getTimeAgo(notification.createdAt),
+                              _getNotificationIcon(notification.type),
+                              _getNotificationColor(notification.type),
+                              notification.isRead,
+                              () => _markAsRead(notification.id),
+                              isDeleting,
+                            ),
+                          ),
                         );
                       },
                     );
@@ -216,6 +327,99 @@ class NotificationPanel extends StatelessWidget {
 
   void _markAsRead(String notificationId) {
     FCMService().markNotificationAsRead(notificationId);
+  }
+
+  Future<bool> _deleteNotification(String notificationId) async {
+    setState(() {
+      _deletingNotifications.add(notificationId);
+    });
+
+    try {
+      await FCMService().deleteNotification(notificationId);
+      return true; // Allow dismissal
+    } catch (e) {
+      print('Error deleting notification: $e');
+      return false; // Prevent dismissal on error
+    } finally {
+      if (mounted) {
+        setState(() {
+          _deletingNotifications.remove(notificationId);
+        });
+      }
+    }
+  }
+
+  Future<void> _clearAllNotifications() async {
+    setState(() {
+      _isClearing = true;
+    });
+
+    try {
+      await FCMService().clearAllNotifications();
+    } catch (e) {
+      print('Error clearing all notifications: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isClearing = false;
+        });
+      }
+    }
+  }
+
+  void _showClearAllDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Clear All Notifications',
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to delete all notifications? This action cannot be undone.',
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _clearAllNotifications();
+              },
+              child: Text(
+                'Clear All',
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.red.shade600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   IconData _getNotificationIcon(String type) {
@@ -263,6 +467,7 @@ class NotificationPanel extends StatelessWidget {
     Color iconColor,
     bool isRead,
     VoidCallback onTap,
+    bool isDeleting,
   ) {
     return GestureDetector(
       onTap: onTap,
@@ -304,7 +509,16 @@ class NotificationPanel extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (!isRead)
+                      if (isDeleting)
+                        const SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                          ),
+                        )
+                      else if (!isRead)
                         Container(
                           width: 8,
                           height: 8,

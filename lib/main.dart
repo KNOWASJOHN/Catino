@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
+import 'notification_provider.dart';
 import 'pages/home.dart';
 import 'components/navbar.dart';
 import 'components/header.dart';
@@ -17,8 +19,8 @@ import 'pages/loginpage.dart';
 import 'services/auth_service.dart';
 import 'services/fcm_service.dart';
 import 'services/print_notification_service.dart';
+import 'services/order_notification_service.dart';
 import 'services/supabase_config.dart';
-import 'package:provider/provider.dart';
 import 'cart_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -45,6 +47,15 @@ void main() async {
     // Continue even if notification service fails
   }
 
+  // Initialize Order Notification Service
+  try {
+    await OrderNotificationService().initialize();
+    print('Order notification service initialized successfully');
+  } catch (e) {
+    print('Order notification service initialization failed: $e');
+    // Continue even if notification service fails
+  }
+
   // Initialize FCM background message handler BEFORE runApp
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
@@ -56,8 +67,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => CartProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         home: StreamBuilder(

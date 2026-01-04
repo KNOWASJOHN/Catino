@@ -36,6 +36,29 @@ class NotificationCacheService {
     return userId != null ? '${_baseUnreadCountKey}_$userId' : null;
   }
 
+  /// Remove individual notification from cache
+  Future<void> removeNotificationFromCache(String notificationId) async {
+    try {
+      await _validateUserCache();
+      
+      final cachedNotifications = await getCachedNotifications();
+      if (cachedNotifications != null) {
+        final notificationIndex = cachedNotifications.indexWhere((n) => n.id == notificationId);
+        if (notificationIndex != -1) {
+          final notification = cachedNotifications[notificationIndex];
+          // If removing an unread notification, decrement unread count
+          if (!notification.isRead) {
+            await decrementUnreadCount();
+          }
+          cachedNotifications.removeAt(notificationIndex);
+          await cacheNotifications(cachedNotifications);
+        }
+      }
+    } catch (e) {
+      print('Error removing notification from cache: $e');
+    }
+  }
+
   /// Validate and clear cache if user has changed
   Future<void> _validateUserCache() async {
     try {
