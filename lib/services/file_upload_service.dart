@@ -187,8 +187,6 @@ class FileUploadService {
       // Authenticate with Supabase
       await _authenticateWithSupabase();
 
-      final filePath = '$userId/$jobId/${_sanitizeFileName(fileName)}';
-      
       final files = await SupabaseConfig.storage
           .from(bucketName)
           .list(path: '$userId/$jobId');
