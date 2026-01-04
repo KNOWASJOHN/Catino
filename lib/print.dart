@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'components/upload.dart';
 import 'components/print_history.dart';
 import 'services/print_service.dart';
@@ -52,7 +53,7 @@ class _PrintPageState extends State<PrintPage> {
           child: Column(
             children: [
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-            const Upload(),
+            Upload(onUploadComplete: _loadPrintJobs),
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.6,
               child: _isLoading
@@ -142,6 +143,46 @@ class _PrintPageState extends State<PrintPage> {
             _buildDetailRow('Date', job.formattedDateTime),
             _buildDetailRow('Status', job.status.displayText),
             _buildDetailRow('Pages', '${job.pageCount}'),
+            if (job.fileUrl.isNotEmpty) ...[
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _openFile(job.fileUrl),
+                      icon: Icon(Icons.open_in_new, size: 16),
+                      label: Text(
+                        'View File',
+                        style: TextStyle(
+                          fontFamily: 'Unbounded',
+                          fontSize: 10,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF00C853),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => _deleteJob(job),
+                    child: Icon(Icons.delete, size: 16),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      minimumSize: Size(48, 36),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
         actions: [
@@ -186,6 +227,107 @@ class _PrintPageState extends State<PrintPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _openFile(String fileUrl) async {
+    try {
+      final uri = Uri.parse(fileUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        _showErrorSnackBar('Cannot open file. Please check your internet connection.');
+      }
+    } catch (e) {
+      _showErrorSnackBar('Error opening file: ${e.toString()}');
+    }
+  }
+
+  Future<void> _deleteJob(PrintJob job) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Delete Print Job',
+          style: TextStyle(
+            fontFamily: 'Unbounded',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete this print job? This action cannot be undone.',
+          style: TextStyle(fontFamily: 'Unbounded', fontSize: 12),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(fontFamily: 'Unbounded'),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(
+              'Delete',
+              style: TextStyle(fontFamily: 'Unbounded'),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      // Close the job details dialog first
+      Navigator.pop(context);
+      
+      try {
+        final success = await _printService.deletePrintJob(
+          job.id,
+          fileName: job.fileName,
+        );
+        
+        if (success) {
+          _showSuccessSnackBar('Print job deleted successfully');
+          _loadPrintJobs(); // Refresh the list
+        } else {
+          _showErrorSnackBar('Failed to delete print job');
+        }
+      } catch (e) {
+        _showErrorSnackBar('Error deleting job: ${e.toString()}');
+      }
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(fontFamily: 'Unbounded', fontSize: 12),
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(fontFamily: 'Unbounded', fontSize: 12),
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

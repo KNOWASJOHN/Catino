@@ -2,6 +2,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../components/print_history.dart';
 import 'print_cache_service.dart';
+import 'file_upload_service.dart';
 
 /// Service for managing print jobs in Firebase
 class PrintService {
@@ -9,6 +10,7 @@ class PrintService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final PrintCacheService _cacheService = PrintCacheService();
   bool _isListening = false;
+  String? _lastCacheUpdate; // Track last cache update to prevent duplicates
 
   /// Start listening to print jobs changes in Firebase
   void startListeningToPrintJobs() {
@@ -31,11 +33,26 @@ class PrintService {
           // Sort by date descending
           jobs.sort((a, b) => b.dateTime.compareTo(a.dateTime));
           
-          // Update cache with fresh data
-          _cacheService.cachePrintJobs(jobs);
-          print('Print jobs cache updated from Firebase listener (${jobs.length} jobs)');
+          // Create a hash of the jobs to detect changes
+          final jobsHash = jobs.map((job) => job.id).join(',');
+          
+          // Only update cache if the data has actually changed
+          if (_lastCacheUpdate != jobsHash) {
+            _lastCacheUpdate = jobsHash;
+            _cacheService.cachePrintJobs(jobs);
+            print('Print jobs cache updated from Firebase listener (${jobs.length} jobs)');
+          } else {
+            print('Skipping cache update - no changes detected');
+          }
         } catch (e) {
           print('Error processing print jobs update: $e');
+        }
+      } else {
+        // No jobs exist, clear cache
+        if (_lastCacheUpdate != 'empty') {
+          _lastCacheUpdate = 'empty';
+          _cacheService.cachePrintJobs([]);
+          print('Print jobs cache cleared - no jobs found');
         }
       }
     });
@@ -146,6 +163,7 @@ class PrintService {
       final userId = _auth.currentUser?.uid;
       if (userId == null) return false;
 
+      // Add to Firebase Database - the listener will update the cache
       await _database
           .child('users')
           .child(userId)
@@ -153,9 +171,7 @@ class PrintService {
           .child(job.id)
           .set(job.toMap());
 
-      // Add to cache immediately
-      await _cacheService.addJobToCache(job);
-
+      print('Print job added to Firebase: ${job.id}');
       return true;
     } catch (e) {
       print('Error adding print job: $e');
@@ -201,11 +217,17 @@ class PrintService {
     }
   }
 
-/// Delete a print job
-Future<bool> deletePrintJob(String jobId) async {
+/// Delete a print job and associated file
+Future<bool> deletePrintJob(String jobId, {String? fileName}) async {
   try {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return false;
+
+    // Delete file from Supabase if fileName provided
+    if (fileName != null && fileName.isNotEmpty) {
+      final fileUploadService = FileUploadService();
+      await fileUploadService.deleteFile(jobId, fileName);
+    }
 
     await _database
         .child('users')

@@ -16,6 +16,7 @@ import 'components/circle_reveal_transition.dart';
 import 'pages/loginpage.dart';
 import 'services/auth_service.dart';
 import 'services/fcm_service.dart';
+import 'services/supabase_config.dart';
 import 'package:provider/provider.dart';
 import 'cart_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,6 +26,14 @@ void main() async {
 
   // Initialize Firebase with options for all platforms
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize Supabase
+  try {
+    await SupabaseConfig.initialize();
+  } catch (e) {
+    print('Supabase initialization failed: $e');
+    // Continue without Supabase for now - the app should still work
+  }
 
   // Initialize FCM background message handler BEFORE runApp
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
