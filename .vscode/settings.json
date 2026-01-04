@@ -1,3 +1,4 @@
 {
-    "dart.flutterSdkPath": "E:\\fluttersdk\\flutter_windows_3.38.1-stable\\flutter"
+    "dart.flutterSdkPath": "E:\\fluttersdk\\flutter_windows_3.38.1-stable\\flutter",
+    "cmake.sourceDirectory": "E:/test/flutter_application_1/linux"
 }
