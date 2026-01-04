@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
+import 'package:provider/provider.dart';
 import 'dart:ui';
+import '../cart_provider.dart';
 
 
 
@@ -594,7 +596,15 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                     _buildNavItem(1, Icons.fastfood, 'Food', _navItemKeys[1]),
 
-                    _buildNavItem(2, Icons.shopping_cart_checkout_outlined, 'Cart', _navItemKeys[2]),
+                    Consumer<CartProvider>(
+
+                      builder: (context, cartProvider, child) {
+
+                        return _buildCartNavItem(2, Icons.shopping_cart_checkout_outlined, 'Cart', _navItemKeys[2], cartProvider.itemCount);
+
+                      },
+
+                    ),
 
                     _buildNavItem(3, Icons.print, 'Print', _navItemKeys[3]),
 
@@ -673,6 +683,152 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
                 semanticLabel: label,
 
               ),
+
+            ),
+
+          ),
+
+        ),
+
+      ),
+
+    );
+
+  }
+
+
+
+  Widget _buildCartNavItem(int index, IconData icon, String label, GlobalKey key, int cartCount) {
+
+    final isSelected = _selectedIndex == index;
+
+    
+
+    return Expanded(
+
+      child: GestureDetector(
+
+        onTap: () {
+
+          if (_selectedIndex != index && !widget.isTransitioning) {
+
+            setState(() {
+
+              _previousIndex = _selectedIndex;
+
+              _selectedIndex = index;
+
+            });
+
+            _updateItemPositions();
+
+            _bubbleController.forward(from: 0.0);
+
+            widget.onItemSelected(index);
+
+          }
+
+        },
+
+        child: Center(
+
+          child: SizedBox(
+
+            key: key,
+
+            width: 48,
+
+            height: 48,
+
+            child: Stack(
+
+              children: [
+
+                Center(
+
+                  child: Icon(
+
+                    icon,
+
+                    size: 24,
+
+                    color: isSelected ? Colors.grey.shade800 : Colors.grey.shade400,
+
+                    semanticLabel: label,
+
+                  ),
+
+                ),
+
+                if (cartCount > 0)
+
+                  Positioned(
+
+                    right: 6,
+
+                    top: 5,
+
+                    child: Container(
+
+                      padding: const EdgeInsets.all(4),
+
+                      decoration: BoxDecoration(
+
+                        color: Colors.red.shade400,
+
+                        shape: BoxShape.circle,
+
+                        boxShadow: [
+
+                          BoxShadow(
+
+                            color: Colors.red.shade400.withValues(alpha: 0.3),
+
+                            blurRadius: 4,
+
+                            spreadRadius: 1,
+
+                            offset: const Offset(0, 1),
+
+                          ),
+
+                        ],
+
+                      ),
+
+                      constraints: const BoxConstraints(
+
+                        minWidth: 16,
+
+                        minHeight: 16,
+
+                      ),
+
+                      child: Text(
+
+                        cartCount > 99 ? '99+' : cartCount.toString(),
+
+                        style: TextStyle(
+
+                          color: Colors.grey.shade800,
+
+                          fontSize: 10,
+
+                          fontWeight: FontWeight.bold,
+
+                          fontFamily: 'Unbounded',
+
+                        ),
+
+                        textAlign: TextAlign.center,
+
+                      ),
+
+                    ),
+
+                  ),
+
+              ],
 
             ),
 
