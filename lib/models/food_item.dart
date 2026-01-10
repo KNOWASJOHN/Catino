@@ -55,4 +55,20 @@ class FoodItem {
       tags: List<String>.from(map['tags'] ?? []),
     );
   }
+
+  // Create FoodItem from Supabase Map
+  factory FoodItem.fromSupabaseMap(Map<String, dynamic> map) {
+    return FoodItem(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      description: map['description'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
+      imageUrl: map['image_url'] ?? '',
+      category: map['category'] ?? 'Other',
+      isVegetarian: map['is_vegetarian'] ?? false,
+      isAvailable: map['is_available'] ?? true,
+      preparationTime: map['preparation_time'] ?? 15,
+      tags: List<String>.from(map['tags'] ?? []),
+    );
+  }
 }

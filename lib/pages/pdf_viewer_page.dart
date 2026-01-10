@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:http/http.dart' as http;
@@ -28,11 +29,19 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
   int currentPage = 0;
   int totalPages = 0;
   PDFViewController? controller;
+  http.Client? _httpClient;
 
   @override
   void initState() {
     super.initState();
+    _httpClient = http.Client();
     _downloadAndDisplayPDF();
+  }
+
+  @override
+  void dispose() {
+    _httpClient?.close();
+    super.dispose();
   }
 
   Future<void> _downloadAndDisplayPDF() async {
@@ -42,31 +51,151 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
         errorMessage = null;
       });
 
+      print('PDFViewer: Starting download from URL: ${widget.url}');
+
+      // Validate URL
+      final uri = Uri.parse(widget.url);
+      if (!uri.hasScheme || uri.host.isEmpty) {
+        throw Exception('Invalid URL format: ${widget.url}');
+      }
+
       // Download the PDF file
-      final response = await http.get(Uri.parse(widget.url));
+      final response = await (_httpClient ?? http.Client()).get(uri);
+      
+      print('PDFViewer: Response status: ${response.statusCode}');
+      print('PDFViewer: Response headers: ${response.headers}');
+      print('PDFViewer: Response body size: ${response.bodyBytes.length} bytes');
+      
+      // For non-200 responses, try to decode error message from JSON
+      if (response.statusCode != 200) {
+        final contentType = response.headers['content-type'] ?? '';
+        if (contentType.contains('application/json')) {
+          try {
+            final errorBody = String.fromCharCodes(response.bodyBytes);
+            print('PDFViewer: Error response body: $errorBody');
+          } catch (_) {}
+        }
+      }
       
       if (response.statusCode == 200) {
+        // Validate content type
+        final contentType = response.headers['content-type'] ?? '';
+        print('PDFViewer: Content-Type: $contentType');
+        
+        // Check if response is actually a PDF
+        final bytes = response.bodyBytes;
+        if (bytes.isEmpty) {
+          throw Exception('Downloaded file is empty (0 bytes)');
+        }
+        
+        // Validate PDF magic bytes (%PDF)
+        if (bytes.length < 4 || 
+            bytes[0] != 0x25 || bytes[1] != 0x50 || 
+            bytes[2] != 0x44 || bytes[3] != 0x46) {
+          print('PDFViewer: ERROR - File does not have PDF magic bytes');
+          print('PDFViewer: First 20 bytes: ${bytes.take(20).toList()}');
+          
+          // Try to decode as string to see if it's an error message
+          try {
+            final bodyText = String.fromCharCodes(bytes.take(500));
+            print('PDFViewer: Response body preview: $bodyText');
+          } catch (_) {}
+          
+          throw Exception('Downloaded file is not a valid PDF. Check if the file exists in storage and the URL is correct.');
+        }
+        
+        print('PDFViewer: Valid PDF detected');
+        
         // Get application documents directory
         final dir = await getApplicationDocumentsDirectory();
-        final fileName = widget.url.split('/').last;
+        
+        // Extract filename from URL, handling query parameters
+        String fileName = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : 'document.pdf';
+        // Remove query parameters from filename
+        fileName = fileName.split('?').first;
+        // Ensure .pdf extension
+        if (!fileName.toLowerCase().endsWith('.pdf')) {
+          fileName = '$fileName.pdf';
+        }
+        // Sanitize filename
+        fileName = fileName.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
+        
         final file = File('${dir.path}/$fileName');
+        print('PDFViewer: Saving to: ${file.path}');
         
         // Write the PDF data to a local file
-        await file.writeAsBytes(response.bodyBytes);
+        await file.writeAsBytes(bytes);
+        print('PDFViewer: File saved successfully');
+        
+        // Verify file was written
+        if (!await file.exists()) {
+          throw Exception('Failed to save PDF file to disk');
+        }
+        
+        final fileSize = await file.length();
+        print('PDFViewer: Saved file size: $fileSize bytes');
         
         setState(() {
           localFilePath = file.path;
           isLoading = false;
         });
-      } else {
+      } else if (response.statusCode == 403) {
+        final errorDetails = 'Access forbidden. This usually means:\n' +
+            '1. The Supabase Storage bucket is not public\n' +
+            '2. The file has been deleted\n' +
+            '3. Row Level Security (RLS) policies are blocking access';
+        print('PDFViewer: ERROR - $errorDetails');
         setState(() {
-          errorMessage = 'Failed to download PDF. Status: ${response.statusCode}';
+          errorMessage = 'Access Denied (403)\n\n$errorDetails';
+          isLoading = false;
+        });
+      } else if (response.statusCode == 404) {
+        final errorDetails = 'File not found. The PDF may have been deleted from storage or the URL is incorrect.';
+        print('PDFViewer: ERROR - $errorDetails');
+        setState(() {
+          errorMessage = 'File Not Found (404)\n\n$errorDetails';
+          isLoading = false;
+        });      } else if (response.statusCode == 400) {
+        String errorDetails = 'Bad Request. The file path may be invalid.';
+        
+        // Try to extract Supabase error message
+        final contentType = response.headers['content-type'] ?? '';
+        if (contentType.contains('application/json')) {
+          try {
+            final errorBody = String.fromCharCodes(response.bodyBytes);
+            errorDetails += '\\n\\nSupabase Response:\\n$errorBody';
+          } catch (_) {}
+        }
+        
+        print('PDFViewer: ERROR - $errorDetails');
+        setState(() {
+          errorMessage = 'Invalid Request (400)\\n\\n$errorDetails';
+          isLoading = false;
+        });      } else {
+        final errorDetails = 'HTTP ${response.statusCode}: ${response.reasonPhrase ?? "Unknown error"}';
+        print('PDFViewer: ERROR - $errorDetails');
+        setState(() {
+          errorMessage = 'Failed to download PDF\n\nStatus: $errorDetails\n\nURL: ${widget.url}';
           isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('PDFViewer: EXCEPTION - ${e.toString()}');
+      print('PDFViewer: Stack trace: $stackTrace');
+      
+      String userFriendlyError;
+      if (e.toString().contains('SocketException') || e.toString().contains('Failed host lookup')) {
+        userFriendlyError = 'Network Error\n\nCannot connect to server. Please check your internet connection.';
+      } else if (e.toString().contains('TimeoutException')) {
+        userFriendlyError = 'Download Timeout\n\nThe server took too long to respond. Please try again.';
+      } else if (e.toString().contains('Invalid URL')) {
+        userFriendlyError = 'Invalid URL\n\n${e.toString()}';
+      } else {
+        userFriendlyError = 'Error Loading PDF\n\n${e.toString()}';
+      }
+      
       setState(() {
-        errorMessage = 'Error downloading PDF: ${e.toString()}';
+        errorMessage = userFriendlyError;
         isLoading = false;
       });
     }

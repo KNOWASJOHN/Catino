@@ -4,7 +4,13 @@ import 'package:flutter/material.dart';
 enum OrderStatus {
   pending,
   completed,
-  cancelled;
+  cancelled,
+  ordered;  // Additional status from migration data
+
+  /// Get string value for database storage
+  String get value {
+    return name;
+  }
 
   /// Get display text for the status
   String get displayText {
@@ -15,6 +21,8 @@ enum OrderStatus {
         return 'Completed';
       case OrderStatus.cancelled:
         return 'Cancelled';
+      case OrderStatus.ordered:
+        return 'Ordered';
     }
   }
 
@@ -27,6 +35,8 @@ enum OrderStatus {
         return Colors.green;
       case OrderStatus.cancelled:
         return Colors.red;
+      case OrderStatus.ordered:
+        return Colors.blue;
     }
   }
 
@@ -39,6 +49,8 @@ enum OrderStatus {
         return Icons.check_circle;
       case OrderStatus.cancelled:
         return Icons.cancel;
+      case OrderStatus.ordered:
+        return Icons.shopping_bag;
     }
   }
 
@@ -51,6 +63,8 @@ enum OrderStatus {
         return OrderStatus.pending;
       case 'cancelled':
         return OrderStatus.cancelled;
+      case 'ordered':
+        return OrderStatus.ordered;
       default:
         return OrderStatus.pending;
     }
@@ -108,6 +122,19 @@ class Order {
     );
   }
 
+  /// Create from Supabase Map
+  factory Order.fromSupabaseMap(Map<String, dynamic> map) {
+    final itemsList = map['items'] as List<dynamic>? ?? [];
+    return Order(
+      id: map['id'] ?? '',
+      code: map['code'] ?? '00',
+      items: itemsList.map((item) => OrderItem.fromSupabaseMap(item as Map<String, dynamic>)).toList(),
+      qrCode: map['qr_code'] ?? '',
+      status: OrderStatus.fromString(map['status'] ?? 'pending'),
+      dateTime: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] ?? 0),
+    );
+  }
+
   /// Create a copy with updated status
   Order copyWith({
     String? id,
@@ -148,6 +175,14 @@ class OrderItem {
 
   /// Create from Firebase Map
   factory OrderItem.fromMap(Map<dynamic, dynamic> map) {
+    return OrderItem(
+      id: map['id'] ?? '',
+      quantity: map['qty'] ?? 0,
+    );
+  }
+
+  /// Create from Supabase Map
+  factory OrderItem.fromSupabaseMap(Map<String, dynamic> map) {
     return OrderItem(
       id: map['id'] ?? '',
       quantity: map['qty'] ?? 0,

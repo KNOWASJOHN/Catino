@@ -3,16 +3,16 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'services/data/order_service.dart';
-import 'models/order_model.dart';
-import 'models/food_item.dart';
+import '../services/data/supabase_order_service.dart';
+import '../models/order_model.dart';
+import '../models/food_item.dart';
 
 class CartProvider with ChangeNotifier {
   Map<String, int> _cart = {};
   Map<String, int> get cart => _cart;
 
   final SupabaseClient _supabase = Supabase.instance.client;
-  final OrderService _orderService = OrderService();
+  final SupabaseOrderService _orderService = SupabaseOrderService();
   String? _currentUserId;
   StreamSubscription<AuthState>? _authSubscription;
   StreamSubscription? _cartSubscription;

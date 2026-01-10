@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../lib/services/user_session_cache.dart';
-import '../lib/services/print_cache_service.dart';
-import '../lib/services/profile_cache_service.dart';
-import '../lib/components/print_history.dart';
+import '../lib/services/cache/user_session_cache.dart';
+import '../lib/services/cache/print_cache_service.dart';
+import '../lib/services/cache/profile_cache_service.dart';
+import '../lib/models/print_job.dart';
 
 /// Test file to verify user-specific cache functionality
 void main() {

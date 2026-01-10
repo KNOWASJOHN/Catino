@@ -47,6 +47,20 @@ class NotificationModel {
     );
   }
 
+  // Create from Supabase Map
+  factory NotificationModel.fromSupabaseMap(Map<String, dynamic> map) {
+    return NotificationModel(
+      id: map['id'] ?? '',
+      title: map['title'] ?? '',
+      message: map['message'] ?? '',
+      type: map['type'] ?? '',
+      userId: map['user_id'] ?? '',
+      createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at_timestamp'] ?? 0),
+      isRead: map['is_read'] ?? false,
+      data: map['data'] != null ? Map<String, dynamic>.from(map['data']) : null,
+    );
+  }
+
   // Copy with new fields
   NotificationModel copyWith({
     String? id,

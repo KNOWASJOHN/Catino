@@ -1,41 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
-import 'firebase_options.dart';
-import 'notification_provider.dart';
-import 'pages/home.dart';
-import 'components/navbar.dart';
-import 'components/header.dart';
-import 'page_components/notification_panel.dart';
-import 'page_components/searchbar.dart';
-import 'profile.dart';
-import 'print.dart';
-import 'cart.dart';
-import 'pages/food.dart';
-import 'components/page_transition.dart';
-import 'components/circle_reveal_transition.dart';
-import 'pages/loginpage.dart';
-import 'services/auth_service.dart';
-import 'services/fcm_service.dart';
-import 'services/print_notification_service.dart';
-import 'services/order_notification_service.dart';
-import 'services/supabase_config.dart';
-import 'cart_provider.dart';
+import 'providers/notification_provider.dart';
+import 'pages/home_page.dart';
+import 'components/common/navbar.dart';
+import 'components/common/header.dart';
+import 'components/notifications/notification_panel.dart';
+import 'components/common/search_bar.dart';
+import 'pages/profile_page.dart';
+import 'pages/print_page.dart';
+import 'pages/cart_page.dart';
+import 'pages/food_page.dart';
+import 'components/animations/page_transition.dart';
+import 'components/animations/circle_reveal_transition.dart';
+import 'pages/login_page.dart';
+import 'services/auth/supabase_auth_service.dart' as auth;
+import 'services/notifications/print_notification_service.dart';
+import 'services/notifications/order_notification_service.dart';
+import 'config/supabase_config.dart';
+import 'providers/cart_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase with options for all platforms
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
   // Initialize Supabase
   try {
     await SupabaseConfig.initialize();
+    print('Supabase initialized successfully');
   } catch (e) {
     print('Supabase initialization failed: $e');
-    // Continue without Supabase for now - the app should still work
+    // Cannot continue without Supabase
+    throw Exception('Failed to initialize Supabase: $e');
   }
 
   // Initialize Print Notification Service
@@ -56,9 +51,6 @@ void main() async {
     // Continue even if notification service fails
   }
 
-  // Initialize FCM background message handler BEFORE runApp
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
   runApp(const MyApp());
 }
 
@@ -75,7 +67,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         home: StreamBuilder(
-          stream: AuthService().authStateChanges,
+          stream: auth.SupabaseAuthService().authStateChanges,
           builder: (context, snapshot) {
             // Show loading while checking auth state
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -85,7 +77,7 @@ class MyApp extends StatelessWidget {
             }
 
             // Show login page if not authenticated
-            if (!snapshot.hasData) {
+            if (!snapshot.hasData || snapshot.data?.session == null) {
               return const LoginPage();
             }
 
@@ -134,13 +126,10 @@ class _MainScreenState extends State<MainScreen> {
     await prefs.setInt('selectedIndex', index);
   }
 
+  // FCM removed - using Supabase for notifications
   void _initializeFCM() async {
-    try {
-      await FCMService().initialize();
-      print('FCM initialized successfully');
-    } catch (e) {
-      print('Error initializing FCM: $e');
-    }
+    // FCM service removed
+    print('FCM service removed - using Supabase');
   }
 
   @override
@@ -219,15 +208,35 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
         if (_showNotificationPanel)
-          Positioned(
-            right: 5,
-            top: 30,
-            child: NotificationPanel(
-              onClose: () {
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                // Close panel when clicking outside
                 setState(() {
                   _showNotificationPanel = false;
                 });
               },
+              behavior: HitTestBehavior.translucent,
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: 5,
+                    top: 30,
+                    child: GestureDetector(
+                      onTap: () {
+                        // Prevent closing when clicking inside the panel
+                      },
+                      child: NotificationPanel(
+                        onClose: () {
+                          setState(() {
+                            _showNotificationPanel = false;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         if (_showSearchMenu)
