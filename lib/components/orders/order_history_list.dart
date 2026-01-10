@@ -838,7 +838,7 @@ class _QrCodeDialog extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.black87,
+        color: Colors.black,
         borderRadius: BorderRadius.circular(_kQrCodeRadius),
         boxShadow: [
           BoxShadow(

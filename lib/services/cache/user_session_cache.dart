@@ -1,4 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../utils/logger_config.dart';
+
+final _logger = AppLogger.getLogger('UserSessionCache');
 
 /// Utility class for caching user session data to minimize Supabase Auth calls
 class UserSessionCache {
@@ -29,7 +32,7 @@ class UserSessionCache {
       
       return _cachedUserId;
     } catch (e) {
-      print('Error getting current user ID: $e');
+      _logger.severe('Error getting current user ID', e);
       return null;
     }
   }

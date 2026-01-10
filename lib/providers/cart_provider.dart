@@ -6,6 +6,9 @@ import 'dart:convert';
 import '../services/data/supabase_order_service.dart';
 import '../models/order_model.dart';
 import '../models/food_item.dart';
+import '../utils/logger_config.dart';
+
+final _logger = AppLogger.getLogger('CartProvider');
 
 class CartProvider with ChangeNotifier {
   Map<String, int> _cart = {};
@@ -18,6 +21,7 @@ class CartProvider with ChangeNotifier {
   StreamSubscription? _cartSubscription;
   bool _isLoading = false;
   bool get isLoading => _isLoading;
+  bool _isLocalUpdate = false; // Flag to track local updates
   
   int get itemCount => _cart.values.fold(0, (sum, qty) => sum + qty);
 
@@ -64,22 +68,36 @@ class CartProvider with ChangeNotifier {
           .eq('user_id', uid)
           .listen(
         (data) {
-          _cart = {};
-          for (final item in data) {
-            _cart[item['food_item_id'] as String] = item['quantity'] as int;
+          // Skip stream updates if this was triggered by a local change
+          if (_isLocalUpdate) {
+            _isLocalUpdate = false;
+            return;
           }
-          _isLoading = false;
-          notifyListeners();
-          _saveToCache(uid, _cart);
+          
+          // Build new cart from stream data
+          final newCart = <String, int>{};
+          for (final item in data) {
+            newCart[item['food_item_id'] as String] = item['quantity'] as int;
+          }
+          
+          // Only update and notify if cart actually changed
+          if (!_areCartsEqual(_cart, newCart)) {
+            _cart = newCart;
+            _isLoading = false;
+            notifyListeners();
+            _saveToCache(uid, _cart);
+          } else {
+            _isLoading = false;
+          }
         },
         onError: (error) {
-          print('Error loading cart from Supabase: $error');
+          _logger.severe('Error loading cart from Supabase', error);
           _isLoading = false;
           notifyListeners();
         },
       );
     } catch (e) {
-      print('Error setting up cart listener: $e');
+      _logger.severe('Error setting up cart listener', e);
       _isLoading = false;
       notifyListeners();
     }
@@ -104,7 +122,7 @@ class CartProvider with ChangeNotifier {
         await _clearCache();
       }
     } catch (e) {
-      print('Error loading cart from cache: $e');
+      _logger.warning('Error loading cart from cache', e);
     }
   }
 
@@ -115,7 +133,7 @@ class CartProvider with ChangeNotifier {
       await prefs.setString('cart_user_id', uid);
       await prefs.setString('cart_data', jsonEncode(cartData));
     } catch (e) {
-      print('Error saving cart to cache: $e');
+      _logger.warning('Error saving cart to cache', e);
     }
   }
 
@@ -126,7 +144,7 @@ class CartProvider with ChangeNotifier {
       await prefs.remove('cart_user_id');
       await prefs.remove('cart_data');
     } catch (e) {
-      print('Error clearing cart cache: $e');
+      _logger.warning('Error clearing cart cache', e);
     }
   }
 
@@ -148,6 +166,7 @@ class CartProvider with ChangeNotifier {
     } else {
       _cart[id] = 1;
     }
+    _isLocalUpdate = true; // Mark as local update
     _saveCart();
     notifyListeners();
   }
@@ -158,18 +177,21 @@ class CartProvider with ChangeNotifier {
     } else {
       _cart[id] = qty;
     }
+    _isLocalUpdate = true; // Mark as local update
     _saveCart();
     notifyListeners();
   }
 
   void removeItem(String id) {
     _cart.remove(id);
+    _isLocalUpdate = true; // Mark as local update
     _saveCart();
     notifyListeners();
   }
 
   void clear() {
     _cart.clear();
+    _isLocalUpdate = true; // Mark as local update
     _saveCart();
     notifyListeners();
   }
@@ -200,7 +222,7 @@ class CartProvider with ChangeNotifier {
       // Also save to cache for offline access
       _saveToCache(uid, _cart);
     } catch (e) {
-      print('Error saving cart to Supabase: $e');
+      _logger.severe('Error saving cart to Supabase', e);
     }
   }
 
@@ -234,14 +256,23 @@ class CartProvider with ChangeNotifier {
       if (success) {
         // Clear cart after successful order placement
         clear();
-        print('Order placed successfully: $code');
+        _logger.info('Order placed successfully: $code');
       } else {
         throw Exception('Failed to place order');
       }
     } catch (e) {
-      print('Error placing order: $e');
+      _logger.severe('Error placing order', e);
       throw e; // Re-throw to handle in UI
     }
+  }
+
+  /// Helper method to compare two carts for equality
+  bool _areCartsEqual(Map<String, int> cart1, Map<String, int> cart2) {
+    if (cart1.length != cart2.length) return false;
+    for (final entry in cart1.entries) {
+      if (cart2[entry.key] != entry.value) return false;
+    }
+    return true;
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:cantino/services/log.dart';
 import '../../models/order_model.dart';
 import '../../models/notification_model.dart';
 
@@ -27,7 +28,7 @@ class OrderNotificationService {
       await _localNotifications.initialize(
         initSettings,
         onDidReceiveNotificationResponse: (details) {
-          print('Notification tapped: ${details.payload}');
+          logInfo('Notification tapped: ${details.payload}');
         },
       );
 
@@ -44,9 +45,9 @@ class OrderNotificationService {
           ?.createNotificationChannel(androidChannel);
       
       _initialized = true;
-      print('Order notification service initialized successfully');
+      logInfo('Order notification service initialized successfully');
     } catch (e) {
-      print('Error initializing order notification service: $e');
+      logError('Error initializing order notification service: $e', e);
     }
   }
 
@@ -143,7 +144,7 @@ class OrderNotificationService {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) {
-        print('Cannot create notification: User not logged in');
+        logWarning('Cannot create notification: User not logged in');
         return;
       }
 
@@ -169,13 +170,13 @@ class OrderNotificationService {
         'data': notification.data,
       });
 
-      print('Notification created in Supabase: $title');
+      logInfo('Notification created in Supabase: $title');
 
       // Show local notification
       await _showLocalNotification(title, message, notification.id, data);
       
     } catch (e) {
-      print('Error creating notification: $e');
+      logError('Error creating notification: $e', e);
     }
   }
 
@@ -204,9 +205,9 @@ class OrderNotificationService {
         payload: data['orderId'],
       );
       
-      print('Local notification shown: $title');
+      logInfo('Local notification shown: $title');
     } catch (e) {
-      print('Error showing local notification: $e');
+      logError('Error showing local notification: $e', e);
     }
   }
 

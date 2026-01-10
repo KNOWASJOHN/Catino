@@ -49,8 +49,8 @@ class _ProfileState extends State<Profile> {
         semester = userData['semester'] ?? '';
         hostel = userData['hostel'] ?? '';
         profilePicUrl = userData['profilePicUrl'] ?? '';
-        notificationsEnabled = userData['notificationsEnabled'] ?? true;
-        dietaryPreference = userData['dietaryPreference'] ?? 'Both';
+        notificationsEnabled = userData['notifications_enabled'] ?? true;
+        dietaryPreference = userData['dietary_preference'] ?? 'Both';
       });
     }
   }
@@ -483,9 +483,19 @@ class _ProfileState extends State<Profile> {
             onChanged: (newValue) async {
               onChanged(newValue);
               // Update in Firebase
-              await _authService.updateUserData({
-                'notificationsEnabled': newValue,
+              final updated = await _authService.updateUserData({
+                'notifications_enabled': newValue,
               });
+              if (updated) {
+                // Refresh cache with latest data from Supabase
+                final freshData = await _authService.getUserData(forceRefresh: true);
+                if (freshData != null) {
+                  // Optionally update local state if needed
+                  setState(() {
+                    notificationsEnabled = freshData['notifications_enabled'] ?? newValue;
+                  });
+                }
+              }
             },
             activeThumbColor: Colors.limeAccent.shade700,
           ),
@@ -552,9 +562,18 @@ class _ProfileState extends State<Profile> {
                   dietaryPreference = newValue;
                 });
                 // Update in Firebase
-                await _authService.updateUserData({
-                  'dietaryPreference': newValue,
+                final updated = await _authService.updateUserData({
+                  'dietary_preference': newValue,
                 });
+                if (updated) {
+                  // Refresh cache with latest data from Supabase
+                  final freshData = await _authService.getUserData(forceRefresh: true);
+                  if (freshData != null) {
+                    setState(() {
+                      dietaryPreference = freshData['dietary_preference'] ?? newValue;
+                    });
+                  }
+                }
               }
             },
           ),

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:http/http.dart' as http;
@@ -140,58 +139,38 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
           isLoading = false;
         });
       } else if (response.statusCode == 403) {
-        final errorDetails = 'Access forbidden. This usually means:\n' +
-            '1. The Supabase Storage bucket is not public\n' +
-            '2. The file has been deleted\n' +
-            '3. Row Level Security (RLS) policies are blocking access';
-        print('PDFViewer: ERROR - $errorDetails');
+        final errorDetails = 'Access forbidden. The file may have been deleted or access is restricted.';
         setState(() {
           errorMessage = 'Access Denied (403)\n\n$errorDetails';
           isLoading = false;
         });
       } else if (response.statusCode == 404) {
-        final errorDetails = 'File not found. The PDF may have been deleted from storage or the URL is incorrect.';
-        print('PDFViewer: ERROR - $errorDetails');
+        final errorDetails = 'File not found. The PDF may have been deleted.';
         setState(() {
           errorMessage = 'File Not Found (404)\n\n$errorDetails';
           isLoading = false;
         });      } else if (response.statusCode == 400) {
         String errorDetails = 'Bad Request. The file path may be invalid.';
         
-        // Try to extract Supabase error message
-        final contentType = response.headers['content-type'] ?? '';
-        if (contentType.contains('application/json')) {
-          try {
-            final errorBody = String.fromCharCodes(response.bodyBytes);
-            errorDetails += '\\n\\nSupabase Response:\\n$errorBody';
-          } catch (_) {}
-        }
-        
-        print('PDFViewer: ERROR - $errorDetails');
         setState(() {
-          errorMessage = 'Invalid Request (400)\\n\\n$errorDetails';
+          errorMessage = 'Invalid Request (400)\n\n$errorDetails';
           isLoading = false;
         });      } else {
         final errorDetails = 'HTTP ${response.statusCode}: ${response.reasonPhrase ?? "Unknown error"}';
-        print('PDFViewer: ERROR - $errorDetails');
         setState(() {
-          errorMessage = 'Failed to download PDF\n\nStatus: $errorDetails\n\nURL: ${widget.url}';
+          errorMessage = 'Failed to download PDF\n\nStatus: $errorDetails';
           isLoading = false;
         });
       }
-    } catch (e, stackTrace) {
-      print('PDFViewer: EXCEPTION - ${e.toString()}');
-      print('PDFViewer: Stack trace: $stackTrace');
+    } catch (e) {
       
       String userFriendlyError;
       if (e.toString().contains('SocketException') || e.toString().contains('Failed host lookup')) {
         userFriendlyError = 'Network Error\n\nCannot connect to server. Please check your internet connection.';
       } else if (e.toString().contains('TimeoutException')) {
         userFriendlyError = 'Download Timeout\n\nThe server took too long to respond. Please try again.';
-      } else if (e.toString().contains('Invalid URL')) {
-        userFriendlyError = 'Invalid URL\n\n${e.toString()}';
       } else {
-        userFriendlyError = 'Error Loading PDF\n\n${e.toString()}';
+        userFriendlyError = 'Error Loading PDF\n\nPlease try again later.';
       }
       
       setState(() {
@@ -235,7 +214,6 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
       return true;
     } catch (e) {
       // If permission request fails, continue with app directory download
-      print('Permission request error: $e');
       return true;
     }
   }

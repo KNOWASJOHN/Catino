@@ -99,7 +99,7 @@ class _NotificationPanelState extends State<NotificationPanel> {
       if (_notificationStreamController != null &&
           !_notificationStreamController!.isClosed) {
         _notificationStreamController!.add(
-          response as List<Map<String, dynamic>>,
+          response,
         );
       }
     } catch (e) {

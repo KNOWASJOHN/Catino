@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/order_model.dart';
+import 'package:cantino/services/log.dart';
 import '../cache/order_cache_service.dart';
 import '../notifications/order_notification_service.dart';
 
@@ -24,20 +25,20 @@ class OrderService {
         .eq('user_id', currentUserId!)
         .listen((data) {
       try {
-        print('Order data changed, processing for notifications...');
+        logDebug('Order data changed, processing for notifications...');
         _processOrderChanges(data);
       } catch (e) {
-        print('Error processing order changes: $e');
+        logError('Error processing order changes: $e', e);
       }
     });
     
-    print('Started listening to order changes for user: $currentUserId');
+    logInfo('Started listening to order changes for user: $currentUserId');
   }
 
   /// Stop listening to order changes
   void stopListeningToOrders() {
     _isListening = false;
-    print('Stopped listening to order changes');
+    logInfo('Stopped listening to order changes');
   }
 
   /// Process order changes and trigger notifications for status updates
@@ -71,14 +72,14 @@ class OrderService {
           final cachedOrder = cachedOrdersMap[order.id];
           if (cachedOrder != null && cachedOrder.status != order.status) {
             // Status changed - send immediate notification
-            print('Order status changed: ${order.code} - ${cachedOrder.status.displayText} -> ${order.status.displayText}');
+            logInfo('Order status changed: ${order.code} - ${cachedOrder.status.displayText} -> ${order.status.displayText}');
             _notificationService.notifyOrderStatusChanged(order, cachedOrder.status);
           } else if (cachedOrder == null) {
             // New order - send confirmation notification
-            print('New order detected: ${order.code}');
+            logInfo('New order detected: ${order.code}');
           }
         } catch (e) {
-          print('Error parsing order ${orderData['id']}: $e');
+          logError('Error parsing order ${orderData['id']}: $e', e);
         }
       }
 
@@ -86,7 +87,7 @@ class OrderService {
       await _cacheService.setCachedOrders(currentOrders);
       
     } catch (e) {
-      print('Error in _processOrderChanges: $e');
+      logError('Error in _processOrderChanges: $e', e);
     }
   }
 
@@ -103,7 +104,7 @@ class OrderService {
         'qty': item['quantity'],
       }).toList();
     } catch (e) {
-      print('Error fetching order items for $orderId: $e');
+      logError('Error fetching order items for $orderId: $e', e);
       return [];
     }
   }
@@ -112,7 +113,7 @@ class OrderService {
   Future<List<Order>> getUserOrders({int limit = 20, int offset = 0, bool skipCache = false}) async {
     try {
       if (currentUserId == null) {
-        print('User not authenticated');
+        logWarning('User not authenticated');
         return [];
       }
 
@@ -120,7 +121,7 @@ class OrderService {
       if (offset == 0 && !skipCache) {
         final cached = await _cacheService.getCachedOrders();
         if (cached != null && cached.isNotEmpty) {
-          print('Returning ${cached.length} cached orders');
+          logInfo('Returning ${cached.length} cached orders');
           
           // Check if cache is stale (older than 10 minutes)
           final cacheTime = await _cacheService.getCacheTimestamp();
@@ -128,11 +129,11 @@ class OrderService {
           if (cacheTime != null && now.difference(cacheTime).inMinutes < 10) {
             return cached.take(limit).toList();
           }
-          print('Cache is stale, fetching fresh data...');
+          logInfo('Cache is stale, fetching fresh data...');
         }
       }
 
-      print('Fetching orders from Supabase for user: $currentUserId (limit: $limit, offset: $offset)');
+      logInfo('Fetching orders from Supabase for user: $currentUserId (limit: $limit, offset: $offset)');
       
       final response = await _supabase
           .from('orders')
@@ -152,7 +153,7 @@ class OrderService {
           
           orders.add(Order.fromSupabaseMap(orderDataWithItems));
         } catch (e) {
-          print('Error parsing order ${orderData['id']}: $e');
+          logError('Error parsing order ${orderData['id']}: $e', e);
         }
       }
 
@@ -163,15 +164,14 @@ class OrderService {
         // Clean up cache - remove orders that don't exist in database
         await _cleanupCache(orders);
         
-        print('Successfully loaded and cached ${orders.length} orders');
+        logInfo('Successfully loaded and cached ${orders.length} orders');
       } else {
-        print('Successfully loaded ${orders.length} orders (offset: $offset)');
+        logInfo('Successfully loaded ${orders.length} orders (offset: $offset)');
       }
 
       return orders;
     } catch (e, stackTrace) {
-      print('Error loading orders: $e');
-      print('Stack trace: $stackTrace');
+      logError('Error loading orders: $e', e, stackTrace);
       
       // Try to return cached data as fallback
       final cached = await _cacheService.getCachedOrders();
@@ -190,14 +190,14 @@ class OrderService {
       
       for (final order in orphanedOrders) {
         await _cacheService.removeOrderFromCache(order.id);
-        print('Removed orphaned order from cache: ${order.id}');
+        logInfo('Removed orphaned order from cache: ${order.id}');
       }
       
       if (orphanedOrders.isNotEmpty) {
-        print('Cleaned up ${orphanedOrders.length} orphaned orders from cache');
+        logInfo('Cleaned up ${orphanedOrders.length} orphaned orders from cache');
       }
     } catch (e) {
-      print('Error cleaning up cache: $e');
+      logError('Error cleaning up cache: $e', e);
     }
   }
 
@@ -225,15 +225,14 @@ class OrderService {
 
       await _supabase.from('order_items').insert(orderItemsData);
 
-      print('Order added to Supabase: ${order.id}');
+      logInfo('Order added to Supabase: ${order.id}');
       
       // Send notification for new order (confirmation)
       await _notificationService.notifyOrderPlaced(order);
       
       return true;
     } catch (e, stackTrace) {
-      print('Error adding order: $e');
-      print('Stack trace: $stackTrace');
+      logError('Error adding order: $e', e, stackTrace);
       return false;
     }
   }
@@ -246,10 +245,10 @@ class OrderService {
           .update({'status': newStatus.value})
           .eq('id', orderId);
 
-      print('Order status updated: $orderId -> ${newStatus.displayText}');
+      logInfo('Order status updated: $orderId -> ${newStatus.displayText}');
       return true;
     } catch (e) {
-      print('Error updating order status: $e');
+      logError('Error updating order status: $e', e);
       return false;
     }
   }
@@ -275,7 +274,7 @@ class OrderService {
       
       return Order.fromSupabaseMap(orderDataWithItems);
     } catch (e) {
-      print('Error fetching order by ID: $e');
+      logError('Error fetching order by ID: $e', e);
       return null;
     }
   }
@@ -302,13 +301,13 @@ class OrderService {
           
           orders.add(Order.fromSupabaseMap(orderDataWithItems));
         } catch (e) {
-          print('Error parsing order ${orderData['id']}: $e');
+          logError('Error parsing order ${orderData['id']}: $e', e);
         }
       }
 
       return orders;
     } catch (e) {
-      print('Error fetching orders by status: $e');
+      logError('Error fetching orders by status: $e', e);
       return [];
     }
   }
@@ -317,11 +316,11 @@ class OrderService {
   Future<bool> deleteOrder(String orderId) async {
     try {
       if (currentUserId == null) {
-        print('User not authenticated');
+        logWarning('User not authenticated');
         return false;
       }
 
-      print('Deleting order: $orderId');
+      logInfo('Deleting order: $orderId');
 
       // Delete order items first (foreign key constraint)
       await _supabase
@@ -341,11 +340,10 @@ class OrderService {
       // Clear the entire cache to ensure fresh data on next load
       await _cacheService.clearCache();
 
-      print('Order deleted successfully: $orderId');
+      logInfo('Order deleted successfully: $orderId');
       return true;
     } catch (e, stackTrace) {
-      print('Error deleting order: $e');
-      print('Stack trace: $stackTrace');
+      logError('Error deleting order: $e', e, stackTrace);
       return false;
     }
   }

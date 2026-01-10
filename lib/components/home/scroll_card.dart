@@ -54,7 +54,6 @@ class _ScrollcardState extends State<Scrollcard> {
   bool _loading = true;
   String? _error;
   StreamSubscription? _cardsSubscription;
-  bool _useRealtimeSubscription = true;
   int _retryCount = 0;
   static const int _maxRetries = 3;
 
@@ -98,22 +97,16 @@ class _ScrollcardState extends State<Scrollcard> {
               _cachedCards = List<ScrollCardModel>.from(cards);
               _loading = false;
               _error = null;
-              _useRealtimeSubscription = true;
             });
             _startAutoScroll();
           }
         }
       }, onError: (e) {
-        print('Realtime subscription error: $e');
         if (mounted) {
-          setState(() {
-            _useRealtimeSubscription = false;
-          });
           _fallbackToRestApi();
         }
       });
     } catch (e) {
-      print('Error setting up realtime subscription: $e');
       _fallbackToRestApi();
     }
   }
@@ -173,7 +166,6 @@ class _ScrollcardState extends State<Scrollcard> {
       }
       _retryCount = 0; // Reset on success
     } catch (e) {
-      print('Error fetching cards with REST API: $e');
       _retryCount++;
       
       if (mounted) {

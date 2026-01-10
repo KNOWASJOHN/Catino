@@ -6,7 +6,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../services/storage/file_upload_service.dart';
 import '../../services/data/print_service.dart';
 import '../../models/print_job.dart';
-import 'print_history.dart';
 
 class Upload extends StatefulWidget {
   final VoidCallback? onUploadComplete;

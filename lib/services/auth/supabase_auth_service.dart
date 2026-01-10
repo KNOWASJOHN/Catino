@@ -197,16 +197,18 @@ class SupabaseAuthService {
   }
 
   /// Update user data in Supabase
+  /// Call this when user changes notification or dietary preference in UI
   Future<bool> updateUserData(Map<String, dynamic> userData) async {
     try {
       if (currentUserId == null) return false;
 
+      // Update user data in Supabase
       await _supabase
           .from('users')
           .update(userData)
           .eq('id', currentUserId!);
 
-      // Update cache
+      // Update cache with fresh data
       final fullUserData = await getUserData(forceRefresh: true);
       if (fullUserData != null) {
         await _profileCacheService.cacheProfileData(fullUserData);

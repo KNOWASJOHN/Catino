@@ -5,6 +5,7 @@ import 'package:cantino/components/food/food_section.dart';
 import 'package:cantino/components/home/scroll_card.dart';
 import 'package:cantino/components/orders/order_history_list.dart';
 import 'package:cantino/services/cache/usercard_cache_service.dart';
+import 'package:cantino/services/log.dart';
 import 'dart:async';
 
 class HomePage extends StatefulWidget {
@@ -190,7 +191,7 @@ class _HomePageState extends State<HomePage> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('Error updating UserCard data: $e');
+      logError('Error updating UserCard data: $e', e);
       // On error, keep displaying cached data if available
       if (_userCardData == null) {
         setState(() {

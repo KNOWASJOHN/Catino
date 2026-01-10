@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:logging/logging.dart';
 import 'providers/notification_provider.dart';
 import 'pages/home_page.dart';
 import 'components/common/navbar.dart';
@@ -18,36 +20,39 @@ import 'services/notifications/print_notification_service.dart';
 import 'services/notifications/order_notification_service.dart';
 import 'config/supabase_config.dart';
 import 'providers/cart_provider.dart';
+import 'utils/logger_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+final _logger = AppLogger.getLogger('Main');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize logger
+  AppLogger.initialize(level: Level.INFO);
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
   // Initialize Supabase
   try {
     await SupabaseConfig.initialize();
-    print('Supabase initialized successfully');
   } catch (e) {
-    print('Supabase initialization failed: $e');
     // Cannot continue without Supabase
-    throw Exception('Failed to initialize Supabase: $e');
+    throw Exception('Failed to initialize application services');
   }
 
   // Initialize Print Notification Service
   try {
     await PrintNotificationService().initialize();
-    print('Print notification service initialized successfully');
   } catch (e) {
-    print('Print notification service initialization failed: $e');
     // Continue even if notification service fails
   }
 
   // Initialize Order Notification Service
   try {
     await OrderNotificationService().initialize();
-    print('Order notification service initialized successfully');
   } catch (e) {
-    print('Order notification service initialization failed: $e');
     // Continue even if notification service fails
   }
 
@@ -129,7 +134,7 @@ class _MainScreenState extends State<MainScreen> {
   // FCM removed - using Supabase for notifications
   void _initializeFCM() async {
     // FCM service removed
-    print('FCM service removed - using Supabase');
+    _logger.info('FCM service removed - using Supabase');
   }
 
   @override

@@ -1,24 +1,27 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Supabase configuration and initialization
 class SupabaseConfig {
-  // TODO: Replace with your actual Supabase project URL and anon key
-  static const String supabaseUrl = 'https://wbvrndjwnhrjbpidtkjy.supabase.co';
-  static const String supabaseAnonKey = 'sb_publishable_F00gG8GMVWhNOrNH2VI4Qw_JFHS5t8P';
+  /// Get Supabase URL from environment variables
+  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
+  
+  /// Get Supabase Anon Key from environment variables
+  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   /// Initialize Supabase
   static Future<void> initialize() async {
-    try {
-      await Supabase.initialize(
-        url: supabaseUrl,
-        anonKey: supabaseAnonKey,
-        debug: true, // Set to false in production
+    if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+      throw Exception(
+        'Supabase credentials not found. Please ensure .env file exists with SUPABASE_URL and SUPABASE_ANON_KEY'
       );
-      print('Supabase initialized successfully');
-    } catch (e) {
-      print('Failed to initialize Supabase: $e');
-      rethrow;
     }
+    
+    await Supabase.initialize(
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey,
+      debug: false,
+    );
   }
 
   /// Get Supabase client instance

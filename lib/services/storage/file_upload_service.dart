@@ -75,8 +75,6 @@ class FileUploadService {
       final fileName = _sanitizeFileName(file.name);
       final filePath = '$userId/$jobId/$fileName';
 
-      print('Uploading file to: $filePath');
-
       // Get file bytes
       Uint8List? fileBytes;
       if (file.bytes != null) {
@@ -88,7 +86,7 @@ class FileUploadService {
       }
 
       // Upload to Supabase Storage
-      final response = await SupabaseConfig.storage
+      await SupabaseConfig.storage
           .from(bucketName)
           .uploadBinary(
             filePath,
@@ -99,25 +97,19 @@ class FileUploadService {
             ),
           );
 
-      print('Upload response: $response');
-
       // Get public URL
       final publicUrl = SupabaseConfig.storage
           .from(bucketName)
           .getPublicUrl(filePath);
 
-      print('File uploaded successfully: $publicUrl');
       return publicUrl;
     } catch (e) {
-      print('File upload failed: $e');
       if (e.toString().contains('row-level security') || 
           e.toString().contains('RLS') ||
           e.toString().contains('Unauthorized')) {
-        throw FileUploadException(
-          'Storage access denied. Please check Supabase bucket policies and ensure the bucket is public or RLS is properly configured.'
-        );
+        throw FileUploadException('Storage access denied. Please contact support.');
       }
-      throw FileUploadException('Upload failed: $e');
+      throw FileUploadException('Upload failed. Please try again.');
     }
   }
 
@@ -126,7 +118,6 @@ class FileUploadService {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) {
-        print('User not authenticated - cannot delete file');
         return false;
       }
 
@@ -139,10 +130,8 @@ class FileUploadService {
           .from(bucketName)
           .remove([filePath]);
 
-      print('File deleted successfully: $filePath');
       return true;
     } catch (e) {
-      print('File deletion failed: $e');
       return false;
     }
   }
@@ -178,7 +167,6 @@ class FileUploadService {
           
       return files.any((file) => file.name == _sanitizeFileName(fileName));
     } catch (e) {
-      print('Error checking file existence: $e');
       return false;
     }
   }

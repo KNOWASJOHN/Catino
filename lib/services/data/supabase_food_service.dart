@@ -1,6 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/food_item.dart';
 import '../cache/food_cache_service.dart';
+import '../../utils/logger_config.dart';
+
+final _logger = AppLogger.getLogger('SupabaseFoodService');
 
 /// Service for managing food items in Supabase
 class SupabaseFoodService {
@@ -22,9 +25,9 @@ class SupabaseFoodService {
         
         // Update cache with fresh data
         _cacheService.cacheAllFoodItems(foodItems);
-        print('Food items cache updated from Supabase listener (${foodItems.length} items)');
+        _logger.info('Food items cache updated from Supabase listener (${foodItems.length} items)');
       } catch (e) {
-        print('Error processing food items update: $e');
+        _logger.warning('Error processing food items update', e);
       }
     });
   }
@@ -39,14 +42,14 @@ class SupabaseFoodService {
       if (!forceRefresh) {
         final cachedItems = await _cacheService.getCachedAllFoodItems();
         if (cachedItems != null && cachedItems.isNotEmpty) {
-          print('Returning ${cachedItems.length} food items from cache');
+          _logger.fine('Returning ${cachedItems.length} food items from cache');
           // Refresh in background if stale
           _refreshFoodDataIfStale();
           return cachedItems;
         }
       }
       
-      print('Fetching all food items from Supabase');
+      _logger.info('Fetching all food items from Supabase');
       
       final response = await _supabase
           .from('food_items')
@@ -56,15 +59,14 @@ class SupabaseFoodService {
       
       List<FoodItem> foodItems = response.map<FoodItem>((item) => FoodItem.fromSupabaseMap(item)).toList();
       
-      print('Returning ${foodItems.length} parsed food items');
+      _logger.info('Returning ${foodItems.length} parsed food items');
       
       // Cache the fresh data
       await _cacheService.cacheAllFoodItems(foodItems);
       
       return foodItems;
     } catch (e, stackTrace) {
-      print('Error fetching food items: $e');
-      print('Stack trace: $stackTrace');
+      _logger.severe('Error fetching food items', e, stackTrace);
       // Fallback to cache if Supabase fails
       final cachedItems = await _cacheService.getCachedAllFoodItems();
       return cachedItems ?? [];
@@ -79,11 +81,11 @@ class SupabaseFoodService {
       );
       
       if (isStale) {
-        print('Food cache is stale, refreshing in background');
+        _logger.info('Food cache is stale, refreshing in background');
         getAllFoodItems(forceRefresh: true);
       }
     } catch (e) {
-      print('Error checking food cache staleness: $e');
+      _logger.warning('Error checking food cache staleness', e);
     }
   }
 
@@ -94,12 +96,12 @@ class SupabaseFoodService {
       if (!forceRefresh) {
         final cachedItems = await _cacheService.getCachedFoodItemsByCategory(category);
         if (cachedItems != null && cachedItems.isNotEmpty) {
-          print('Returning ${cachedItems.length} items from cache for category: $category');
+          _logger.fine('Returning ${cachedItems.length} items from cache for category: $category');
           return cachedItems;
         }
       }
       
-      print('Fetching food items for category: $category');
+      _logger.info('Fetching food items for category: $category');
       
       final response = await _supabase
           .from('food_items')
@@ -110,15 +112,14 @@ class SupabaseFoodService {
       
       List<FoodItem> foodItems = response.map<FoodItem>((item) => FoodItem.fromSupabaseMap(item)).toList();
       
-      print('Returning ${foodItems.length} parsed food items for category: $category');
+      _logger.info('Returning ${foodItems.length} parsed food items for category: $category');
       
       // Cache the fresh data
       await _cacheService.cacheFoodItemsByCategory(category, foodItems);
       
       return foodItems;
     } catch (e, stackTrace) {
-      print('Error fetching food items by category: $e');
-      print('Stack trace: $stackTrace');
+      _logger.severe('Error fetching food items by category', e, stackTrace);
       // Fallback to cache
       final cachedItems = await _cacheService.getCachedFoodItemsByCategory(category);
       return cachedItems ?? [];
@@ -132,12 +133,12 @@ class SupabaseFoodService {
       if (!forceRefresh) {
         final cachedItems = await _cacheService.getCachedVegetarianItems();
         if (cachedItems != null && cachedItems.isNotEmpty) {
-          print('Returning ${cachedItems.length} vegetarian items from cache');
+          _logger.fine('Returning ${cachedItems.length} vegetarian items from cache');
           return cachedItems;
         }
       }
       
-      print('Fetching vegetarian food items from Supabase');
+      _logger.info('Fetching vegetarian food items from Supabase');
       
       final response = await _supabase
           .from('food_items')
@@ -148,15 +149,14 @@ class SupabaseFoodService {
       
       List<FoodItem> foodItems = response.map<FoodItem>((item) => FoodItem.fromSupabaseMap(item)).toList();
       
-      print('Returning ${foodItems.length} vegetarian items');
+      _logger.info('Returning ${foodItems.length} vegetarian items');
       
       // Cache the fresh data
       await _cacheService.cacheVegetarianItems(foodItems);
       
       return foodItems;
     } catch (e, stackTrace) {
-      print('Error fetching vegetarian items: $e');
-      print('Stack trace: $stackTrace');
+      _logger.severe('Error fetching vegetarian items', e, stackTrace);
       // Fallback to cache
       final cachedItems = await _cacheService.getCachedVegetarianItems();
       return cachedItems ?? [];
@@ -173,13 +173,13 @@ class SupabaseFoodService {
           // Filter to only non-vegetarian items
           final nonVegItems = cachedItems.where((item) => !item.isVegetarian).toList();
           if (nonVegItems.isNotEmpty) {
-            print('Returning ${nonVegItems.length} non-vegetarian items from cache');
+            _logger.fine('Returning ${nonVegItems.length} non-vegetarian items from cache');
             return nonVegItems;
           }
         }
       }
       
-      print('Fetching non-vegetarian food items from Supabase');
+      _logger.info('Fetching non-vegetarian food items from Supabase');
       
       final response = await _supabase
           .from('food_items')
@@ -190,7 +190,7 @@ class SupabaseFoodService {
       
       List<FoodItem> foodItems = response.map<FoodItem>((item) => FoodItem.fromSupabaseMap(item)).toList();
       
-      print('Returning ${foodItems.length} non-vegetarian items');
+      _logger.info('Returning ${foodItems.length} non-vegetarian items');
       
       // Update the cache with all items (not just non-veg)
       final allItems = await getAllFoodItems();
@@ -198,8 +198,7 @@ class SupabaseFoodService {
       
       return foodItems;
     } catch (e, stackTrace) {
-      print('Error fetching non-vegetarian items: $e');
-      print('Stack trace: $stackTrace');
+      _logger.severe('Error fetching non-vegetarian items', e, stackTrace);
       // Fallback to cache
       final cachedItems = await _cacheService.getCachedVegetarianItems();
       return cachedItems?.where((item) => !item.isVegetarian).toList() ?? [];
@@ -209,7 +208,7 @@ class SupabaseFoodService {
   /// Search food items by name or description
   Future<List<FoodItem>> searchFoodItems(String query) async {
     try {
-      print('Searching food items for: $query');
+      _logger.info('Searching food items for: $query');
       
       final response = await _supabase
           .from('food_items')
@@ -220,11 +219,10 @@ class SupabaseFoodService {
       
       List<FoodItem> foodItems = response.map<FoodItem>((item) => FoodItem.fromSupabaseMap(item)).toList();
       
-      print('Found ${foodItems.length} items matching query');
+      _logger.info('Found ${foodItems.length} items matching query');
       return foodItems;
     } catch (e, stackTrace) {
-      print('Error searching food items: $e');
-      print('Stack trace: $stackTrace');
+      _logger.severe('Error searching food items', e, stackTrace);
       return [];
     }
   }

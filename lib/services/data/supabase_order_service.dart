@@ -2,6 +2,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/order_model.dart';
 import '../cache/order_cache_service.dart';
 import '../notifications/order_notification_service.dart';
+import '../../utils/logger_config.dart';
+
+final _logger = AppLogger.getLogger('SupabaseOrderService');
 
 /// Service for managing orders in Supabase with real-time status change notifications
 class SupabaseOrderService {
@@ -25,20 +28,20 @@ class SupabaseOrderService {
         .eq('user_id', currentUserId!)
         .listen((data) {
       try {
-        print('Order data changed, processing for notifications...');
+        _logger.info('Order data changed, processing for notifications...');
         _processOrderChanges(data);
       } catch (e) {
-        print('Error processing order changes: $e');
+        _logger.severe('Error processing order changes', e);
       }
     });
     
-    print('Started listening to order changes for user: $currentUserId');
+    _logger.info('Started listening to order changes for user: $currentUserId');
   }
 
   /// Stop listening to order changes
   void stopListeningToOrders() {
     _isListening = false;
-    print('Stopped listening to order changes');
+    _logger.info('Stopped listening to order changes');
   }
 
   /// Process order changes and trigger notifications for status updates
@@ -72,14 +75,14 @@ class SupabaseOrderService {
           final cachedOrder = cachedOrdersMap[order.id];
           if (cachedOrder != null && cachedOrder.status != order.status) {
             // Status changed - send immediate notification
-            print('Order status changed: ${order.code} - ${cachedOrder.status.displayText} -> ${order.status.displayText}');
+            _logger.info('Order status changed: ${order.code} - ${cachedOrder.status.displayText} -> ${order.status.displayText}');
             _notificationService.notifyOrderStatusChanged(order, cachedOrder.status);
           } else if (cachedOrder == null) {
             // New order - send confirmation notification
-            print('New order detected: ${order.code}');
+            _logger.info('New order detected: ${order.code}');
           }
         } catch (e) {
-          print('Error parsing order ${orderData['id']}: $e');
+          _logger.warning('Error parsing order ${orderData['id']}', e);
         }
       }
 
@@ -88,7 +91,7 @@ class SupabaseOrderService {
 
       
     } catch (e) {
-      print('Error in _processOrderChanges: $e');
+      _logger.severe('Error in _processOrderChanges', e);
     }
   }
 
@@ -105,7 +108,7 @@ class SupabaseOrderService {
         'qty': item['quantity'],
       }).toList();
     } catch (e) {
-      print('Error fetching order items for $orderId: $e');
+      _logger.warning('Error fetching order items for $orderId', e);
       return [];
     }
   }
@@ -114,14 +117,14 @@ class SupabaseOrderService {
   Future<List<Order>> getUserOrders() async {
     try {
       if (currentUserId == null) {
-        print('User not authenticated');
+        _logger.warning('User not authenticated');
         return [];
       }
 
       // Try cache first for faster loading
       final cached = await _cacheService.getCachedOrders();
       if (cached != null && cached.isNotEmpty) {
-        print('Returning ${cached.length} cached orders');
+        _logger.fine('Returning ${cached.length} cached orders');
         
         // Check if cache is stale (older than 10 minutes)
         final cacheTime = await _cacheService.getCacheTimestamp();
@@ -129,10 +132,10 @@ class SupabaseOrderService {
         if (cacheTime != null && now.difference(cacheTime).inMinutes < 10) {
           return cached;
         }
-        print('Cache is stale, fetching fresh data...');
+        _logger.info('Cache is stale, fetching fresh data...');
       }
 
-      print('Fetching orders from Supabase for user: $currentUserId');
+      _logger.info('Fetching orders from Supabase for user: $currentUserId');
       
       final response = await _supabase
           .from('orders')
@@ -151,18 +154,17 @@ class SupabaseOrderService {
           
           orders.add(Order.fromSupabaseMap(orderDataWithItems));
         } catch (e) {
-          print('Error parsing order ${orderData['id']}: $e');
+          _logger.warning('Error parsing order ${orderData['id']}', e);
         }
       }
 
       // Cache the results
       await _cacheService.setCachedOrders(orders);
-      print('Successfully loaded and cached ${orders.length} orders');
+      _logger.info('Successfully loaded and cached ${orders.length} orders');
 
       return orders;
     } catch (e, stackTrace) {
-      print('Error loading orders: $e');
-      print('Stack trace: $stackTrace');
+      _logger.severe('Error loading orders', e, stackTrace);
       
       // Try to return cached data as fallback
       final cached = await _cacheService.getCachedOrders();
@@ -194,15 +196,14 @@ class SupabaseOrderService {
 
       await _supabase.from('order_items').insert(orderItemsData);
 
-      print('Order added to Supabase: ${order.id}');
+      _logger.info('Order added to Supabase: ${order.id}');
       
       // Send notification for new order (confirmation)
       await _notificationService.notifyOrderPlaced(order);
       
       return true;
     } catch (e, stackTrace) {
-      print('Error adding order: $e');
-      print('Stack trace: $stackTrace');
+      _logger.severe('Error adding order', e, stackTrace);
       return false;
     }
   }
@@ -215,10 +216,10 @@ class SupabaseOrderService {
           .update({'status': newStatus.value})
           .eq('id', orderId);
 
-      print('Order status updated: $orderId -> ${newStatus.displayText}');
+      _logger.info('Order status updated: $orderId -> ${newStatus.displayText}');
       return true;
     } catch (e) {
-      print('Error updating order status: $e');
+      _logger.severe('Error updating order status', e);
       return false;
     }
   }
@@ -244,7 +245,7 @@ class SupabaseOrderService {
       
       return Order.fromSupabaseMap(orderDataWithItems);
     } catch (e) {
-      print('Error fetching order by ID: $e');
+      _logger.warning('Error fetching order by ID', e);
       return null;
     }
   }
@@ -271,13 +272,13 @@ class SupabaseOrderService {
           
           orders.add(Order.fromSupabaseMap(orderDataWithItems));
         } catch (e) {
-          print('Error parsing order ${orderData['id']}: $e');
+          _logger.warning('Error parsing order ${orderData['id']}', e);
         }
       }
 
       return orders;
     } catch (e) {
-      print('Error fetching orders by status: $e');
+      _logger.severe('Error fetching orders by status', e);
       return [];
     }
   }

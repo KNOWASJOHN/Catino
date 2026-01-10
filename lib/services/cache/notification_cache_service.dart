@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cantino/services/log.dart';
 import '../../models/notification_model.dart';
 import 'user_session_cache.dart';
 
@@ -61,7 +62,7 @@ class NotificationCacheService {
         }
       }
     } catch (e) {
-      print('Error removing notification from cache: $e');
+      logError('Error removing notification from cache: $e', e);
     }
   }
 
@@ -80,7 +81,7 @@ class NotificationCacheService {
         }
       }
     } catch (e) {
-      print('Error validating user cache: $e');
+      logError('Error validating user cache: $e', e);
     }
   }
 
@@ -98,7 +99,7 @@ class NotificationCacheService {
         }
       }
     } catch (e) {
-      print('Error clearing user caches: $e');
+      logError('Error clearing user caches: $e', e);
     }
   }
 
@@ -112,7 +113,7 @@ class NotificationCacheService {
       final unreadCountKey = await _getUnreadCountKey();
       
       if (cacheKey == null || lastUpdateKey == null || unreadCountKey == null) {
-        print('User not authenticated - cannot cache notifications');
+        logWarning('User not authenticated - cannot cache notifications');
         return;
       }
       
@@ -140,9 +141,9 @@ class NotificationCacheService {
       final unreadCount = notificationsToCache.where((n) => !n.isRead).length;
       await prefs.setInt(unreadCountKey, unreadCount);
       
-      print('Cached ${notificationsToCache.length} notifications (unread: $unreadCount)');
+      logInfo('Cached ${notificationsToCache.length} notifications (unread: $unreadCount)');
     } catch (e) {
-      print('Error caching notifications: $e');
+      logError('Error caching notifications: $e', e);
     }
   }
 
@@ -153,7 +154,7 @@ class NotificationCacheService {
       
       final cacheKey = await _getCacheKey();
       if (cacheKey == null) {
-        print('User not authenticated - cannot retrieve cached notifications');
+        logWarning('User not authenticated - cannot retrieve cached notifications');
         return null;
       }
       
@@ -161,7 +162,7 @@ class NotificationCacheService {
       final jsonString = prefs.getString(cacheKey);
       
       if (jsonString == null) {
-        print('No cached notifications found');
+        logInfo('No cached notifications found');
         return null;
       }
       
@@ -170,10 +171,10 @@ class NotificationCacheService {
           .map((json) => NotificationModel.fromMap(Map<String, dynamic>.from(json)))
           .toList();
       
-      print('Retrieved ${notifications.length} notifications from cache');
+      logInfo('Retrieved ${notifications.length} notifications from cache');
       return notifications;
     } catch (e) {
-      print('Error retrieving cached notifications: $e');
+      logError('Error retrieving cached notifications: $e', e);
       return null;
     }
   }
@@ -188,7 +189,7 @@ class NotificationCacheService {
       final lastUpdate = prefs.getInt(lastUpdateKey);
       
       if (lastUpdate == null) {
-        print('No cache timestamp found - cache is stale');
+        logInfo('No cache timestamp found - cache is stale');
         return true;
       }
       
@@ -197,10 +198,10 @@ class NotificationCacheService {
       final age = now.difference(lastUpdateTime);
       final isStale = age > maxAge;
       
-      print('Cache age: ${age.inMinutes} minutes, stale: $isStale');
+      logInfo('Cache age: ${age.inMinutes} minutes, stale: $isStale');
       return isStale;
     } catch (e) {
-      print('Error checking cache staleness: $e');
+      logError('Error checking cache staleness: $e', e);
       return true; // Assume stale on error
     }
   }
@@ -227,7 +228,7 @@ class NotificationCacheService {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getInt(unreadCountKey) ?? 0;
     } catch (e) {
-      print('Error getting unread count: $e');
+      logError('Error getting unread count: $e', e);
       return 0;
     }
   }
@@ -235,8 +236,7 @@ class NotificationCacheService {
   /// Sync unread count from Supabase database and update cache
   Future<int> syncUnreadCountFromDatabase(String userId) async {
     try {
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      print('🔍 Syncing unread count from database for user: $userId');
+      logInfo('Syncing unread count from database for user: $userId');
       
       // Import Supabase client
       final supabase = Supabase.instance.client;
@@ -249,8 +249,8 @@ class NotificationCacheService {
           .order('created_at_timestamp', ascending: false)
           .limit(50);
       
-      print('📊 Total notifications in database: ${(allNotifications as List).length}');
-      print('📝 All notifications data: $allNotifications');
+      logInfo('Total notifications in database: ${(allNotifications as List).length}');
+      logDebug('All notifications data: $allNotifications');
       
       // Convert to NotificationModel and cache the full list
       final notificationModels = (allNotifications as List)
@@ -259,7 +259,7 @@ class NotificationCacheService {
       
       // Cache the notification list
       await cacheNotifications(notificationModels);
-      print('💾 Cached ${notificationModels.length} notification objects');
+      logInfo('Cached ${notificationModels.length} notification objects');
       
       // Query unread notifications count
       final response = await supabase
@@ -269,22 +269,21 @@ class NotificationCacheService {
           .eq('is_read', false);
       
       final unreadCount = (response as List).length;
-      print('🔔 Unread notifications count: $unreadCount');
-      print('📝 Unread notifications data: $response');
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      logInfo('Unread notifications count: $unreadCount');
+      logDebug('Unread notifications data: $response');
       
       // Update cache (cacheNotifications already does this, but ensure it's set)
       final unreadCountKey = await _getUnreadCountKey();
       if (unreadCountKey != null) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt(unreadCountKey, unreadCount);
-        print('✅ Cache updated with unread count: $unreadCount');
+        logInfo('Cache updated with unread count: $unreadCount');
       }
       
       return unreadCount;
     } catch (e) {
-      print('❌ Error syncing unread count from database: $e');
-      print('Stack trace: ${StackTrace.current}');
+      logError('Error syncing unread count from database: $e', e);
+      logError('Stack trace: ${StackTrace.current}');
       return 0;
     }
   }
@@ -298,9 +297,9 @@ class NotificationCacheService {
       final prefs = await SharedPreferences.getInstance();
       final currentCount = prefs.getInt(unreadCountKey) ?? 0;
       await prefs.setInt(unreadCountKey, currentCount + 1);
-      print('Incremented unread count to ${currentCount + 1}');
+      logInfo('Incremented unread count to ${currentCount + 1}');
     } catch (e) {
-      print('Error incrementing unread count: $e');
+      logError('Error incrementing unread count: $e', e);
     }
   }
 
@@ -314,10 +313,10 @@ class NotificationCacheService {
       final currentCount = prefs.getInt(unreadCountKey) ?? 0;
       if (currentCount > 0) {
         await prefs.setInt(unreadCountKey, currentCount - 1);
-        print('Decremented unread count to ${currentCount - 1}');
+        logInfo('Decremented unread count to ${currentCount - 1}');
       }
     } catch (e) {
-      print('Error decrementing unread count: $e');
+      logError('Error decrementing unread count: $e', e);
     }
   }
 
@@ -334,7 +333,7 @@ class NotificationCacheService {
       await prefs.remove(cacheKey);
       await prefs.remove(lastUpdateKey);
       await prefs.remove(unreadCountKey);
-      print('Cleared notification cache');
+      logInfo('Cleared notification cache');
     } catch (e) {
       print('Error clearing cache: $e');
     }
@@ -346,9 +345,9 @@ class NotificationCacheService {
       await _clearAllUserCaches();
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_userIdKey);
-      print('Cleared all users notification cache');
+      logInfo('Cleared all users notification cache');
     } catch (e) {
-      print('Error clearing all users notification cache: $e');
+      logError('Error clearing all users notification cache: $e', e);
     }
   }
 
@@ -360,7 +359,7 @@ class NotificationCacheService {
       
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(lastUpdateKey);
-      print('Invalidated notification cache');
+      logInfo('Invalidated notification cache');
     } catch (e) {
       print('Error invalidating cache: $e');
     }

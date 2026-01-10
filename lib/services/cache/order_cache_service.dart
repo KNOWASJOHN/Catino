@@ -1,6 +1,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../models/order_model.dart';
+import '../../utils/logger_config.dart';
+
+final _logger = AppLogger.getLogger('OrderCacheService');
 
 /// Service for caching orders locally to improve performance and offline support
 class OrderCacheService {
@@ -20,7 +23,7 @@ class OrderCacheService {
       final List<dynamic> ordersList = jsonDecode(ordersJson);
       return ordersList.map((orderData) => Order.fromMap(orderData)).toList();
     } catch (e) {
-      print('Error getting cached orders: $e');
+      _logger.warning('Error getting cached orders', e);
       return null;
     }
   }
@@ -34,9 +37,9 @@ class OrderCacheService {
       await prefs.setString(_ordersKey, ordersJson);
       await prefs.setString(_timestampKey, DateTime.now().toIso8601String());
       
-      print('Cached ${orders.length} orders successfully');
+      _logger.fine('Cached ${orders.length} orders successfully');
     } catch (e) {
-      print('Error caching orders: $e');
+      _logger.warning('Error caching orders', e);
     }
   }
 
@@ -50,10 +53,10 @@ class OrderCacheService {
       if (orderIndex != -1) {
         cachedOrders[orderIndex] = updatedOrder;
         await setCachedOrders(cachedOrders);
-        print('Updated cached order: ${updatedOrder.code} - ${updatedOrder.status.displayText}');
+        _logger.fine('Updated cached order: ${updatedOrder.code} - ${updatedOrder.status.displayText}');
       }
     } catch (e) {
-      print('Error updating cached order: $e');
+      _logger.warning('Error updating cached order', e);
     }
   }
 
@@ -69,12 +72,12 @@ class OrderCacheService {
       if (cachedOrders.length < initialLength) {
         // Order was found and removed, update cache with new list
         await setCachedOrders(cachedOrders);
-        print('Removed order $orderId from cache');
+        _logger.fine('Removed order $orderId from cache');
       } else {
-        print('Order $orderId not found in cache');
+        _logger.fine('Order $orderId not found in cache');
       }
     } catch (e) {
-      print('Error removing order from cache: $e');
+      _logger.warning('Error removing order from cache', e);
     }
   }
 
@@ -89,7 +92,7 @@ class OrderCacheService {
       }
       return null;
     } catch (e) {
-      print('Error getting cache timestamp: $e');
+      _logger.warning('Error getting cache timestamp', e);
       return null;
     }
   }
@@ -100,9 +103,9 @@ class OrderCacheService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_ordersKey);
       await prefs.remove(_timestampKey);
-      print('Order cache cleared');
+      _logger.info('Order cache cleared');
     } catch (e) {
-      print('Error clearing order cache: $e');
+      _logger.warning('Error clearing order cache', e);
     }
   }
 
@@ -115,7 +118,7 @@ class OrderCacheService {
       final age = DateTime.now().difference(timestamp);
       return age.inMinutes > maxAgeMinutes;
     } catch (e) {
-      print('Error checking cache staleness: $e');
+      _logger.warning('Error checking cache staleness', e);
       return true;
     }
   }
@@ -132,7 +135,7 @@ class OrderCacheService {
         'isStale': await isCacheStale(),
       };
     } catch (e) {
-      print('Error getting cache info: $e');
+      _logger.warning('Error getting cache info', e);
       return {
         'orderCount': 0,
         'lastUpdated': null,

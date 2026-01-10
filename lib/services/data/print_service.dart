@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/print_job.dart';
+import '../../utils/logger_config.dart';
+
+final _logger = AppLogger.getLogger('PrintService');
 
 /// Service for managing print jobs using Supabase
 class PrintService {
@@ -20,7 +23,7 @@ class PrintService {
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
         .listen((data) {
-      print('Print jobs updated: ${data.length} jobs');
+      _logger.info('Print jobs updated: ${data.length} jobs');
     });
   }
 
@@ -48,7 +51,7 @@ class PrintService {
           .map((json) => PrintJob.fromSupabaseMap(json))
           .toList();
     } catch (e) {
-      print('Error getting user print jobs: $e');
+      _logger.severe('Error getting user print jobs', e);
       rethrow;
     }
   }
@@ -74,7 +77,7 @@ class PrintService {
 
       return true;
     } catch (e) {
-      print('Error adding print job: $e');
+      _logger.severe('Error adding print job', e);
       return false;
     }
   }
@@ -87,7 +90,7 @@ class PrintService {
           .update({'status': status.displayText.toLowerCase()})
           .eq('id', jobId);
     } catch (e) {
-      print('Error updating print job status: $e');
+      _logger.severe('Error updating print job status', e);
       rethrow;
     }
   }
@@ -98,7 +101,7 @@ class PrintService {
       await _supabase.from('print_jobs').delete().eq('id', jobId);
       return true;
     } catch (e) {
-      print('Error deleting print job: $e');
+      _logger.severe('Error deleting print job', e);
       return false;
     }
   }
