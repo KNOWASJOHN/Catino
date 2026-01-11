@@ -85,7 +85,10 @@ class CategorySection extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.limeAccent,
                     borderRadius: BorderRadius.circular(20),
@@ -124,7 +127,8 @@ class CategorySection extends StatelessWidget {
                     foodItem: foodItem,
                     quantity: quantity,
                     onAdd: () => onAddToCart(foodItem.id),
-                    onUpdateQuantity: (qty) => onUpdateQuantity(foodItem.id, qty),
+                    onUpdateQuantity: (qty) =>
+                        onUpdateQuantity(foodItem.id, qty),
                     isHorizontalView: true,
                   ),
                 ),
@@ -164,7 +168,7 @@ class _FoodListPageState extends State<FoodListPage> {
 
   // Add a map of ScrollControllers for each category
   final Map<String, ScrollController> _categoryScrollControllers = {};
-  
+
   Map<String, List<FoodItem>> _groupedFoodItems = {};
   bool _loading = true;
 
@@ -215,13 +219,13 @@ class _FoodListPageState extends State<FoodListPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _groupedFoodItems.isEmpty
-              ? Center(
-                  child: Text(
-                    'No food items available',
-                    style: TextStyle(fontFamily: 'Unbounded'),
-                  ),
-                )
-              : _buildFoodList(),
+          ? Center(
+              child: Text(
+                'No food items available',
+                style: TextStyle(fontFamily: 'Unbounded'),
+              ),
+            )
+          : _buildFoodList(),
     );
   }
 
@@ -229,27 +233,35 @@ class _FoodListPageState extends State<FoodListPage> {
     final categories = _groupedFoodItems.keys.toList()
       ..sort((a, b) => a.compareTo(b));
 
-    final cartProvider = Provider.of<CartProvider>(context);
-    final cart = cartProvider.cart;
+    // Initialize ScrollControllers once for all categories before building
+    for (final category in categories) {
+      _categoryScrollControllers.putIfAbsent(
+        category,
+        () => ScrollController(),
+      );
+    }
 
-    return ListView.builder(
-      itemCount: categories.length,
-      itemBuilder: (context, index) {
-        final category = categories[index];
-        final foodItems = _groupedFoodItems[category]!;
-        // Get or create a ScrollController for this category
-        final controller = _categoryScrollControllers.putIfAbsent(
-          category,
-          () => ScrollController(),
-        );
-        return CategorySection(
-          category: category,
-          foodItems: foodItems,
-          cart: cart,
-          onAddToCart: (id) => cartProvider.addItem(id),
-          onUpdateQuantity: (id, qty) => cartProvider.updateQuantity(id, qty),
-          icon: _categoryIcons[category] ?? Icons.restaurant_menu,
-          scrollController: controller,
+    return Consumer<CartProvider>(
+      builder: (context, cartProvider, child) {
+        final cart = cartProvider.cart;
+        return ListView.builder(
+          itemCount: categories.length,
+          itemBuilder: (context, index) {
+            final category = categories[index];
+            final foodItems = _groupedFoodItems[category]!;
+            // Use the pre-created ScrollController
+            final controller = _categoryScrollControllers[category]!;
+            return CategorySection(
+              category: category,
+              foodItems: foodItems,
+              cart: cart,
+              onAddToCart: (id) => cartProvider.addItem(id),
+              onUpdateQuantity: (id, qty) =>
+                  cartProvider.updateQuantity(id, qty),
+              icon: _categoryIcons[category] ?? Icons.restaurant_menu,
+              scrollController: controller,
+            );
+          },
         );
       },
     );
@@ -278,15 +290,17 @@ class FoodItemCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       elevation: 8,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: Colors.black87,
       shadowColor: Colors.black.withOpacity(0.3),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final maxH = constraints.maxHeight.isFinite ? constraints.maxHeight : 320.0;
-          final imageHeight = isHorizontalView ? (maxH * 0.42).clamp(70.0, 140.0) : (maxH * 0.30).clamp(90.0, 180.0);
+          final maxH = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : 320.0;
+          final imageHeight = isHorizontalView
+              ? (maxH * 0.42).clamp(70.0, 140.0)
+              : (maxH * 0.30).clamp(90.0, 180.0);
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -305,16 +319,24 @@ class FoodItemCard extends StatelessWidget {
                         child: Image.network(
                           foodItem.imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: theme.colorScheme.surfaceContainerHighest,
-                            child: Icon(Icons.restaurant_menu, size: 48, color: theme.disabledColor),
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
+                                child: Icon(
+                                  Icons.restaurant_menu,
+                                  size: 48,
+                                  color: theme.disabledColor,
+                                ),
+                              ),
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return Center(
                               child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
                                     : null,
                                 color: theme.colorScheme.primary,
                               ),
@@ -326,9 +348,14 @@ class FoodItemCard extends StatelessWidget {
                         top: 8,
                         right: 8,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: foodItem.isVegetarian ? const Color(0xFF00C853) : Colors.red.shade700,
+                            color: foodItem.isVegetarian
+                                ? const Color(0xFF00C853)
+                                : Colors.red.shade700,
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: [
                               BoxShadow(
@@ -406,7 +433,10 @@ class FoodItemCard extends StatelessWidget {
                           const Spacer(),
                           if (foodItem.tags.isNotEmpty)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white24,
                                 borderRadius: BorderRadius.circular(8),
@@ -431,7 +461,11 @@ class FoodItemCard extends StatelessWidget {
                       // Preparation time and quantity/button
                       Row(
                         children: [
-                          Icon(Icons.access_time, size: 10, color: Colors.white60),
+                          Icon(
+                            Icons.access_time,
+                            size: 10,
+                            color: Colors.white60,
+                          ),
                           const SizedBox(width: 1),
                           Text(
                             '${foodItem.preparationTime} min',
@@ -452,7 +486,9 @@ class FoodItemCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF00C853).withOpacity(0.3),
+                                    color: const Color(
+                                      0xFF00C853,
+                                    ).withOpacity(0.3),
                                     blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   ),
@@ -463,9 +499,16 @@ class FoodItemCard extends StatelessWidget {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF00C853),
                                   shadowColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                   fixedSize: Size(8, 8),
-                                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    8,
+                                    8,
+                                    8,
+                                    8,
+                                  ),
                                 ),
                                 child: const Text(
                                   'ADD',
@@ -485,7 +528,9 @@ class FoodItemCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF00C853).withOpacity(0.3),
+                                    color: const Color(
+                                      0xFF00C853,
+                                    ).withOpacity(0.3),
                                     blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   ),
@@ -495,13 +540,26 @@ class FoodItemCard extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
-                                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                                    icon: const Icon(Icons.remove, color: Colors.white, size: 12),
-                                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                                    onPressed: () => onUpdateQuantity(quantity - 1),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 2,
+                                    ),
+                                    icon: const Icon(
+                                      Icons.remove,
+                                      color: Colors.white,
+                                      size: 12,
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 18,
+                                      minHeight: 18,
+                                    ),
+                                    onPressed: () =>
+                                        onUpdateQuantity(quantity - 1),
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 1,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.white24,
                                       borderRadius: BorderRadius.circular(6),
@@ -517,10 +575,20 @@ class FoodItemCard extends StatelessWidget {
                                     ),
                                   ),
                                   IconButton(
-                                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                                    icon: const Icon(Icons.add, color: Colors.white, size: 12),
-                                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                                    onPressed: () => onUpdateQuantity(quantity + 1),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 2,
+                                    ),
+                                    icon: const Icon(
+                                      Icons.add,
+                                      color: Colors.white,
+                                      size: 12,
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 18,
+                                      minHeight: 18,
+                                    ),
+                                    onPressed: () =>
+                                        onUpdateQuantity(quantity + 1),
                                   ),
                                 ],
                               ),

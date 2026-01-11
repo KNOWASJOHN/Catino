@@ -21,8 +21,11 @@ class CartProvider with ChangeNotifier {
   StreamSubscription? _cartSubscription;
   bool _isLoading = false;
   bool get isLoading => _isLoading;
-  bool _isLocalUpdate = false; // Flag to track local updates
-  
+
+  // Track pending local updates to prevent stream-triggered rebuilds
+  final Set<String> _pendingLocalUpdates = {};
+  Timer? _debounceTimer;
+
   int get itemCount => _cart.values.fold(0, (sum, qty) => sum + qty);
 
   CartProvider() {
@@ -51,7 +54,7 @@ class CartProvider with ChangeNotifier {
   /// Load cart from Supabase with offline cache fallback
   Future<void> _loadCart() async {
     _cancelCartSubscription();
-    
+
     final uid = _currentUserId;
     if (uid == null) return;
 
@@ -67,35 +70,38 @@ class CartProvider with ChangeNotifier {
           .stream(primaryKey: ['user_id', 'food_item_id'])
           .eq('user_id', uid)
           .listen(
-        (data) {
-          // Skip stream updates if this was triggered by a local change
-          if (_isLocalUpdate) {
-            _isLocalUpdate = false;
-            return;
-          }
-          
-          // Build new cart from stream data
-          final newCart = <String, int>{};
-          for (final item in data) {
-            newCart[item['food_item_id'] as String] = item['quantity'] as int;
-          }
-          
-          // Only update and notify if cart actually changed
-          if (!_areCartsEqual(_cart, newCart)) {
-            _cart = newCart;
-            _isLoading = false;
-            notifyListeners();
-            _saveToCache(uid, _cart);
-          } else {
-            _isLoading = false;
-          }
-        },
-        onError: (error) {
-          _logger.severe('Error loading cart from Supabase', error);
-          _isLoading = false;
-          notifyListeners();
-        },
-      );
+            (data) {
+              // Skip stream updates if we have pending local updates
+              if (_pendingLocalUpdates.isNotEmpty) {
+                _logger.fine(
+                  'Skipping stream update - local update in progress',
+                );
+                return;
+              }
+
+              // Build new cart from stream data
+              final newCart = <String, int>{};
+              for (final item in data) {
+                newCart[item['food_item_id'] as String] =
+                    item['quantity'] as int;
+              }
+
+              // Only update and notify if cart actually changed
+              if (!_areCartsEqual(_cart, newCart)) {
+                _cart = newCart;
+                _isLoading = false;
+                notifyListeners();
+                _saveToCache(uid, _cart);
+              } else {
+                _isLoading = false;
+              }
+            },
+            onError: (error) {
+              _logger.severe('Error loading cart from Supabase', error);
+              _isLoading = false;
+              notifyListeners();
+            },
+          );
     } catch (e) {
       _logger.severe('Error setting up cart listener', e);
       _isLoading = false;
@@ -108,14 +114,19 @@ class CartProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cachedUserId = prefs.getString('cart_user_id');
-      
+
       // Only load cache if it belongs to the current user
       if (cachedUserId == uid) {
         final cartJson = prefs.getString('cart_data');
         if (cartJson != null) {
           final decoded = jsonDecode(cartJson) as Map<String, dynamic>;
-          _cart = decoded.map((k, v) => MapEntry(k, v as int));
-          notifyListeners();
+          final newCart = decoded.map((k, v) => MapEntry(k, v as int));
+
+          // Only update and notify if cart actually changed
+          if (!_areCartsEqual(_cart, newCart)) {
+            _cart = newCart;
+            notifyListeners();
+          }
         }
       } else {
         // Clear cache if it belongs to a different user
@@ -166,7 +177,7 @@ class CartProvider with ChangeNotifier {
     } else {
       _cart[id] = 1;
     }
-    _isLocalUpdate = true; // Mark as local update
+    _markLocalUpdate(id);
     _saveCart();
     notifyListeners();
   }
@@ -177,21 +188,21 @@ class CartProvider with ChangeNotifier {
     } else {
       _cart[id] = qty;
     }
-    _isLocalUpdate = true; // Mark as local update
+    _markLocalUpdate(id);
     _saveCart();
     notifyListeners();
   }
 
   void removeItem(String id) {
     _cart.remove(id);
-    _isLocalUpdate = true; // Mark as local update
+    _markLocalUpdate(id);
     _saveCart();
     notifyListeners();
   }
 
   void clear() {
     _cart.clear();
-    _isLocalUpdate = true; // Mark as local update
+    _markLocalUpdate('__all__');
     _saveCart();
     notifyListeners();
   }
@@ -200,25 +211,26 @@ class CartProvider with ChangeNotifier {
   void _saveCart() async {
     final uid = _currentUserId;
     if (uid == null) return;
-    
+
     try {
       // First, delete all existing cart items for this user
-      await _supabase
-          .from('user_cart')
-          .delete()
-          .eq('user_id', uid);
-      
+      await _supabase.from('user_cart').delete().eq('user_id', uid);
+
       // Then insert the current cart items
       if (_cart.isNotEmpty) {
-        final cartData = _cart.entries.map((entry) => {
-          'user_id': uid,
-          'food_item_id': entry.key,
-          'quantity': entry.value,
-        }).toList();
-        
+        final cartData = _cart.entries
+            .map(
+              (entry) => {
+                'user_id': uid,
+                'food_item_id': entry.key,
+                'quantity': entry.value,
+              },
+            )
+            .toList();
+
         await _supabase.from('user_cart').insert(cartData);
       }
-      
+
       // Also save to cache for offline access
       _saveToCache(uid, _cart);
     } catch (e) {
@@ -235,10 +247,14 @@ class CartProvider with ChangeNotifier {
       final code = orderId.substring(6); // Shorter code for display
 
       // Convert cart items to OrderItem objects
-      final orderItems = cartItems.map((e) => OrderItem(
-        id: (e['item'] as FoodItem).id,
-        quantity: e['qty'] as int,
-      )).toList();
+      final orderItems = cartItems
+          .map(
+            (e) => OrderItem(
+              id: (e['item'] as FoodItem).id,
+              quantity: e['qty'] as int,
+            ),
+          )
+          .toList();
 
       // Create Order object with proper model structure
       final order = Order(
@@ -252,7 +268,7 @@ class CartProvider with ChangeNotifier {
 
       // Use OrderService for proper status management and automatic notifications
       final success = await _orderService.addOrder(order);
-      
+
       if (success) {
         // Clear cart after successful order placement
         clear();
@@ -266,6 +282,18 @@ class CartProvider with ChangeNotifier {
     }
   }
 
+  /// Mark a local update to prevent stream-triggered rebuilds
+  void _markLocalUpdate(String id) {
+    _pendingLocalUpdates.add(id);
+
+    // Clear the pending update after a delay
+    // This prevents the stream from triggering a rebuild during the save operation
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 1000), () {
+      _pendingLocalUpdates.clear();
+    });
+  }
+
   /// Helper method to compare two carts for equality
   bool _areCartsEqual(Map<String, int> cart1, Map<String, int> cart2) {
     if (cart1.length != cart2.length) return false;
@@ -277,6 +305,7 @@ class CartProvider with ChangeNotifier {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _cancelCartSubscription();
     _authSubscription?.cancel();
     _orderService.stopListeningToOrders();
