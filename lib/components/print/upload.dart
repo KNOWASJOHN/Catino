@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart' as syncfusion_pdf;
 import '../../services/storage/file_upload_service.dart';
 import '../../services/data/print_service.dart';
 import '../../models/print_job.dart';
+import '../../utils/pricing_config.dart';
 
 class Upload extends StatefulWidget {
   final VoidCallback? onUploadComplete;
-  
+
   const Upload({super.key, this.onUploadComplete});
 
   @override
@@ -20,21 +22,30 @@ class _UploadState extends State<Upload> {
   final FileUploadService _fileUploadService = FileUploadService();
   final PrintService _printService = PrintService();
   final Connectivity _connectivity = Connectivity();
-  
+
   bool _isUploading = false;
   double _uploadProgress = 0.0;
   PlatformFile? _selectedFile;
 
+  // Print options state
+  int _pdfPageCount = 0; // Extracted from PDF
+  int _copies = 1; // Number of copies to print
+  ColorMode _colorMode = ColorMode.blackAndWhite;
+  Sides _sides = Sides.single;
+  double _calculatedPrice = 0.0;
+  bool _isExtractingPages = false;
+
   /// Check if device has internet connectivity
   Future<bool> _hasInternetConnection() async {
     try {
-      final List<ConnectivityResult> connectivityResults = await _connectivity.checkConnectivity();
-      
+      final List<ConnectivityResult> connectivityResults = await _connectivity
+          .checkConnectivity();
+
       // Check if any connection is available
       if (connectivityResults.contains(ConnectivityResult.none)) {
         return false;
       }
-      
+
       // Additional check: try to ping a reliable server
       final result = await InternetAddress.lookup('google.com');
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
@@ -73,6 +84,10 @@ class _UploadState extends State<Upload> {
           if (_selectedFile != null) ...[
             SizedBox(height: 16),
             _buildFileInfo(),
+            SizedBox(height: 20),
+            _buildPrintOptions(),
+            SizedBox(height: 16),
+            _buildPriceDisplay(),
             SizedBox(height: 16),
             _buildActionButtons(),
           ],
@@ -118,11 +133,7 @@ class _UploadState extends State<Upload> {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.check_circle,
-            size: 30,
-            color: Colors.green,
-          ),
+          Icon(Icons.check_circle, size: 30, color: Colors.green),
           SizedBox(height: 4),
           Text(
             'PDF Selected',
@@ -140,11 +151,7 @@ class _UploadState extends State<Upload> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          Icons.upload_file,
-          size: 30,
-          color: Colors.black87,
-        ),
+        Icon(Icons.upload_file, size: 30, color: Colors.black87),
         SizedBox(height: 4),
         Text(
           'Upload Your Document',
@@ -221,6 +228,341 @@ class _UploadState extends State<Upload> {
     );
   }
 
+  /// Extract page count from PDF file
+  Future<int> _extractPdfPageCount(PlatformFile file) async {
+    try {
+      if (file.path == null) return 0;
+
+      setState(() {
+        _isExtractingPages = true;
+      });
+
+      final pdfFile = File(file.path!);
+      final bytes = await pdfFile.readAsBytes();
+
+      // Use syncfusion_flutter_pdf to get the page count reliably
+      final syncfusionDocument = syncfusion_pdf.PdfDocument(inputBytes: bytes);
+      final pageCount = syncfusionDocument.pages.count;
+      syncfusionDocument.dispose(); // Dispose the document to free resources
+
+      setState(() {
+        _isExtractingPages = false;
+      });
+
+      return pageCount;
+    } catch (e) {
+      print('Error extracting PDF page count: $e');
+      setState(() {
+        _isExtractingPages = false;
+      });
+      return 0; // Default to 0 on error
+    }
+  }
+
+  Widget _buildPrintOptions() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+      margin: EdgeInsets.symmetric(horizontal: 50),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Print Options',
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(height: 16),
+
+          // PDF Page Count Display
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Text(
+                  'PDF Pages:',
+                  style: TextStyle(
+                    fontFamily: 'Unbounded',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: _isExtractingPages
+                    ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF00C853),
+                          ),
+                        ),
+                      )
+                    : Text(
+                        _pdfPageCount > 0 ? '$_pdfPageCount' : 'N/A',
+                        style: TextStyle(
+                          fontFamily: 'Unbounded',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF00C853),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+
+          // Number of Copies Input
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Text(
+                  'Number of Copies:',
+                  style: TextStyle(
+                    fontFamily: 'Unbounded',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  controller: TextEditingController(text: '$_copies'),
+                  decoration: InputDecoration(
+                    hintText: '1',
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Color(0xFF00C853)),
+                    ),
+                  ),
+                  style: TextStyle(fontFamily: 'Unbounded', fontSize: 10),
+                  onChanged: (value) {
+                    setState(() {
+                      _copies = int.tryParse(value) ?? 1;
+                      if (_copies < 1) _copies = 1;
+                      _updatePrice();
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+
+          // Color Mode Selector
+          Text(
+            'Color Mode:',
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontSize: 10,
+              fontWeight: FontWeight.w400,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(height: 8),
+          SegmentedButton<ColorMode>(
+            segments: [
+              ButtonSegment(
+                value: ColorMode.blackAndWhite,
+                label: Text(
+                  'B&W',
+                  style: TextStyle(fontFamily: 'Unbounded', fontSize: 9),
+                ),
+                icon: Icon(Icons.filter_b_and_w, size: 16),
+              ),
+              ButtonSegment(
+                value: ColorMode.color,
+                label: Text(
+                  'Color',
+                  style: TextStyle(fontFamily: 'Unbounded', fontSize: 9),
+                ),
+                icon: Icon(Icons.palette, size: 16),
+              ),
+            ],
+            selected: {_colorMode},
+            onSelectionChanged: (Set<ColorMode> selection) {
+              setState(() {
+                _colorMode = selection.first;
+                _updatePrice();
+              });
+            },
+            style: ButtonStyle(
+              textStyle: WidgetStateProperty.all(
+                TextStyle(fontFamily: 'Unbounded', fontSize: 9),
+              ),
+            ),
+          ),
+          SizedBox(height: 16),
+
+          // Sides Selector
+          Text(
+            'Print Sides:',
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontSize: 10,
+              fontWeight: FontWeight.w400,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(height: 8),
+          SegmentedButton<Sides>(
+            segments: [
+              ButtonSegment(
+                value: Sides.single,
+                label: Text(
+                  'Single',
+                  style: TextStyle(fontFamily: 'Unbounded', fontSize: 9),
+                ),
+                icon: Icon(Icons.filter_1, size: 16),
+              ),
+              ButtonSegment(
+                value: Sides.double,
+                label: Text(
+                  'Double',
+                  style: TextStyle(fontFamily: 'Unbounded', fontSize: 9),
+                ),
+                icon: Icon(Icons.filter_2, size: 16),
+              ),
+            ],
+            selected: {_sides},
+            onSelectionChanged: (Set<Sides> selection) {
+              setState(() {
+                _sides = selection.first;
+                _updatePrice();
+              });
+            },
+            style: ButtonStyle(
+              textStyle: WidgetStateProperty.all(
+                TextStyle(fontFamily: 'Unbounded', fontSize: 9),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceDisplay() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      margin: EdgeInsets.symmetric(horizontal: 50),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF00C853), Color(0xFF00E676)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0xFF00C853).withOpacity(0.3),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Estimated Price',
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white.withOpacity(0.9),
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                PricingConfig.formatPrice(_calculatedPrice),
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'Rate: ${PricingConfig.formatPrice(PricingConfig.getRatePerPage(_colorMode, _sides))}/page',
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 8,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white.withOpacity(0.9),
+                ),
+              ),
+              SizedBox(height: 2),
+              Text(
+                '$_pdfPageCount pages × $_copies copies',
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 8,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white.withOpacity(0.9),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _updatePrice() {
+    setState(() {
+      _calculatedPrice = PricingConfig.calculatePrice(
+        pageCount: _pdfPageCount * _copies, // Total pages = PDF pages × copies
+        colorMode: _colorMode,
+        sides: _sides,
+      );
+    });
+  }
+
   Widget _buildActionButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -266,15 +608,30 @@ class _UploadState extends State<Upload> {
       if (file != null) {
         setState(() {
           _selectedFile = file;
+          _isExtractingPages = true;
+        });
+
+        // Extract page count from PDF
+        final pageCount = await _extractPdfPageCount(file);
+
+        setState(() {
+          _pdfPageCount = pageCount;
+          _copies = 1; // Reset to default
+          _isExtractingPages = false;
+          _updatePrice(); // Calculate initial price
         });
       }
     } catch (e) {
+      setState(() {
+        _isExtractingPages = false;
+      });
       _showErrorDialog('File Selection Error', e.toString());
     }
   }
 
   Future<void> _uploadAndCreateJob() async {
-    if (_selectedFile == null || _isUploading) return; // Prevent multiple uploads
+    if (_selectedFile == null || _isUploading)
+      return; // Prevent multiple uploads
 
     // Check internet connectivity first
     final hasInternet = await _hasInternetConnection();
@@ -292,29 +649,35 @@ class _UploadState extends State<Upload> {
       // Generate unique job ID with microseconds for better uniqueness
       final now = DateTime.now();
       final jobId = '${now.millisecondsSinceEpoch}_${now.microsecond}';
-      
+
       print('Creating print job with ID: $jobId');
-      
+
       // Simulate upload progress
       _simulateUploadProgress();
-      
+
       // Upload file to Supabase
-      final fileUrl = await _fileUploadService.uploadFile(_selectedFile!, jobId);
-      
-      // Create print job with file URL
+      final fileUrl = await _fileUploadService.uploadFile(
+        _selectedFile!,
+        jobId,
+      );
+
+      // Create print job with file URL and print options
       final printJob = PrintJob(
         id: jobId,
         code: _generatePrintCode(),
         fileName: _selectedFile!.name,
         dateTime: DateTime.now(),
         status: PrintStatus.pending,
-        pageCount: 1, // TODO: Extract from PDF
+        pageCount: _pdfPageCount * _copies, // Total pages to print
         fileUrl: fileUrl,
+        colorMode: _colorMode,
+        sides: _sides,
+        price: _calculatedPrice,
       );
 
       print('Adding print job to database: ${printJob.id}');
       final success = await _printService.addPrintJob(printJob);
-      
+
       if (success) {
         _showSuccessDialog();
         _clearSelection();
@@ -360,6 +723,12 @@ class _UploadState extends State<Upload> {
   void _clearSelection() {
     setState(() {
       _selectedFile = null;
+      _pdfPageCount = 0;
+      _copies = 1;
+      _colorMode = ColorMode.blackAndWhite;
+      _sides = Sides.single;
+      _calculatedPrice = 0.0;
+      _isExtractingPages = false;
     });
   }
 
@@ -384,10 +753,7 @@ class _UploadState extends State<Upload> {
         ),
         content: Text(
           'Please check your internet connection and try again. File upload requires an active internet connection.',
-          style: TextStyle(
-            fontFamily: 'Unbounded',
-            fontSize: 12,
-          ),
+          style: TextStyle(fontFamily: 'Unbounded', fontSize: 12),
         ),
         actions: [
           TextButton(
@@ -433,10 +799,7 @@ class _UploadState extends State<Upload> {
         ),
         content: Text(
           message,
-          style: TextStyle(
-            fontFamily: 'Unbounded',
-            fontSize: 12,
-          ),
+          style: TextStyle(fontFamily: 'Unbounded', fontSize: 12),
         ),
         actions: [
           TextButton(
@@ -475,10 +838,7 @@ class _UploadState extends State<Upload> {
         ),
         content: Text(
           'Your document has been uploaded and added to print queue.',
-          style: TextStyle(
-            fontFamily: 'Unbounded',
-            fontSize: 12,
-          ),
+          style: TextStyle(fontFamily: 'Unbounded', fontSize: 12),
         ),
         actions: [
           TextButton(

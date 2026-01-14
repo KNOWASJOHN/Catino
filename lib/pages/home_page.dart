@@ -6,6 +6,7 @@ import 'package:cantino/components/home/scroll_card.dart';
 import 'package:cantino/components/orders/order_history_list.dart';
 import 'package:cantino/services/cache/usercard_cache_service.dart';
 import 'package:cantino/services/log.dart';
+import 'package:cantino/components/common/skeleton_loader.dart';
 import 'dart:async';
 
 class HomePage extends StatefulWidget {
@@ -18,10 +19,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final UserCardCacheService _cacheService = UserCardCacheService();
   final _supabase = Supabase.instance.client;
-  
+
   StreamSubscription<List<Map<String, dynamic>>>? _userSubscription;
   StreamSubscription<List<Map<String, dynamic>>>? _ordersSubscription;
-  
+
   Map<String, dynamic>? _userCardData;
   bool _isLoading = true;
 
@@ -68,10 +69,10 @@ class _HomePageState extends State<HomePage> {
         .stream(primaryKey: ['id'])
         .eq('id', userId)
         .listen((data) {
-      if (data.isNotEmpty) {
-        _updateUserCardData(userId);
-      }
-    });
+          if (data.isNotEmpty) {
+            _updateUserCardData(userId);
+          }
+        });
 
     // Listen to orders changes
     _ordersSubscription = _supabase
@@ -79,8 +80,8 @@ class _HomePageState extends State<HomePage> {
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
         .listen((data) {
-      _updateUserCardData(userId);
-    });
+          _updateUserCardData(userId);
+        });
 
     // Initial fetch if no cache
     if (_userCardData == null) {
@@ -96,7 +97,7 @@ class _HomePageState extends State<HomePage> {
           .select()
           .eq('id', userId)
           .maybeSingle();
-      
+
       if (userResponse == null) {
         final defaultData = _getDefaultData();
         await _cacheService.saveUserCardData(defaultData);
@@ -114,9 +115,9 @@ class _HomePageState extends State<HomePage> {
           .from('orders')
           .select()
           .eq('user_id', userId);
-      
+
       Map<String, dynamic> userCardData;
-      
+
       if (ordersResponse.isEmpty) {
         userCardData = {
           'userName': userData['user_name'] ?? 'User',
@@ -127,7 +128,7 @@ class _HomePageState extends State<HomePage> {
         };
       } else {
         final orders = ordersResponse as List<dynamic>;
-        
+
         if (orders.isEmpty) {
           userCardData = {
             'userName': userData['user_name'] ?? 'User',
@@ -140,12 +141,14 @@ class _HomePageState extends State<HomePage> {
           // Find the latest order by timestamp
           Map<String, dynamic>? latestOrder;
           int latestTimestamp = 0;
-          
+
           for (var orderData in orders) {
             if (orderData is Map) {
               final order = Map<String, dynamic>.from(orderData);
-              final timestamp = order['timestamp'] is int ? order['timestamp'] as int : 0;
-              
+              final timestamp = order['timestamp'] is int
+                  ? order['timestamp'] as int
+                  : 0;
+
               if (timestamp > latestTimestamp) {
                 latestTimestamp = timestamp;
                 latestOrder = order;
@@ -159,18 +162,24 @@ class _HomePageState extends State<HomePage> {
                 .from('order_items')
                 .select()
                 .eq('order_id', latestOrder['id']);
-            
-            final itemsList = orderItems.map((item) => {
-              'foodItemId': item['food_item_id'],
-              'quantity': item['quantity'],
-            }).toList();
-            
+
+            final itemsList = orderItems
+                .map(
+                  (item) => {
+                    'foodItemId': item['food_item_id'],
+                    'quantity': item['quantity'],
+                  },
+                )
+                .toList();
+
             userCardData = {
               'userName': userData['user_name'] ?? 'User',
               'orderCode': latestOrder['code']?.toString() ?? 'N/A',
               'items': itemsList,
               'status': latestOrder['status']?.toString() ?? 'N/A',
-              'timestamp': latestOrder['timestamp'] is int ? latestOrder['timestamp'] as int : 0,
+              'timestamp': latestOrder['timestamp'] is int
+                  ? latestOrder['timestamp'] as int
+                  : 0,
             };
           } else {
             userCardData = {
@@ -214,11 +223,34 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    Widget userCardWidget;
-
+    // Show skeleton loading state when loading and no cached data
     if (_isLoading && _userCardData == null) {
-      userCardWidget = const Center(child: CircularProgressIndicator());
-    } else if (_userCardData == null) {
+      return Scaffold(
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                const UserCardSkeleton(),
+                const SizedBox(height: 20),
+                const FoodSectionSkeleton(),
+                const SizedBox(height: 20),
+                const ScrollCardSkeleton(),
+                const SizedBox(height: 10),
+                const OrderHistorySkeleton(),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Determine which UserCard to show
+    Widget userCardWidget;
+    if (_userCardData == null) {
       userCardWidget = const UserCard(
         userName: 'User',
         orderCode: 'N/A',

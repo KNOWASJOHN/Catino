@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/print_job.dart';
 import '../../utils/logger_config.dart';
+import '../notifications/print_notification_service.dart';
 
 final _logger = AppLogger.getLogger('PrintService');
 
@@ -16,15 +17,15 @@ class PrintService {
     if (userId == null) return;
 
     _printJobsSubscription?.cancel();
-    
+
     // Listen to changes in print_jobs table
     _printJobsSubscription = _supabase
         .from('print_jobs')
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
         .listen((data) {
-      _logger.info('Print jobs updated: ${data.length} jobs');
-    });
+          _logger.info('Print jobs updated: ${data.length} jobs');
+        });
   }
 
   /// Stop listening to print jobs
@@ -73,7 +74,13 @@ class PrintService {
         'status': job.status.displayText.toLowerCase(),
         'page_count': job.pageCount,
         'file_url': job.fileUrl,
+        'color_mode': job.colorMode.toDbString(),
+        'sides': job.sides.toDbString(),
+        'price': job.price,
       });
+
+      // Send notification for new print job
+      await PrintNotificationService().notifyPrintJobAdded(job);
 
       return true;
     } catch (e) {
@@ -89,6 +96,26 @@ class PrintService {
           .from('print_jobs')
           .update({'status': status.displayText.toLowerCase()})
           .eq('id', jobId);
+
+      // Get the updated job to send notification
+      final response = await _supabase
+          .from('print_jobs')
+          .select()
+          .eq('id', jobId)
+          .single();
+
+      final updatedJob = PrintJob.fromSupabaseMap(response);
+
+      // Send appropriate notification based on status
+      if (status == PrintStatus.finished) {
+        await PrintNotificationService().notifyPrintJobCompleted(updatedJob);
+      } else if (status == PrintStatus.cancelled) {
+        await PrintNotificationService().notifyPrintJobCancelled(updatedJob);
+      } else {
+        await PrintNotificationService().notifyPrintJobStatusChanged(
+          updatedJob,
+        );
+      }
     } catch (e) {
       _logger.severe('Error updating print job status', e);
       rethrow;

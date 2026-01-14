@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/pricing_config.dart';
 
 /// Enum for print job status - easy to extend with new statuses
 enum PrintStatus {
@@ -66,6 +67,9 @@ class PrintJob {
   final PrintStatus status;
   final int pageCount;
   final String fileUrl;
+  final ColorMode colorMode;
+  final Sides sides;
+  final double price;
 
   const PrintJob({
     required this.id,
@@ -75,6 +79,9 @@ class PrintJob {
     required this.status,
     this.pageCount = 1,
     this.fileUrl = '',
+    this.colorMode = ColorMode.blackAndWhite,
+    this.sides = Sides.single,
+    this.price = 0.0,
   });
 
   /// Format date and time for display
@@ -92,6 +99,9 @@ class PrintJob {
       'status': status.displayText.toLowerCase(),
       'pageCount': pageCount,
       'fileUrl': fileUrl,
+      'colorMode': colorMode.toDbString(),
+      'sides': sides.toDbString(),
+      'price': price,
     };
   }
 
@@ -105,6 +115,9 @@ class PrintJob {
       status: PrintStatus.fromString(map['status'] ?? 'pending'),
       pageCount: map['pageCount'] ?? 1,
       fileUrl: map['fileUrl'] ?? '',
+      colorMode: ColorMode.fromString(map['colorMode'] ?? 'blackAndWhite'),
+      sides: Sides.fromString(map['sides'] ?? 'single'),
+      price: (map['price'] ?? 0.0).toDouble(),
     );
   }
 
@@ -118,6 +131,9 @@ class PrintJob {
       status: PrintStatus.fromString(map['status'] ?? 'pending'),
       pageCount: map['page_count'] ?? 1,
       fileUrl: map['file_url'] ?? '',
+      colorMode: ColorMode.fromString(map['color_mode'] ?? 'blackAndWhite'),
+      sides: Sides.fromString(map['sides'] ?? 'single'),
+      price: (map['price'] ?? 0.0).toDouble(),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/print_job.dart';
+import '../../utils/pricing_config.dart';
 
 /// Reusable Print History Widget
 class PrintHistory extends StatelessWidget {
@@ -70,44 +71,112 @@ class PrintHistory extends StatelessWidget {
         onTap: onJobTap != null ? () => onJobTap!(job) : null,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Code badge
               _buildCodeBadge(job.code),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
 
               // Job details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      job.fileName,
-                      style: TextStyle(
-                        fontFamily: 'Unbounded',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    // File name and status
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            job.fileName,
+                            style: TextStyle(
+                              fontFamily: 'Unbounded',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildStatusChip(job.status),
+                      ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
+
+                    // Date/Time
                     Text(
                       job.formattedDateTime,
                       style: TextStyle(
                         fontFamily: 'Unbounded',
-                        fontSize: 10,
-                        color: Colors.black54,
+                        fontSize: 8,
+                        color: Colors.black45,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Print options and price in a row
+                    Row(
+                      children: [
+                        // Print options - compact
+                        Expanded(
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              _buildCompactInfoChip(
+                                icon: Icons.pages,
+                                label: '${job.pageCount}p',
+                              ),
+                              _buildCompactInfoChip(
+                                icon: job.colorMode == ColorMode.color
+                                    ? Icons.palette
+                                    : Icons.filter_b_and_w,
+                                label: job.colorMode == ColorMode.color
+                                    ? 'Color'
+                                    : 'B&W',
+                              ),
+                              _buildCompactInfoChip(
+                                icon: job.sides == Sides.double
+                                    ? Icons.filter_2
+                                    : Icons.filter_1,
+                                label: job.sides == Sides.double
+                                    ? '2-sided'
+                                    : '1-sided',
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        // Price - compact
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF00C853),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            PricingConfig.formatPrice(job.price),
+                            style: TextStyle(
+                              fontFamily: 'Unbounded',
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-
-              // Status indicator
-              _buildStatusChip(job.status),
             ],
           ),
         ),
@@ -118,8 +187,8 @@ class PrintHistory extends StatelessWidget {
   /// Build code badge - easy to customize styling
   Widget _buildCodeBadge(String code) {
     return Container(
-      width: 48,
-      height: 48,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
         color: Colors.limeAccent.shade700.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
@@ -130,7 +199,7 @@ class PrintHistory extends StatelessWidget {
           code,
           style: TextStyle(
             fontFamily: 'Unbounded',
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w700,
             color: Colors.black87,
           ),
@@ -142,24 +211,53 @@ class PrintHistory extends StatelessWidget {
   /// Build status chip - easy to customize colors and icons
   Widget _buildStatusChip(PrintStatus status) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: status.color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: status.color, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(status.icon, size: 16, color: status.color),
-          const SizedBox(width: 6),
+          Icon(status.icon, size: 12, color: status.color),
+          const SizedBox(width: 4),
           Text(
             status.displayText,
             style: TextStyle(
               fontFamily: 'Unbounded',
-              fontSize: 10,
+              fontSize: 8,
               fontWeight: FontWeight.w600,
               color: status.color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build compact info chip for print options
+  Widget _buildCompactInfoChip({
+    required IconData icon,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: Colors.black54),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontSize: 8,
+              color: Colors.black54,
             ),
           ),
         ],
