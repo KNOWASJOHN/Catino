@@ -474,3 +474,95 @@ class OrderHistorySkeleton extends StatelessWidget {
     );
   }
 }
+
+/// Skeleton loader for the TableCalendar component - glassmorphic style
+class TableCalendarSkeleton extends StatelessWidget {
+  const TableCalendarSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.95,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            spreadRadius: 5,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Column(
+            children: [
+              // Heading
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                child: const SkeletonLoader(
+                  width: 100,
+                  height: 20,
+                  baseColor: Colors.black26,
+                ),
+              ),
+              // Calendar content
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    // Month/Year header
+                    const SkeletonLoader(
+                      width: 150,
+                      height: 20,
+                      baseColor: Colors.black26,
+                    ),
+                    const SizedBox(height: 16),
+                    // Days of week
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: List.generate(
+                        7,
+                        (index) => const SkeletonLoader(
+                          width: 30,
+                          height: 12,
+                          baseColor: Colors.black26,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Calendar grid (5 rows)
+                    ...List.generate(
+                      5,
+                      (rowIndex) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(
+                            7,
+                            (colIndex) => const SkeletonLoader(
+                              width: 30,
+                              height: 30,
+                              baseColor: Colors.black26,
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(15),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

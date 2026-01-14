@@ -172,7 +172,7 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
       final success = await _orderService.deleteOrder(orderId);
 
       debugPrint('Delete operation result: $success');
-      
+
       if (success && mounted) {
         _showSuccessSnackBar('Order deleted successfully');
         await _loadOrders();
@@ -255,138 +255,163 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
         maxHeight: MediaQuery.of(context).size.height * 0.7,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: const Color(0xFF1e1e1e),
         borderRadius: BorderRadius.circular(_kDialogRadius),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 2,
-        ),
+        border: Border.all(color: const Color(0xFF2d2d2d), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            spreadRadius: 5,
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(_kDialogRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Column(
-              children: [
-                // Heading
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-                  child: Text(
+        child: Column(
+          children: [
+            // Simple header
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFF2d2d2d), width: 1),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.history_rounded,
+                    color: Colors.white.withOpacity(0.9),
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
                     'Order History',
                     style: TextStyle(
-                      color: Colors.black87,
-                      backgroundColor: Colors.transparent,
+                      color: Colors.white,
                       fontFamily: 'Unbounded',
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      letterSpacing: -0.3,
                     ),
                   ),
-                ),
-                
-                // Content
-                Expanded(
-                  child: Stack(
-                    children: [
-                      _isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : _orders.isEmpty
-                              ? const _EmptyOrdersState()
-                              : ListView.builder(
-                                  controller: _scrollController,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 8,
-                                  ),
-                                  physics: const ClampingScrollPhysics(),
-                                  itemCount: _orders.length + (_isLoadingMore ? 1 : 0),
-                                  itemBuilder: (context, index) {
-                                if (index == _orders.length) {
-                                  return const Center(
-                                    child: Padding(
-                                      padding: EdgeInsets.all(16.0),
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  );
-                                }
-
-                                final order = _orders[index];
-                                return Dismissible(
-                                  key: Key(order.id),
-                                  direction: DismissDirection.endToStart,
-                                  confirmDismiss: (direction) async {
-                                    await _showDeleteConfirmDialog(order);
-                                    return false;
-                                  },
-                                  background: Container(
-                                    margin: const EdgeInsets.only(bottom: 15),
-                                    alignment: Alignment.centerRight,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.red.withOpacity(0.1),
-                                          Colors.red.withOpacity(0.3),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(_kCardRadius),
-                                      border: Border.all(
-                                        color: Colors.red.withOpacity(0.5),
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    padding: const EdgeInsets.only(right: 24),
-                                    child: Container(
-                                      width: 64,
-                                      height: 64,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            Colors.red.withOpacity(0.3),
-                                            Colors.red.withOpacity(0.5),
-                                          ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: Colors.red,
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        Icons.delete_outline_rounded,
-                                        color: Colors.red,
-                                        size: 32,
-                                      ),
-                                    ),
-                                  ),
-                                  child: _OrderItemCard(
-                                    order: order,
-                                    isDeleting: _deletingOrders.contains(order.id),
-                                    onTap: () => _showQrCodeDialog(order),
-                                  ),
-                                );
-                              },
-                            ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
+
+            // Content
+            Expanded(
+              child: Stack(
+                children: [
+                  _isLoading
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                        )
+                      : _orders.isEmpty
+                      ? const _EmptyOrdersState()
+                      : ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          physics: const ClampingScrollPhysics(),
+                          itemCount: _orders.length + (_isLoadingMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == _orders.length) {
+                              return Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white.withOpacity(0.7),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final order = _orders[index];
+                            return Dismissible(
+                              key: Key(order.id),
+                              direction: DismissDirection.endToStart,
+                              confirmDismiss: (direction) async {
+                                await _showDeleteConfirmDialog(order);
+                                return false;
+                              },
+                              background: Container(
+                                margin: const EdgeInsets.only(bottom: 15),
+                                alignment: Alignment.centerRight,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      const Color(0xFFFF006E).withOpacity(0.2),
+                                      const Color(0xFFFF006E).withOpacity(0.5),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    _kCardRadius,
+                                  ),
+                                  border: Border.all(
+                                    color: const Color(
+                                      0xFFFF006E,
+                                    ).withOpacity(0.7),
+                                    width: 2,
+                                  ),
+                                ),
+                                padding: const EdgeInsets.only(right: 24),
+                                child: Container(
+                                  width: 64,
+                                  height: 64,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        const Color(
+                                          0xFFFF006E,
+                                        ).withOpacity(0.4),
+                                        const Color(
+                                          0xFFFF006E,
+                                        ).withOpacity(0.6),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: const Color(0xFFFF006E),
+                                      width: 2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFFFF006E,
+                                        ).withOpacity(0.5),
+                                        blurRadius: 15,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.delete_outline_rounded,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
+                                ),
+                              ),
+                              child: _OrderItemCard(
+                                order: order,
+                                isDeleting: _deletingOrders.contains(order.id),
+                                onTap: () => _showQrCodeDialog(order),
+                              ),
+                            );
+                          },
+                        ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -415,26 +440,16 @@ class _OrderItemCard extends StatelessWidget {
       child: Opacity(
         opacity: isDeleting ? 0.5 : 1.0,
         child: Container(
-          margin: const EdgeInsets.only(bottom: 15),
+          margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFFF5F5F5),
-                const Color(0xFFE8E8E8),
-              ],
-            ),
+            color: const Color(0xFF2a2a2a),
             borderRadius: BorderRadius.circular(_kCardRadius),
-            border: Border.all(
-              color: Colors.black.withOpacity(0.05),
-              width: 1.0,
-            ),
+            border: Border.all(color: const Color(0xFF3a3a3a), width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 10,
-                offset: const Offset(0, 3)
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -443,16 +458,16 @@ class _OrderItemCard extends StatelessWidget {
             child: InkWell(
               onTap: isDeleting ? null : onTap,
               borderRadius: BorderRadius.circular(_kCardRadius),
-              splashColor: order.status.color.withOpacity(0.1),
-              highlightColor: order.status.color.withOpacity(0.05),
+              splashColor: Colors.white.withOpacity(0.05),
+              highlightColor: Colors.white.withOpacity(0.02),
               child: Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
                     _buildStatusIcon(),
-                    const SizedBox(width: 18),
+                    const SizedBox(width: 16),
                     Expanded(child: _buildOrderDetails()),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     _buildQrCodeIndicator(),
                   ],
                 ),
@@ -466,35 +481,17 @@ class _OrderItemCard extends StatelessWidget {
 
   Widget _buildStatusIcon() {
     return Container(
-      width: 56,
-      height: 56,
+      width: 52,
+      height: 52,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            order.status.color.withOpacity(0.3),
-            order.status.color.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
+        color: order.status.color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: order.status.color.withOpacity(0.5),
-          width: 2,
+          color: order.status.color.withOpacity(0.3),
+          width: 1.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: order.status.color.withOpacity(0.3),
-            blurRadius: 8,
-            spreadRadius: 1,
-          ),
-        ],
       ),
-      child: Icon(
-        order.status.icon,
-        color: order.status.color,
-        size: 28,
-      ),
+      child: Icon(order.status.icon, color: order.status.color, size: 26),
     );
   }
 
@@ -505,7 +502,7 @@ class _OrderItemCard extends StatelessWidget {
         Text(
           '#${order.code}',
           style: const TextStyle(
-            color: Colors.black87,
+            color: Colors.white,
             fontFamily: 'Unbounded',
             fontSize: 14,
             fontWeight: FontWeight.bold,
@@ -518,8 +515,8 @@ class _OrderItemCard extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           order.formattedDateTime,
-          style: const TextStyle(
-            color: Colors.black87,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.7),
             fontFamily: 'Unbounded',
             fontSize: 12,
             letterSpacing: 0.2,
@@ -527,18 +524,7 @@ class _OrderItemCard extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 6),
-        Container(
-          height: 1,
-          width: 60,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.white.withOpacity(0.3),
-                Colors.transparent,
-              ],
-            ),
-          ),
-        ),
+        Container(height: 1, width: 50, color: const Color(0xFF3a3a3a)),
         const SizedBox(height: 6),
         _buildItemCount(),
       ],
@@ -547,10 +533,7 @@ class _OrderItemCard extends StatelessWidget {
 
   Widget _buildStatusBadge() {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: order.status.color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(_kStatusBadgeRadius),
@@ -562,11 +545,7 @@ class _OrderItemCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            order.status.icon,
-            color: order.status.color,
-            size: 12,
-          ),
+          Icon(order.status.icon, color: order.status.color, size: 12),
           const SizedBox(width: 6),
           Text(
             order.status.displayText,
@@ -587,17 +566,17 @@ class _OrderItemCard extends StatelessWidget {
   Widget _buildItemCount() {
     return Row(
       children: [
-        const Icon(
+        Icon(
           Icons.shopping_bag_outlined,
           size: 14,
-          color: Colors.black54,
+          color: Colors.white.withOpacity(0.6),
         ),
         const SizedBox(width: 6),
         Flexible(
           child: Text(
             '${order.totalItems} item${order.totalItems != 1 ? 's' : ''}',
-            style: const TextStyle(
-              color: Colors.black54,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
               fontFamily: 'Unbounded',
               fontSize: 12,
               letterSpacing: 0.2,
@@ -640,10 +619,7 @@ class _OrderItemCard extends StatelessWidget {
         if (order.totalItems > 0) ...[
           const SizedBox(height: 6),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 6,
-              vertical: 3,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
             constraints: const BoxConstraints(minWidth: 24),
             decoration: BoxDecoration(
               color: order.status.color.withOpacity(0.5),
@@ -659,7 +635,7 @@ class _OrderItemCard extends StatelessWidget {
             child: Text(
               '${order.totalItems}',
               style: const TextStyle(
-                color: Colors.black54,
+                color: Colors.white,
                 fontFamily: 'Unbounded',
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
@@ -736,49 +712,56 @@ class _DeleteConfirmDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Colors.black87,
+      backgroundColor: const Color(0xFF1e1e1e),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0xFF2d2d2d), width: 1),
       ),
       title: const Text(
         'Delete Order',
         style: TextStyle(
           color: Colors.white,
           fontFamily: 'Unbounded',
+          fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
       ),
       content: Text(
         'Are you sure you want to delete order #$orderCode? This action cannot be undone.',
-        style: const TextStyle(
-          color: Colors.white70,
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.7),
           fontFamily: 'Unbounded',
+          fontSize: 14,
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text(
+          child: Text(
             'Cancel',
             style: TextStyle(
-              color: Colors.grey,
+              color: Colors.white.withOpacity(0.6),
               fontFamily: 'Unbounded',
+              fontSize: 14,
             ),
           ),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFdc3545),
+            foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
             ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            elevation: 0,
           ),
           child: const Text(
             'Delete',
             style: TextStyle(
-              color: Colors.white,
               fontFamily: 'Unbounded',
+              fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -797,21 +780,22 @@ class _QrCodeDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF1e1e1e),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(_kDialogRadius),
+        side: const BorderSide(color: Color(0xFF2d2d2d), width: 1),
       ),
       child: Container(
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildTitle(),
             const SizedBox(height: 24),
             _buildQrCode(),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             _buildStatusBadge(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             _buildDateTime(),
             const SizedBox(height: 28),
             _buildCloseButton(context),
@@ -825,7 +809,7 @@ class _QrCodeDialog extends StatelessWidget {
     return Text(
       'Order #${order.code}',
       style: const TextStyle(
-        color: Colors.black87,
+        color: Colors.white,
         fontFamily: 'Unbounded',
         fontSize: 18,
         fontWeight: FontWeight.bold,
@@ -836,17 +820,11 @@ class _QrCodeDialog extends StatelessWidget {
 
   Widget _buildQrCode() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(_kQrCodeRadius),
-        boxShadow: [
-          BoxShadow(
-            color: order.status.color.withOpacity(0.3),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
+        border: Border.all(color: const Color(0xFF3a3a3a), width: 1),
       ),
       child: QrImageView(
         data: order.qrCode,
@@ -859,33 +837,19 @@ class _QrCodeDialog extends StatelessWidget {
 
   Widget _buildStatusBadge() {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: order.status.color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: order.status.color,
+          color: order.status.color.withOpacity(0.4),
           width: 1.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: order.status.color.withOpacity(0.2),
-            blurRadius: 8,
-            spreadRadius: 1,
-          ),
-        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            order.status.icon,
-            color: order.status.color,
-            size: 20,
-          ),
+          Icon(order.status.icon, color: order.status.color, size: 18),
           const SizedBox(width: 8),
           Text(
             order.status.displayText,
@@ -904,22 +868,16 @@ class _QrCodeDialog extends StatelessWidget {
 
   Widget _buildDateTime() {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.black87.withOpacity(0.05),
+        color: const Color(0xFF2a2a2a),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.black87.withOpacity(0.1),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFF3a3a3a), width: 1),
       ),
       child: Text(
         order.formattedDateTime,
-        style: const TextStyle(
-          color: Colors.black87,
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.8),
           fontFamily: 'Unbounded',
           fontSize: 13,
           letterSpacing: 0.3,
@@ -929,30 +887,29 @@ class _QrCodeDialog extends StatelessWidget {
   }
 
   Widget _buildCloseButton(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () => Navigator.pop(context),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _kPrimaryAccent,
-        foregroundColor: Colors.black,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () => Navigator.pop(context),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF2a2a2a),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Color(0xFF3a3a3a), width: 1),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          elevation: 0,
         ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 40,
-          vertical: 16,
-        ),
-        elevation: 0,
-      ),
-      child: const Text(
-        'Close',
-        style: TextStyle(
-          fontFamily: 'Unbounded',
-          fontWeight: FontWeight.bold,
-          fontSize: 15,
-          letterSpacing: 0.5,
+        child: const Text(
+          'Close',
+          style: TextStyle(
+            fontFamily: 'Unbounded',
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
         ),
       ),
     );
   }
 }
-

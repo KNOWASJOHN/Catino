@@ -7,6 +7,7 @@ import 'package:cantino/components/orders/order_history_list.dart';
 import 'package:cantino/services/cache/usercard_cache_service.dart';
 import 'package:cantino/services/log.dart';
 import 'package:cantino/components/common/skeleton_loader.dart';
+import 'package:cantino/components/common/table_calendar_component.dart';
 import 'dart:async';
 
 class HomePage extends StatefulWidget {
@@ -238,7 +239,9 @@ class _HomePageState extends State<HomePage> {
                 const FoodSectionSkeleton(),
                 const SizedBox(height: 20),
                 const ScrollCardSkeleton(),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
+                const TableCalendarSkeleton(),
+                const SizedBox(height: 20),
                 const OrderHistorySkeleton(),
                 SizedBox(height: MediaQuery.of(context).size.height * 0.2),
               ],
@@ -280,11 +283,13 @@ class _HomePageState extends State<HomePage> {
             children: [
               SizedBox(height: MediaQuery.of(context).size.height * 0.02),
               userCardWidget,
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               const FoodSection(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               const Scrollcard(),
-              const SizedBox(height: 10),
+              const SizedBox(height: 50),
+              const TableCalendarComponent(),
+              const SizedBox(height: 50),
               const OrderHistoryList(),
               SizedBox(height: MediaQuery.of(context).size.height * 0.2),
             ],
