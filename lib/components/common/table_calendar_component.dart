@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'dart:ui';
+import 'package:cantino/components/common/meal_dialog.dart';
+import 'package:cantino/services/meal_service.dart';
+import 'package:cantino/models/meal_model.dart';
 
 /// A styled table calendar component that matches the app's design system.
 ///
@@ -19,6 +22,38 @@ class TableCalendarComponent extends StatefulWidget {
 class _TableCalendarComponentState extends State<TableCalendarComponent> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  final MealService _mealService = MealService();
+  List<MealModel> _mealsInMonth = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMealsForMonth(_focusedDay);
+  }
+
+  /// Load meals for the visible month
+  Future<void> _loadMealsForMonth(DateTime focusedDay) async {
+    final firstDay = DateTime(focusedDay.year, focusedDay.month, 1);
+    final lastDay = DateTime(focusedDay.year, focusedDay.month + 1, 0);
+
+    final meals = await _mealService.getMealsInRange(firstDay, lastDay);
+    setState(() {
+      _mealsInMonth = meals;
+    });
+  }
+
+  /// Check if a date has a meal
+  bool _hasMeal(DateTime day) {
+    return _mealsInMonth.any((meal) => isSameDay(meal.date, day));
+  }
+
+  /// Event loader for calendar markers
+  List<String> _getEventsForDay(DateTime day) {
+    if (_hasMeal(day)) {
+      return ['meal']; // Return a marker for this day
+    }
+    return [];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,14 +115,19 @@ class _TableCalendarComponentState extends State<TableCalendarComponent> {
                       _selectedDay = selectedDay;
                       _focusedDay = focusedDay;
                     });
+                    // Show meal dialog when a date is selected
+                    _showMealDialog(context, selectedDay);
                   },
                   onPageChanged: (focusedDay) {
                     _focusedDay = focusedDay;
+                    _loadMealsForMonth(focusedDay);
                   },
                   calendarFormat: CalendarFormat.month,
                   availableCalendarFormats: const {
                     CalendarFormat.month: 'Month',
                   },
+                  // Event loader for markers
+                  eventLoader: _getEventsForDay,
 
                   // Header styling
                   headerStyle: HeaderStyle(
@@ -219,12 +259,13 @@ class _TableCalendarComponentState extends State<TableCalendarComponent> {
                       fontSize: 14,
                     ),
 
-                    // Markers
+                    // Markers - Red for dates with meals
                     markersMaxCount: 1,
                     markerDecoration: BoxDecoration(
-                      color: const Color(0xFFCDFF00),
+                      color: Colors.red,
                       shape: BoxShape.circle,
                     ),
+                    markerSize: 6.0,
                   ),
                 ),
               ),
@@ -232,6 +273,14 @@ class _TableCalendarComponentState extends State<TableCalendarComponent> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Show meal dialog for the selected date
+  void _showMealDialog(BuildContext context, DateTime selectedDate) {
+    showDialog(
+      context: context,
+      builder: (context) => MealDialog(selectedDate: selectedDate),
     );
   }
 }
