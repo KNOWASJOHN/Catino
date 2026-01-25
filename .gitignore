@@ -77,3 +77,8 @@ windows/flutter/ephemeral/
 
 # Linux specific
 linux/flutter/ephemeral/
+
+# Node.js Backend
+backend/node_modules/
+backend/.env
+backend/package-lock.json
