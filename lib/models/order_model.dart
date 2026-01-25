@@ -5,7 +5,7 @@ enum OrderStatus {
   pending,
   completed,
   cancelled,
-  ordered;  // Additional status from migration data
+  ordered; // Additional status from migration data
 
   /// Get string value for database storage
   String get value {
@@ -79,6 +79,9 @@ class Order {
   final String qrCode;
   final OrderStatus status;
   final DateTime dateTime;
+  final String? paymentId;
+  final String? orderId;
+  final String? paymentStatus;
 
   const Order({
     required this.id,
@@ -87,6 +90,9 @@ class Order {
     required this.qrCode,
     required this.status,
     required this.dateTime,
+    this.paymentId,
+    this.orderId,
+    this.paymentStatus,
   });
 
   /// Format date and time for display
@@ -106,6 +112,9 @@ class Order {
       'qrCode': qrCode,
       'status': status.displayText.toLowerCase(),
       'timestamp': dateTime.millisecondsSinceEpoch,
+      'paymentId': paymentId,
+      'orderId': orderId,
+      'paymentStatus': paymentStatus,
     };
   }
 
@@ -115,10 +124,15 @@ class Order {
     return Order(
       id: map['id'] ?? '',
       code: map['code'] ?? '00',
-      items: itemsList.map((item) => OrderItem.fromMap(item as Map<dynamic, dynamic>)).toList(),
+      items: itemsList
+          .map((item) => OrderItem.fromMap(item as Map<dynamic, dynamic>))
+          .toList(),
       qrCode: map['qrCode'] ?? '',
       status: OrderStatus.fromString(map['status'] ?? 'pending'),
       dateTime: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] ?? 0),
+      paymentId: map['paymentId'],
+      orderId: map['orderId'],
+      paymentStatus: map['paymentStatus'],
     );
   }
 
@@ -128,10 +142,17 @@ class Order {
     return Order(
       id: map['id'] ?? '',
       code: map['code'] ?? '00',
-      items: itemsList.map((item) => OrderItem.fromSupabaseMap(item as Map<String, dynamic>)).toList(),
+      items: itemsList
+          .map(
+            (item) => OrderItem.fromSupabaseMap(item as Map<String, dynamic>),
+          )
+          .toList(),
       qrCode: map['qr_code'] ?? '',
       status: OrderStatus.fromString(map['status'] ?? 'pending'),
       dateTime: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] ?? 0),
+      paymentId: map['payment_id'],
+      orderId: map['order_id'],
+      paymentStatus: map['payment_status'],
     );
   }
 
@@ -151,6 +172,9 @@ class Order {
       qrCode: qrCode ?? this.qrCode,
       status: status ?? this.status,
       dateTime: dateTime ?? this.dateTime,
+      paymentId: paymentId ?? this.paymentId,
+      orderId: orderId ?? this.orderId,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
     );
   }
 }
@@ -160,32 +184,20 @@ class OrderItem {
   final String id;
   final int quantity;
 
-  const OrderItem({
-    required this.id,
-    required this.quantity,
-  });
+  const OrderItem({required this.id, required this.quantity});
 
   /// Convert to Map for Firebase
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'qty': quantity,
-    };
+    return {'id': id, 'qty': quantity};
   }
 
   /// Create from Firebase Map
   factory OrderItem.fromMap(Map<dynamic, dynamic> map) {
-    return OrderItem(
-      id: map['id'] ?? '',
-      quantity: map['qty'] ?? 0,
-    );
+    return OrderItem(id: map['id'] ?? '', quantity: map['qty'] ?? 0);
   }
 
   /// Create from Supabase Map
   factory OrderItem.fromSupabaseMap(Map<String, dynamic> map) {
-    return OrderItem(
-      id: map['id'] ?? '',
-      quantity: map['qty'] ?? 0,
-    );
+    return OrderItem(id: map['id'] ?? '', quantity: map['qty'] ?? 0);
   }
 }

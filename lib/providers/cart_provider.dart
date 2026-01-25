@@ -6,6 +6,7 @@ import 'dart:convert';
 import '../services/data/supabase_order_service.dart';
 import '../models/order_model.dart';
 import '../models/food_item.dart';
+import '../models/payment_result.dart';
 import '../utils/logger_config.dart';
 
 final _logger = AppLogger.getLogger('CartProvider');
@@ -238,9 +239,21 @@ class CartProvider with ChangeNotifier {
     }
   }
 
-  Future<void> placeOrder(List<Map<String, dynamic>> cartItems) async {
+  Future<void> placeOrder(
+    List<Map<String, dynamic>> cartItems, {
+    PaymentResult? paymentResult,
+  }) async {
     final uid = _currentUserId;
     if (uid == null) return;
+
+    // Log payment details for debugging
+    if (paymentResult != null) {
+      _logger.info(
+        'Placing order with payment: ID=${paymentResult.paymentId}, Status=${paymentResult.isSuccess}',
+      );
+    } else {
+      _logger.warning('Placing order WITHOUT payment result');
+    }
 
     try {
       final orderId = 'order_${DateTime.now().millisecondsSinceEpoch}';
@@ -264,6 +277,9 @@ class CartProvider with ChangeNotifier {
         qrCode: 'https://api.qrserver.com/v1/create-qr-code/?data=$code',
         status: OrderStatus.pending,
         dateTime: DateTime.now(),
+        paymentId: paymentResult?.paymentId,
+        orderId: paymentResult?.orderId,
+        paymentStatus: paymentResult != null ? 'paid' : 'pending',
       );
 
       // Use OrderService for proper status management and automatic notifications

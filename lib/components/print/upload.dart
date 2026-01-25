@@ -37,6 +37,38 @@ class _UploadState extends State<Upload> {
   double _calculatedPrice = 0.0;
   bool _isExtractingPages = false;
 
+  late TextEditingController _copiesController;
+  final FocusNode _copiesFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _copiesController = TextEditingController(text: '1');
+    _copiesFocusNode.addListener(_handleFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _copiesController.dispose();
+    _copiesFocusNode.removeListener(_handleFocusChange);
+    _copiesFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleFocusChange() {
+    if (!_copiesFocusNode.hasFocus) {
+      if (_copiesController.text.isEmpty ||
+          int.tryParse(_copiesController.text) == null ||
+          (int.tryParse(_copiesController.text) ?? 0) < 1) {
+        _copiesController.text = '1';
+        setState(() {
+          _copies = 1;
+          _updatePrice();
+        });
+      }
+    }
+  }
+
   /// Check if device has internet connectivity
   Future<bool> _hasInternetConnection() async {
     try {
@@ -353,7 +385,8 @@ class _UploadState extends State<Upload> {
                 flex: 1,
                 child: TextField(
                   keyboardType: TextInputType.number,
-                  controller: TextEditingController(text: '$_copies'),
+                  controller: _copiesController,
+                  focusNode: _copiesFocusNode,
                   decoration: InputDecoration(
                     hintText: '1',
                     contentPadding: EdgeInsets.symmetric(
@@ -375,11 +408,22 @@ class _UploadState extends State<Upload> {
                   ),
                   style: TextStyle(fontFamily: 'Unbounded', fontSize: 10),
                   onChanged: (value) {
-                    setState(() {
-                      _copies = int.tryParse(value) ?? 1;
-                      if (_copies < 1) _copies = 1;
-                      _updatePrice();
-                    });
+                    // Allow empty or partial input while typing
+                    if (value.isEmpty) {
+                      setState(() {
+                        _copies = 1; // Use 1 for temporary calculation
+                        _updatePrice();
+                      });
+                      return;
+                    }
+
+                    final val = int.tryParse(value);
+                    if (val != null && val > 0) {
+                      setState(() {
+                        _copies = val;
+                        _updatePrice();
+                      });
+                    }
                   },
                 ),
               ),
@@ -619,6 +663,7 @@ class _UploadState extends State<Upload> {
         setState(() {
           _pdfPageCount = pageCount;
           _copies = 1; // Reset to default
+          _copiesController.text = '1';
           _isExtractingPages = false;
           _updatePrice(); // Calculate initial price
         });
@@ -771,6 +816,7 @@ class _UploadState extends State<Upload> {
       _selectedFile = null;
       _pdfPageCount = 0;
       _copies = 1;
+      _copiesController.text = '1';
       _colorMode = ColorMode.blackAndWhite;
       _sides = Sides.single;
       _calculatedPrice = 0.0;

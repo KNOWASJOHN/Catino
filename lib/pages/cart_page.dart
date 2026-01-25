@@ -809,6 +809,8 @@ class _CartState extends State<Cart> {
                                                                   await cartProvider
                                                                       .placeOrder(
                                                                         cartItems,
+                                                                        paymentResult:
+                                                                            result,
                                                                       );
                                                                   Navigator.of(
                                                                     context,

@@ -10,9 +10,9 @@ final _logger = AppLogger.getLogger('SupabaseOrderService');
 class SupabaseOrderService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final OrderCacheService _cacheService = OrderCacheService();
-  final OrderNotificationService _notificationService = OrderNotificationService();
+  final OrderNotificationService _notificationService =
+      OrderNotificationService();
   bool _isListening = false;
-
 
   /// Get current user ID
   String? get currentUserId => _supabase.auth.currentUser?.id;
@@ -21,20 +21,20 @@ class SupabaseOrderService {
   void startListeningToOrders() {
     if (currentUserId == null || _isListening) return;
     _isListening = true;
-    
+
     _supabase
         .from('orders')
         .stream(primaryKey: ['id'])
         .eq('user_id', currentUserId!)
         .listen((data) {
-      try {
-        _logger.info('Order data changed, processing for notifications...');
-        _processOrderChanges(data);
-      } catch (e) {
-        _logger.severe('Error processing order changes', e);
-      }
-    });
-    
+          try {
+            _logger.info('Order data changed, processing for notifications...');
+            _processOrderChanges(data);
+          } catch (e) {
+            _logger.severe('Error processing order changes', e);
+          }
+        });
+
     _logger.info('Started listening to order changes for user: $currentUserId');
   }
 
@@ -45,14 +45,16 @@ class SupabaseOrderService {
   }
 
   /// Process order changes and trigger notifications for status updates
-  Future<void> _processOrderChanges(List<Map<String, dynamic>> ordersData) async {
+  Future<void> _processOrderChanges(
+    List<Map<String, dynamic>> ordersData,
+  ) async {
     try {
       if (currentUserId == null) return;
 
       // Get cached orders for comparison
       final cachedOrders = await _cacheService.getCachedOrders();
       final cachedOrdersMap = <String, Order>{};
-      
+
       if (cachedOrders != null) {
         for (final order in cachedOrders) {
           cachedOrdersMap[order.id] = order;
@@ -67,16 +69,21 @@ class SupabaseOrderService {
           final orderItems = await _getOrderItems(orderData['id']);
           final orderDataWithItems = Map<String, dynamic>.from(orderData);
           orderDataWithItems['items'] = orderItems;
-          
+
           final order = Order.fromSupabaseMap(orderDataWithItems);
           currentOrders.add(order);
-          
+
           // Check for status changes
           final cachedOrder = cachedOrdersMap[order.id];
           if (cachedOrder != null && cachedOrder.status != order.status) {
             // Status changed - send immediate notification
-            _logger.info('Order status changed: ${order.code} - ${cachedOrder.status.displayText} -> ${order.status.displayText}');
-            _notificationService.notifyOrderStatusChanged(order, cachedOrder.status);
+            _logger.info(
+              'Order status changed: ${order.code} - ${cachedOrder.status.displayText} -> ${order.status.displayText}',
+            );
+            _notificationService.notifyOrderStatusChanged(
+              order,
+              cachedOrder.status,
+            );
           } else if (cachedOrder == null) {
             // New order - send confirmation notification
             _logger.info('New order detected: ${order.code}');
@@ -88,8 +95,6 @@ class SupabaseOrderService {
 
       // Update cache with current orders
       await _cacheService.setCachedOrders(currentOrders);
-
-      
     } catch (e) {
       _logger.severe('Error in _processOrderChanges', e);
     }
@@ -102,11 +107,12 @@ class SupabaseOrderService {
           .from('order_items')
           .select()
           .eq('order_id', orderId);
-      
-      return response.map<Map<String, dynamic>>((item) => {
-        'id': item['food_item_id'],
-        'qty': item['quantity'],
-      }).toList();
+
+      return response
+          .map<Map<String, dynamic>>(
+            (item) => {'id': item['food_item_id'], 'qty': item['quantity']},
+          )
+          .toList();
     } catch (e) {
       _logger.warning('Error fetching order items for $orderId', e);
       return [];
@@ -125,7 +131,7 @@ class SupabaseOrderService {
       final cached = await _cacheService.getCachedOrders();
       if (cached != null && cached.isNotEmpty) {
         _logger.fine('Returning ${cached.length} cached orders');
-        
+
         // Check if cache is stale (older than 10 minutes)
         final cacheTime = await _cacheService.getCacheTimestamp();
         final now = DateTime.now();
@@ -136,7 +142,7 @@ class SupabaseOrderService {
       }
 
       _logger.info('Fetching orders from Supabase for user: $currentUserId');
-      
+
       final response = await _supabase
           .from('orders')
           .select()
@@ -151,7 +157,7 @@ class SupabaseOrderService {
           final orderItems = await _getOrderItems(orderData['id']);
           final orderDataWithItems = Map<String, dynamic>.from(orderData);
           orderDataWithItems['items'] = orderItems;
-          
+
           orders.add(Order.fromSupabaseMap(orderDataWithItems));
         } catch (e) {
           _logger.warning('Error parsing order ${orderData['id']}', e);
@@ -165,7 +171,7 @@ class SupabaseOrderService {
       return orders;
     } catch (e, stackTrace) {
       _logger.severe('Error loading orders', e, stackTrace);
-      
+
       // Try to return cached data as fallback
       final cached = await _cacheService.getCachedOrders();
       return cached ?? [];
@@ -178,29 +184,40 @@ class SupabaseOrderService {
       if (currentUserId == null) return false;
 
       // Add to Supabase Database
-      await _supabase.from('orders').insert({
+      final orderData = {
         'id': order.id,
         'user_id': currentUserId,
         'code': order.code,
         'qr_code': order.qrCode,
         'status': order.status.value,
         'timestamp': order.dateTime.millisecondsSinceEpoch,
-      });
+        'payment_id': order.paymentId,
+        'order_id': order.orderId,
+        'payment_status': order.paymentStatus,
+      };
+
+      _logger.info('Inserting order to Supabase: $orderData');
+
+      await _supabase.from('orders').insert(orderData);
 
       // Add order items
-      final orderItemsData = order.items.map((item) => {
-        'order_id': order.id,
-        'food_item_id': item.id,
-        'quantity': item.quantity,
-      }).toList();
+      final orderItemsData = order.items
+          .map(
+            (item) => {
+              'order_id': order.id,
+              'food_item_id': item.id,
+              'quantity': item.quantity,
+            },
+          )
+          .toList();
 
       await _supabase.from('order_items').insert(orderItemsData);
 
       _logger.info('Order added to Supabase: ${order.id}');
-      
+
       // Send notification for new order (confirmation)
       await _notificationService.notifyOrderPlaced(order);
-      
+
       return true;
     } catch (e, stackTrace) {
       _logger.severe('Error adding order', e, stackTrace);
@@ -216,7 +233,9 @@ class SupabaseOrderService {
           .update({'status': newStatus.value})
           .eq('id', orderId);
 
-      _logger.info('Order status updated: $orderId -> ${newStatus.displayText}');
+      _logger.info(
+        'Order status updated: $orderId -> ${newStatus.displayText}',
+      );
       return true;
     } catch (e) {
       _logger.severe('Error updating order status', e);
@@ -242,7 +261,7 @@ class SupabaseOrderService {
       final orderItems = await _getOrderItems(orderId);
       final orderDataWithItems = Map<String, dynamic>.from(response);
       orderDataWithItems['items'] = orderItems;
-      
+
       return Order.fromSupabaseMap(orderDataWithItems);
     } catch (e) {
       _logger.warning('Error fetching order by ID', e);
@@ -269,7 +288,7 @@ class SupabaseOrderService {
           final orderItems = await _getOrderItems(orderData['id']);
           final orderDataWithItems = Map<String, dynamic>.from(orderData);
           orderDataWithItems['items'] = orderItems;
-          
+
           orders.add(Order.fromSupabaseMap(orderDataWithItems));
         } catch (e) {
           _logger.warning('Error parsing order ${orderData['id']}', e);
