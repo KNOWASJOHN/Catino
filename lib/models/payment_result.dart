@@ -24,6 +24,16 @@ class PaymentResult {
   /// External wallet name (if user chose external wallet)
   final String? walletName;
 
+  /// Check if the payment was cancelled
+  bool get isCancelled {
+    if (isSuccess) return false;
+    // Check for standard cancellation code (0)
+    if (errorCode == 0) return true;
+    // Check for cancellation keywords in error message
+    final msg = errorMessage?.toLowerCase() ?? '';
+    return msg.contains('cancelled') || msg.contains('canceled');
+  }
+
   const PaymentResult({
     this.paymentId,
     this.orderId,

@@ -70,6 +70,9 @@ class PrintJob {
   final ColorMode colorMode;
   final Sides sides;
   final double price;
+  final String? paymentId;
+  final String? orderId;
+  final String? paymentStatus;
 
   const PrintJob({
     required this.id,
@@ -82,6 +85,9 @@ class PrintJob {
     this.colorMode = ColorMode.blackAndWhite,
     this.sides = Sides.single,
     this.price = 0.0,
+    this.paymentId,
+    this.orderId,
+    this.paymentStatus,
   });
 
   /// Format date and time for display
@@ -102,6 +108,9 @@ class PrintJob {
       'colorMode': colorMode.toDbString(),
       'sides': sides.toDbString(),
       'price': price,
+      'paymentId': paymentId,
+      'orderId': orderId,
+      'paymentStatus': paymentStatus,
     };
   }
 
@@ -118,6 +127,9 @@ class PrintJob {
       colorMode: ColorMode.fromString(map['colorMode'] ?? 'blackAndWhite'),
       sides: Sides.fromString(map['sides'] ?? 'single'),
       price: (map['price'] ?? 0.0).toDouble(),
+      paymentId: map['paymentId'],
+      orderId: map['orderId'],
+      paymentStatus: map['paymentStatus'],
     );
   }
 
@@ -134,6 +146,9 @@ class PrintJob {
       colorMode: ColorMode.fromString(map['color_mode'] ?? 'blackAndWhite'),
       sides: Sides.fromString(map['sides'] ?? 'single'),
       price: (map['price'] ?? 0.0).toDouble(),
+      paymentId: map['payment_id'],
+      orderId: map['order_id'],
+      paymentStatus: map['payment_status'],
     );
   }
 }

@@ -55,72 +55,75 @@ class _PrintPageState extends State<PrintPage> {
           child: Column(
             children: [
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-            Upload(onUploadComplete: _loadPrintJobs),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.6,
-              child: _isLoading
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFF00C853),
+              Upload(onUploadComplete: _loadPrintJobs),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.6,
+                child: _isLoading
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                Color(0xFF00C853),
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            'Loading print jobs...',
-                            style: TextStyle(
-                              fontFamily: 'Unbounded',
-                              fontSize: 12,
-                              color: Colors.grey[600],
+                            SizedBox(height: 16),
+                            Text(
+                              'Loading print jobs...',
+                              style: TextStyle(
+                                fontFamily: 'Unbounded',
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : _printJobs.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.print_disabled,
-                                  size: 64, color: Colors.grey[300]),
-                              SizedBox(height: 16),
-                              Text(
-                                'No print jobs found',
+                          ],
+                        ),
+                      )
+                    : _printJobs.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.print_disabled,
+                              size: 64,
+                              color: Colors.grey[300],
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'No print jobs found',
+                              style: TextStyle(
+                                fontFamily: 'Unbounded',
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: _loadPrintJobs,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFF00C853),
+                              ),
+                              child: Text(
+                                'Retry',
                                 style: TextStyle(
                                   fontFamily: 'Unbounded',
-                                  fontSize: 16,
-                                  color: Colors.grey[600],
+                                  color: Colors.white,
                                 ),
                               ),
-                              SizedBox(height: 8),
-                              ElevatedButton(
-                                onPressed: _loadPrintJobs,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFF00C853),
-                                ),
-                                child: Text(
-                                  'Retry',
-                                  style: TextStyle(
-                                    fontFamily: 'Unbounded',
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : PrintHistory(
-                          printJobs: _printJobs,
-                          onJobTap: (job) {
-                            // Handle when a print job is tapped
-                            _showJobDetails(job);
-                          },
+                            ),
+                          ],
                         ),
-            ),
+                      )
+                    : PrintHistory(
+                        printJobs: _printJobs,
+                        onJobTap: (job) {
+                          // Handle when a print job is tapped
+                          _showJobDetails(job);
+                        },
+                      ),
+              ),
             ],
           ),
         ),
@@ -135,7 +138,10 @@ class _PrintPageState extends State<PrintPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Print Job #${job.code}',
-          style: TextStyle(fontFamily: 'Unbounded', fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontFamily: 'Unbounded',
+            fontWeight: FontWeight.w600,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -145,6 +151,25 @@ class _PrintPageState extends State<PrintPage> {
             _buildDetailRow('Date', job.formattedDateTime),
             _buildDetailRow('Status', job.status.displayText),
             _buildDetailRow('Pages', '${job.pageCount}'),
+            _buildDetailRow('Price', '₹${job.price.toStringAsFixed(2)}'),
+            if (job.paymentId != null && job.paymentId!.isNotEmpty) ...[
+              SizedBox(height: 8),
+              Divider(),
+              SizedBox(height: 8),
+              Text(
+                'Payment Information',
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey[800],
+                ),
+              ),
+              SizedBox(height: 8),
+              _buildDetailRow('Payment ID', job.paymentId ?? 'N/A'),
+              _buildDetailRow('Order ID', job.orderId ?? 'N/A'),
+              _buildPaymentStatusRow(job.paymentStatus ?? 'pending'),
+            ],
             if (job.fileUrl.isNotEmpty) ...[
               SizedBox(height: 16),
               Row(
@@ -155,10 +180,7 @@ class _PrintPageState extends State<PrintPage> {
                       icon: Icon(Icons.open_in_new, size: 16),
                       label: Text(
                         'View File',
-                        style: TextStyle(
-                          fontFamily: 'Unbounded',
-                          fontSize: 10,
-                        ),
+                        style: TextStyle(fontFamily: 'Unbounded', fontSize: 10),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF00C853),
@@ -190,10 +212,7 @@ class _PrintPageState extends State<PrintPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Close',
-              style: TextStyle(fontFamily: 'Unbounded'),
-            ),
+            child: Text('Close', style: TextStyle(fontFamily: 'Unbounded')),
           ),
         ],
       ),
@@ -233,6 +252,67 @@ class _PrintPageState extends State<PrintPage> {
     );
   }
 
+  Widget _buildPaymentStatusRow(String status) {
+    Color statusColor;
+    String statusText;
+
+    switch (status.toLowerCase()) {
+      case 'paid':
+        statusColor = Colors.green;
+        statusText = 'Paid ✓';
+        break;
+      case 'failed':
+        statusColor = Colors.red;
+        statusText = 'Failed';
+        break;
+      case 'pending':
+      default:
+        statusColor = Colors.orange;
+        statusText = 'Pending';
+        break;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 60,
+            child: Text(
+              'Payment:',
+              style: TextStyle(
+                fontFamily: 'Unbounded',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: statusColor, width: 1),
+              ),
+              child: Text(
+                statusText,
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: statusColor,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _openFile(String fileUrl, [String? fileName]) async {
     try {
       // Validate URL is not empty or null
@@ -245,8 +325,11 @@ class _PrintPageState extends State<PrintPage> {
       Uri? parsedUri;
       try {
         parsedUri = Uri.parse(fileUrl);
-        if (!parsedUri.hasScheme || (!parsedUri.isScheme('http') && !parsedUri.isScheme('https'))) {
-          _showErrorSnackBar('Cannot open file: Invalid URL format. URL must start with http:// or https://');
+        if (!parsedUri.hasScheme ||
+            (!parsedUri.isScheme('http') && !parsedUri.isScheme('https'))) {
+          _showErrorSnackBar(
+            'Cannot open file: Invalid URL format. URL must start with http:// or https://',
+          );
           return;
         }
       } catch (e) {
@@ -255,7 +338,7 @@ class _PrintPageState extends State<PrintPage> {
       }
 
       // Check if it's a PDF file by URL extension or content type
-      if (fileUrl.toLowerCase().endsWith('.pdf') || 
+      if (fileUrl.toLowerCase().endsWith('.pdf') ||
           fileUrl.contains('application/pdf') ||
           fileUrl.contains('.pdf')) {
         // Open PDF in-app
@@ -273,7 +356,9 @@ class _PrintPageState extends State<PrintPage> {
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         } else {
-          _showErrorSnackBar('Cannot open file. No app available to handle this file type.');
+          _showErrorSnackBar(
+            'Cannot open file. No app available to handle this file type.',
+          );
         }
       }
     } catch (e) {
@@ -301,10 +386,7 @@ class _PrintPageState extends State<PrintPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(fontFamily: 'Unbounded'),
-            ),
+            child: Text('Cancel', style: TextStyle(fontFamily: 'Unbounded')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -312,10 +394,7 @@ class _PrintPageState extends State<PrintPage> {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: Text(
-              'Delete',
-              style: TextStyle(fontFamily: 'Unbounded'),
-            ),
+            child: Text('Delete', style: TextStyle(fontFamily: 'Unbounded')),
           ),
         ],
       ),
@@ -324,10 +403,10 @@ class _PrintPageState extends State<PrintPage> {
     if (confirmed == true) {
       // Close the job details dialog first
       Navigator.pop(context);
-      
+
       try {
         final success = await _printService.deletePrintJob(job.id);
-        
+
         if (success) {
           _showSuccessSnackBar('Print job deleted successfully');
           _loadPrintJobs(); // Refresh the list

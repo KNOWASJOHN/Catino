@@ -6,6 +6,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart' as syncfusion_pdf;
 import '../../services/storage/file_upload_service.dart';
 import '../../services/data/print_service.dart';
+import '../../services/payment/payment_service.dart';
 import '../../models/print_job.dart';
 import '../../utils/pricing_config.dart';
 
@@ -21,6 +22,7 @@ class Upload extends StatefulWidget {
 class _UploadState extends State<Upload> {
   final FileUploadService _fileUploadService = FileUploadService();
   final PrintService _printService = PrintService();
+  final PaymentService _paymentService = PaymentService();
   final Connectivity _connectivity = Connectivity();
 
   bool _isUploading = false;
@@ -640,6 +642,15 @@ class _UploadState extends State<Upload> {
       return;
     }
 
+    // Validate that price is greater than zero
+    if (_calculatedPrice <= 0) {
+      _showErrorDialog(
+        'Invalid Price',
+        'Cannot process payment. Please check your print options.',
+      );
+      return;
+    }
+
     setState(() {
       _isUploading = true;
       _uploadProgress = 0.0;
@@ -652,16 +663,47 @@ class _UploadState extends State<Upload> {
 
       print('Creating print job with ID: $jobId');
 
-      // Simulate upload progress
+      // Step 1: Process payment first
+      print('Starting payment for ₹${_calculatedPrice.toStringAsFixed(2)}');
+      final paymentResult = await _paymentService.startPayment(
+        amount: _calculatedPrice,
+        description: 'Print Job - ${_selectedFile!.name}',
+        metadata: {
+          'job_id': jobId,
+          'file_name': _selectedFile!.name,
+          'page_count': _pdfPageCount * _copies,
+          'color_mode': _colorMode.toDbString(),
+          'sides': _sides.toDbString(),
+        },
+      );
+
+      // Step 2: Check if payment was successful
+      if (!paymentResult.isSuccess) {
+        if (paymentResult.isCancelled) {
+          _showErrorDialog(
+            'Payment Cancelled',
+            'You have cancelled the payment process.',
+          );
+          return;
+        }
+
+        throw Exception(
+          paymentResult.errorMessage ?? 'Payment failed. Please try again.',
+        );
+      }
+
+      print('Payment successful! Payment ID: ${paymentResult.paymentId}');
+
+      // Step 3: Simulate upload progress
       _simulateUploadProgress();
 
-      // Upload file to Supabase
+      // Step 4: Upload file to Supabase
       final fileUrl = await _fileUploadService.uploadFile(
         _selectedFile!,
         jobId,
       );
 
-      // Create print job with file URL and print options
+      // Step 5: Create print job with file URL, print options, and payment details
       final printJob = PrintJob(
         id: jobId,
         code: _generatePrintCode(),
@@ -673,6 +715,9 @@ class _UploadState extends State<Upload> {
         colorMode: _colorMode,
         sides: _sides,
         price: _calculatedPrice,
+        paymentId: paymentResult.paymentId,
+        orderId: paymentResult.orderId,
+        paymentStatus: 'paid', // Mark as paid since payment was successful
       );
 
       print('Adding print job to database: ${printJob.id}');
@@ -686,6 +731,7 @@ class _UploadState extends State<Upload> {
         throw Exception('Failed to create print job');
       }
     } catch (e) {
+      print('Error in upload and payment flow: $e');
       _showErrorDialog('Upload Error', e.toString());
     } finally {
       setState(() {

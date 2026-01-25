@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../services/data/supabase_food_service.dart';
+import '../services/payment/payment_service.dart';
 import '../models/food_item.dart';
 
 class Cart extends StatefulWidget {
@@ -791,33 +792,72 @@ class _CartState extends State<Cart> {
                                                                 Icons.payment,
                                                               ),
                                                               onPressed: () async {
-                                                                await cartProvider
-                                                                    .placeOrder(
-                                                                      cartItems,
+                                                                // Start Razorpay payment
+                                                                final paymentService =
+                                                                    PaymentService();
+                                                                final result = await paymentService
+                                                                    .startPayment(
+                                                                      amount:
+                                                                          total,
+                                                                      description:
+                                                                          'Catino Food Order',
                                                                     );
-                                                                Navigator.of(
-                                                                  context,
-                                                                ).pop();
-                                                                ScaffoldMessenger.of(
-                                                                  context,
-                                                                ).showSnackBar(
-                                                                  SnackBar(
-                                                                    content: const Text(
-                                                                      'Order placed successfully!',
-                                                                      style: TextStyle(
-                                                                        fontFamily:
-                                                                            'Unbounded',
+
+                                                                if (result
+                                                                    .isSuccess) {
+                                                                  // Payment successful - place order
+                                                                  await cartProvider
+                                                                      .placeOrder(
+                                                                        cartItems,
+                                                                      );
+                                                                  Navigator.of(
+                                                                    context,
+                                                                  ).pop();
+                                                                  ScaffoldMessenger.of(
+                                                                    context,
+                                                                  ).showSnackBar(
+                                                                    SnackBar(
+                                                                      content: const Text(
+                                                                        'Payment successful! Order placed.',
+                                                                        style: TextStyle(
+                                                                          fontFamily:
+                                                                              'Unbounded',
+                                                                        ),
                                                                       ),
+                                                                      backgroundColor: Colors
+                                                                          .green
+                                                                          .shade600,
                                                                     ),
-                                                                    backgroundColor:
-                                                                        Colors
-                                                                            .green
-                                                                            .shade600,
-                                                                  ),
-                                                                );
+                                                                  );
+                                                                } else {
+                                                                  // Payment failed or cancelled
+                                                                  final isCancelled =
+                                                                      result
+                                                                          .isCancelled;
+                                                                  ScaffoldMessenger.of(
+                                                                    context,
+                                                                  ).showSnackBar(
+                                                                    SnackBar(
+                                                                      content: Text(
+                                                                        isCancelled
+                                                                            ? 'Payment Cancelled'
+                                                                            : (result.errorMessage ??
+                                                                                  'Payment failed'),
+                                                                        style: const TextStyle(
+                                                                          fontFamily:
+                                                                              'Unbounded',
+                                                                        ),
+                                                                      ),
+                                                                      backgroundColor:
+                                                                          isCancelled
+                                                                          ? Colors.orange.shade700
+                                                                          : Colors.red.shade600,
+                                                                    ),
+                                                                  );
+                                                                }
                                                               },
                                                               label: const Text(
-                                                                'Pay & Place Order',
+                                                                'Pay Bill',
                                                                 style: TextStyle(
                                                                   fontFamily:
                                                                       'Unbounded',

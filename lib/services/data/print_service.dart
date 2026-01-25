@@ -77,6 +77,9 @@ class PrintService {
         'color_mode': job.colorMode.toDbString(),
         'sides': job.sides.toDbString(),
         'price': job.price,
+        'payment_id': job.paymentId,
+        'order_id': job.orderId,
+        'payment_status': job.paymentStatus,
       });
 
       // Send notification for new print job

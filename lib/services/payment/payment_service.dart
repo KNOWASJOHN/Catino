@@ -207,7 +207,7 @@ class PaymentService {
   }) async {
     try {
       // TODO: Replace with your actual backend endpoint
-      final url = Uri.parse('$_backendUrl/create-order');
+      final url = Uri.parse('$_backendUrl/api/create-order');
 
       final response = await http.post(
         url,
@@ -284,7 +284,7 @@ class PaymentService {
   Future<bool> _verifyPaymentOnBackend(PaymentResult result) async {
     try {
       // TODO: Replace with your actual backend endpoint
-      final url = Uri.parse('$_backendUrl/verify-payment');
+      final url = Uri.parse('$_backendUrl/api/verify-payment');
 
       final response = await http.post(
         url,
@@ -409,17 +409,20 @@ class PaymentService {
 
   /// Handle payment error
   void _handlePaymentError(PaymentFailureResponse response) {
-    logError('PaymentService: Payment failed - ${response.message}', null);
-
-    _showToast(
-      response.message ?? 'Payment failed. Please try again.',
-      isSuccess: false,
+    logError(
+      'PaymentService: Payment failed - ${response.message}, Code: ${response.code}',
+      null,
     );
 
-    final result = PaymentResult.failure(
-      message: response.message ?? 'Payment failed',
-      code: response.code,
-    );
+    // Sanitize error message, "undefined" sometimes returned on cancellation
+    String message = response.message ?? 'Payment failed';
+    if (message == 'undefined') {
+      message = 'Payment cancelled';
+    }
+
+    _showToast(message, isSuccess: false);
+
+    final result = PaymentResult.failure(message: message, code: response.code);
 
     _paymentCompleter?.complete(result);
   }
