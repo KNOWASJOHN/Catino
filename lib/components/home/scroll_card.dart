@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../common/skeleton_loader.dart';
 
 class ScrollCardModel {
   final String id;
@@ -67,7 +68,7 @@ class _ScrollcardState extends State<Scrollcard> {
   Future<void> _initializeData() async {
     // Try realtime subscription first
     _listenToScrollCards();
-    
+
     // If realtime fails, fallback to regular fetch after a short delay
     await Future.delayed(const Duration(seconds: 2));
     if (_loading || _error != null) {
@@ -83,29 +84,32 @@ class _ScrollcardState extends State<Scrollcard> {
           .stream(primaryKey: ['id'])
           .eq('is_active', true)
           .order('display_order')
-          .listen((data) {
-        _retryCount = 0; // Reset retry count on success
-        final List<ScrollCardModel> cards = [];
-        for (var item in data) {
-          cards.add(ScrollCardModel.fromSupabaseMap(item));
-        }
-        // Compare with cache
-        if (!_areCardListsEqual(cards, _cachedCards)) {
-          if (mounted) {
-            setState(() {
-              _cards = cards;
-              _cachedCards = List<ScrollCardModel>.from(cards);
-              _loading = false;
-              _error = null;
-            });
-            _startAutoScroll();
-          }
-        }
-      }, onError: (e) {
-        if (mounted) {
-          _fallbackToRestApi();
-        }
-      });
+          .listen(
+            (data) {
+              _retryCount = 0; // Reset retry count on success
+              final List<ScrollCardModel> cards = [];
+              for (var item in data) {
+                cards.add(ScrollCardModel.fromSupabaseMap(item));
+              }
+              // Compare with cache
+              if (!_areCardListsEqual(cards, _cachedCards)) {
+                if (mounted) {
+                  setState(() {
+                    _cards = cards;
+                    _cachedCards = List<ScrollCardModel>.from(cards);
+                    _loading = false;
+                    _error = null;
+                  });
+                  _startAutoScroll();
+                }
+              }
+            },
+            onError: (e) {
+              if (mounted) {
+                _fallbackToRestApi();
+              }
+            },
+          );
     } catch (e) {
       _fallbackToRestApi();
     }
@@ -114,10 +118,10 @@ class _ScrollcardState extends State<Scrollcard> {
   Future<void> _fallbackToRestApi() async {
     print('Falling back to REST API polling');
     _cardsSubscription?.cancel();
-    
+
     // Initial fetch
     await _fetchCardsWithRest();
-    
+
     // Set up polling every 30 seconds
     _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
@@ -167,13 +171,14 @@ class _ScrollcardState extends State<Scrollcard> {
       _retryCount = 0; // Reset on success
     } catch (e) {
       _retryCount++;
-      
+
       if (mounted) {
         setState(() {
           _loading = false;
           if (_cards.isEmpty) {
             // Only show error if we have no cached data
-            _error = 'Unable to load cards. ${_retryCount < _maxRetries ? "Retrying..." : "Please check your connection."}';
+            _error =
+                'Unable to load cards. ${_retryCount < _maxRetries ? "Retrying..." : "Please check your connection."}';
           }
         });
       }
@@ -204,9 +209,11 @@ class _ScrollcardState extends State<Scrollcard> {
   void _startAutoScroll() {
     _timer?.cancel();
     if (_cards.isEmpty) return;
-    
+
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (_pageController.hasClients && !_isUserInteracting && _cards.isNotEmpty) {
+      if (_pageController.hasClients &&
+          !_isUserInteracting &&
+          _cards.isNotEmpty) {
         if (_currentPage < _cards.length - 1) {
           _currentPage++;
           _pageController.animateToPage(
@@ -254,10 +261,7 @@ class _ScrollcardState extends State<Scrollcard> {
   Widget build(BuildContext context) {
     final cardHeight = MediaQuery.of(context).size.height * 0.4;
     if (_loading) {
-      return SizedBox(
-        height: cardHeight,
-        child: const Center(child: CircularProgressIndicator()),
-      );
+      return const Center(child: ScrollCardSkeleton());
     }
     if (_error != null && _cards.isEmpty) {
       return SizedBox(
@@ -320,12 +324,16 @@ class _ScrollcardState extends State<Scrollcard> {
                 final String description = card.description;
 
                 ImageProvider imageProvider;
-                if (image.isNotEmpty && (image.startsWith('http://') || image.startsWith('https://'))) {
+                if (image.isNotEmpty &&
+                    (image.startsWith('http://') ||
+                        image.startsWith('https://'))) {
                   imageProvider = NetworkImage(image);
                 } else if (image.isNotEmpty && image.startsWith('assets/')) {
                   imageProvider = AssetImage(image);
                 } else {
-                  imageProvider = const AssetImage('assets/Elements/placeholder.jpg');
+                  imageProvider = const AssetImage(
+                    'assets/Elements/placeholder.jpg',
+                  );
                 }
 
                 return Container(

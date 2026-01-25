@@ -5,6 +5,7 @@ import 'package:cantino/services/data/order_service.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:async';
 import 'dart:ui';
+import '../common/skeleton_loader.dart';
 
 // Design constants
 const _kPrimaryAccent = Color(0xFFCDFF00);
@@ -78,13 +79,13 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
   // ========== Data Loading Methods ==========
 
   /// Loads the initial page of orders
-  /// Loads the initial page of orders
-  Future<void> _loadOrders() async {
+  Future<void> _loadOrders({bool forceRefresh = false}) async {
     try {
       _currentOffset = 0;
       final orders = await _orderService.getUserOrders(
         limit: _kPageSize,
         offset: 0,
+        skipCache: forceRefresh,
       );
       if (mounted) {
         setState(() {
@@ -153,7 +154,9 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
         .eq('user_id', user.id)
         .listen(
           (data) {
-            _loadOrders();
+            // Force refresh from network to ensure we get the latest data
+            // Cache might be stale or in race condition with other listeners
+            _loadOrders(forceRefresh: true);
           },
           onError: (error) {
             debugPrint('Error in orders listener: $error');
@@ -306,9 +309,11 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
               child: Stack(
                 children: [
                   _isLoading
-                      ? Center(
-                          child: CircularProgressIndicator(
-                            color: Colors.white.withOpacity(0.7),
+                      ? const SkeletonList(
+                          itemCount: 8,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
                           ),
                         )
                       : _orders.isEmpty

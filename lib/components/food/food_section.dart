@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/food_item.dart';
 import '../../services/data/supabase_food_service.dart';
+import '../common/skeleton_loader.dart';
 import 'dart:async';
 
 class FoodSection extends StatefulWidget {
@@ -43,7 +44,7 @@ class _FoodSectionState extends State<FoodSection> {
 
   void _updateDisplayedItems() {
     if (_allFoodItems.isEmpty) return;
-    
+
     setState(() {
       // Shuffle and take first items for variety
       final shuffled = List<FoodItem>.from(_allFoodItems)..shuffle();
@@ -53,10 +54,10 @@ class _FoodSectionState extends State<FoodSection> {
 
   Future<void> _loadFoodItems() async {
     setState(() => _isLoading = true);
-    
+
     try {
       List<FoodItem> items = await _foodService.getAllFoodItems();
-      
+
       setState(() {
         _allFoodItems = items;
         _updateDisplayedItems();
@@ -70,9 +71,7 @@ class _FoodSectionState extends State<FoodSection> {
 
   Widget foodBox(FoodItem item) {
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Stack(
@@ -90,10 +89,12 @@ class _FoodSectionState extends State<FoodSection> {
                     child: CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
                           ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
+                                loadingProgress.expectedTotalBytes!
                           : null,
                       strokeWidth: 2,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00C853)),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFF00C853),
+                      ),
                     ),
                   ),
                 );
@@ -104,11 +105,16 @@ class _FoodSectionState extends State<FoodSection> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.image_not_supported,
-                          size: 40, color: Colors.grey[500]),
+                      Icon(
+                        Icons.image_not_supported,
+                        size: 40,
+                        color: Colors.grey[500],
+                      ),
                       const SizedBox(height: 8),
-                      Text('Image not available',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 10)),
+                      Text(
+                        'Image not available',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 10),
+                      ),
                     ],
                   ),
                 );
@@ -120,10 +126,7 @@ class _FoodSectionState extends State<FoodSection> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.7),
-                  ],
+                  colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
                 ),
               ),
             ),
@@ -211,11 +214,7 @@ class _FoodSectionState extends State<FoodSection> {
     }
 
     if (_isLoading) {
-      return Center(
-        child: CircularProgressIndicator(
-          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00C853)),
-        ),
-      );
+      return const FoodSectionSkeleton();
     }
 
     if (_displayedItems.isEmpty) {

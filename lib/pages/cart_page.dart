@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../components/common/skeleton_loader.dart';
 import '../providers/cart_provider.dart';
 import '../services/data/supabase_food_service.dart';
 import '../services/payment/payment_service.dart';
@@ -91,7 +92,13 @@ class _CartState extends State<Cart> {
                   future: _foodFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const Padding(
+                        padding: EdgeInsets.fromLTRB(12, 100, 12, 0),
+                        child: SkeletonList(
+                          itemCount: 4,
+                          padding: EdgeInsets.zero,
+                        ),
+                      );
                     }
                     if (snapshot.hasError || !snapshot.hasData) {
                       return const Center(
