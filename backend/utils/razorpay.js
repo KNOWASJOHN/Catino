@@ -8,7 +8,7 @@ const Razorpay = require('razorpay');
 
 // Validate required environment variables
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-    console.error('ERROR: RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set in .env');
+    console.error('Missing Razorpay credentials in environment');
     process.exit(1);
 }
 

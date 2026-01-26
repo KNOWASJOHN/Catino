@@ -66,12 +66,16 @@ router.post('/create-order', async (req, res) => {
             },
         };
 
-        console.log('Creating order:', options);
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Creating order');
+        }
 
         // Create order via Razorpay API
         const order = await razorpay.orders.create(options);
 
-        console.log('Order created:', order.id);
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Order created');
+        }
 
         // Return order details to client
         res.json({
@@ -81,10 +85,14 @@ router.post('/create-order', async (req, res) => {
             receipt: order.receipt,
         });
     } catch (error) {
-        console.error('Order creation failed:', error);
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Order creation failed', error);
+        } else {
+            console.error('Order creation failed');
+        }
         res.status(500).json({
             error: 'Order creation failed',
-            message: error.message,
+            message: process.env.NODE_ENV === 'development' ? error.message : 'An internal error occurred',
         });
     }
 });
@@ -137,11 +145,9 @@ router.post('/verify-payment', (req, res) => {
         // Compare signatures
         const isValid = expectedSignature === signature;
 
-        console.log('Payment verification:', {
-            order_id,
-            payment_id,
-            verified: isValid,
-        });
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Payment verification result');
+        }
 
         if (isValid) {
             // =====================================================================
@@ -158,10 +164,7 @@ router.post('/verify-payment', (req, res) => {
                 message: 'Payment verified successfully',
             });
         } else {
-            console.error('Signature mismatch!', {
-                received: signature,
-                expected: expectedSignature,
-            });
+            console.error('Signature mismatch!');
 
             res.status(400).json({
                 verified: false,
@@ -170,10 +173,14 @@ router.post('/verify-payment', (req, res) => {
             });
         }
     } catch (error) {
-        console.error('Verification failed:', error);
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Verification failed', error);
+        } else {
+            console.error('Verification failed');
+        }
         res.status(500).json({
             error: 'Verification failed',
-            message: error.message,
+            message: process.env.NODE_ENV === 'development' ? error.message : 'An internal error occurred',
         });
     }
 });
@@ -220,46 +227,64 @@ router.post('/webhook', (req, res) => {
         // Parse the webhook payload
         const event = JSON.parse(rawBody.toString());
 
-        console.log('Webhook received:', event.event);
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Webhook received:', event.event);
+        }
 
         // Handle different event types
         switch (event.event) {
             case 'payment.authorized':
-                console.log('Payment authorized:', event.payload.payment.entity.id);
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('Payment authorized event received');
+                }
                 // Payment is authorized but not captured yet
                 break;
 
             case 'payment.captured':
-                console.log('Payment captured:', event.payload.payment.entity.id);
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('Payment captured event received');
+                }
                 // Payment is successfully captured
                 // This is a good place to fulfill the order
                 break;
 
             case 'payment.failed':
-                console.log('Payment failed:', event.payload.payment.entity.id);
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('Payment failed event received');
+                }
                 // Handle failed payment
                 break;
 
             case 'order.paid':
-                console.log('Order paid:', event.payload.order.entity.id);
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('Order paid event received');
+                }
                 // Order is fully paid
                 break;
 
             case 'refund.created':
-                console.log('Refund created:', event.payload.refund.entity.id);
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('Refund created event received');
+                }
                 // Handle refund
                 break;
 
             default:
-                console.log('Unhandled event:', event.event);
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('Unhandled event:', event.event);
+                }
         }
 
         // Always respond with 200 to acknowledge receipt
         res.json({ received: true });
-    } catch (error) {
-        console.error('Webhook error:', error);
-        // Still return 200 to prevent retries for parsing errors
-        res.json({ received: true, error: error.message });
+        } catch (error) {
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Webhook error', error);
+            } else {
+                console.error('Webhook error');
+            }
+            // Still return 200 to prevent retries for parsing errors
+            res.json({ received: true });
     }
 });
 
@@ -289,10 +314,14 @@ router.get('/payment/:paymentId', async (req, res) => {
             created_at: payment.created_at,
         });
     } catch (error) {
-        console.error('Payment fetch failed:', error);
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Payment fetch failed:', error);
+        } else {
+            console.error('Payment fetch failed');
+        }
         res.status(500).json({
             error: 'Payment fetch failed',
-            message: error.message,
+            message: process.env.NODE_ENV === 'development' ? error.message : 'An internal error occurred',
         });
     }
 });
