@@ -97,7 +97,7 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
           _isLoading = false;
         });
       }
-    } catch (e, st) {
+    } catch (e) {
       // Avoid printing error details which may contain sensitive data
       // Set loading to false so UI can update. Keep error handling internal.
       if (mounted) {
@@ -132,7 +132,7 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
           _isLoadingMore = false;
         });
       }
-    } catch (e, st) {
+    } catch (e) {
       // Avoid printing error details which may contain sensitive data
       if (mounted) {
         setState(() {
@@ -186,7 +186,7 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
         }
         return false;
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       // Log internally in development if needed; avoid exposing exception text to UI
       if (mounted) {
         _showErrorSnackBar('An error occurred while deleting the order');
