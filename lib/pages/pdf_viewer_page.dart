@@ -75,7 +75,6 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
       
       if (response.statusCode == 200) {
         // Validate content type
-        final contentType = response.headers['content-type'] ?? '';
         if (kDebugMode) logInfo('PDFViewer: Content-Type determined');
         
         // Check if response is actually a PDF
