@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../services/auth/supabase_auth_service.dart';
+import '../services/log.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -108,7 +110,7 @@ class _ProfileState extends State<Profile> {
                   'View all your past orders',
                   () {
                     // Navigate to order history page
-                    print('Navigate to Order History');
+                    if (kDebugMode) logInfo('Navigate to Order History');
                   },
                 ),
                 _buildInfoTile(Icons.fastfood, 'Last Ordered', lastOrderedItem),
@@ -149,7 +151,7 @@ class _ProfileState extends State<Profile> {
                   'Update your personal information',
                   () {
                     // Navigate to edit profile page
-                    print('Navigate to Edit Profile');
+                    if (kDebugMode) logInfo('Navigate to Edit Profile');
                   },
                 ),
                 _buildActionTile(
@@ -158,7 +160,7 @@ class _ProfileState extends State<Profile> {
                   'Update your login credentials',
                   () {
                     // Navigate to change password page
-                    print('Navigate to Change Password');
+                    if (kDebugMode) logInfo('Navigate to Change Password');
                   },
                 ),
                 _buildActionTile(
@@ -246,7 +248,7 @@ class _ProfileState extends State<Profile> {
                     icon: Icon(Icons.camera_alt, color: Colors.black, size: 18),
                     onPressed: () {
                       // Handle profile picture change
-                      print('Change profile picture');
+                      if (kDebugMode) logInfo('Change profile picture');
                     },
                   ),
                 ),

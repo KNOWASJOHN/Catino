@@ -87,6 +87,7 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
         offset: 0,
         skipCache: forceRefresh,
       );
+
       if (mounted) {
         setState(() {
           _orders = orders;
@@ -96,8 +97,9 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
           _isLoading = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error loading orders: $e');
+    } catch (e, st) {
+      // Avoid printing error details which may contain sensitive data
+      // Set loading to false so UI can update. Keep error handling internal.
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -130,8 +132,8 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
           _isLoadingMore = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error loading more orders: $e');
+    } catch (e, st) {
+      // Avoid printing error details which may contain sensitive data
       if (mounted) {
         setState(() {
           _isLoadingMore = false;
@@ -159,7 +161,7 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
             _loadOrders(forceRefresh: true);
           },
           onError: (error) {
-            debugPrint('Error in orders listener: $error');
+            // Dev-only: orders listener error; avoid console prints of payloads
           },
         );
   }
@@ -171,10 +173,8 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
     setState(() => _deletingOrders.add(orderId));
 
     try {
-      debugPrint('Attempting to delete order: $orderId');
-      final success = await _orderService.deleteOrder(orderId);
-
-      debugPrint('Delete operation result: $success');
+    // Dev-only: attempting to delete order (do not log full order IDs in production)
+    final success = await _orderService.deleteOrder(orderId);
 
       if (success && mounted) {
         _showSuccessSnackBar('Order deleted successfully');
@@ -187,10 +187,9 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
         return false;
       }
     } catch (e, stackTrace) {
-      debugPrint('Error deleting order: $e');
-      debugPrint('Stack trace: $stackTrace');
+      // Log internally in development if needed; avoid exposing exception text to UI
       if (mounted) {
-        _showErrorSnackBar('Error: $e');
+        _showErrorSnackBar('An error occurred while deleting the order');
       }
       return false;
     } finally {

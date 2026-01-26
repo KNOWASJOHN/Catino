@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import '../services/log.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -50,7 +52,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
         errorMessage = null;
       });
 
-      print('PDFViewer: Starting download from URL: ${widget.url}');
+      if (kDebugMode) logInfo('PDFViewer: Starting download');
 
       // Validate URL
       final uri = Uri.parse(widget.url);
@@ -61,49 +63,40 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
       // Download the PDF file
       final response = await (_httpClient ?? http.Client()).get(uri);
       
-      print('PDFViewer: Response status: ${response.statusCode}');
-      print('PDFViewer: Response headers: ${response.headers}');
-      print('PDFViewer: Response body size: ${response.bodyBytes.length} bytes');
+      if (kDebugMode) logInfo('PDFViewer: Response status: ${response.statusCode}');
       
       // For non-200 responses, try to decode error message from JSON
       if (response.statusCode != 200) {
         final contentType = response.headers['content-type'] ?? '';
         if (contentType.contains('application/json')) {
-          try {
-            final errorBody = String.fromCharCodes(response.bodyBytes);
-            print('PDFViewer: Error response body: $errorBody');
-          } catch (_) {}
+          // Avoid printing error body which may contain sensitive URLs or tokens
         }
       }
       
       if (response.statusCode == 200) {
         // Validate content type
         final contentType = response.headers['content-type'] ?? '';
-        print('PDFViewer: Content-Type: $contentType');
+        if (kDebugMode) logInfo('PDFViewer: Content-Type determined');
         
         // Check if response is actually a PDF
         final bytes = response.bodyBytes;
         if (bytes.isEmpty) {
-          throw Exception('Downloaded file is empty (0 bytes)');
+          throw Exception('Downloaded file is empty');
         }
         
         // Validate PDF magic bytes (%PDF)
         if (bytes.length < 4 || 
             bytes[0] != 0x25 || bytes[1] != 0x50 || 
             bytes[2] != 0x44 || bytes[3] != 0x46) {
-          print('PDFViewer: ERROR - File does not have PDF magic bytes');
-          print('PDFViewer: First 20 bytes: ${bytes.take(20).toList()}');
+          if (kDebugMode) logInfo('PDFViewer: ERROR - File does not have PDF magic bytes');
           
           // Try to decode as string to see if it's an error message
-          try {
-            final bodyText = String.fromCharCodes(bytes.take(500));
-            print('PDFViewer: Response body preview: $bodyText');
-          } catch (_) {}
+          // Avoid printing response body previews which may contain sensitive info
           
           throw Exception('Downloaded file is not a valid PDF. Check if the file exists in storage and the URL is correct.');
         }
         
-        print('PDFViewer: Valid PDF detected');
+        if (kDebugMode) logInfo('PDFViewer: Valid PDF detected');
         
         // Get application documents directory
         final dir = await getApplicationDocumentsDirectory();
@@ -120,19 +113,16 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
         fileName = fileName.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
         
         final file = File('${dir.path}/$fileName');
-        print('PDFViewer: Saving to: ${file.path}');
+        if (kDebugMode) logInfo('PDFViewer: Saving file');
         
         // Write the PDF data to a local file
         await file.writeAsBytes(bytes);
-        print('PDFViewer: File saved successfully');
+        if (kDebugMode) logInfo('PDFViewer: File saved successfully');
         
         // Verify file was written
         if (!await file.exists()) {
           throw Exception('Failed to save PDF file to disk');
         }
-        
-        final fileSize = await file.length();
-        print('PDFViewer: Saved file size: $fileSize bytes');
         
         setState(() {
           localFilePath = file.path;
@@ -248,12 +238,12 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
         final file = File('$selectedDirectory/$fileName');
         await file.writeAsBytes(response.bodyBytes);
         
-        _showMessage('PDF downloaded to: ${file.path}', isError: false);
+        _showMessage('PDF downloaded', isError: false);
       } else {
         _showMessage('Failed to download PDF', isError: true);
       }
     } catch (e) {
-      _showMessage('Error downloading: ${e.toString()}', isError: true);
+      _showMessage('Error downloading file', isError: true);
     } finally {
       setState(() => isDownloading = false);
     }
@@ -306,7 +296,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
         _showMessage('Failed to download PDF', isError: true);
       }
     } catch (e) {
-      _showMessage('Error downloading: ${e.toString()}', isError: true);
+      _showMessage('Error downloading file', isError: true);
     } finally {
       setState(() => isDownloading = false);
     }

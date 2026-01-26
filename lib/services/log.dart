@@ -12,9 +12,9 @@ void initLogging({Level level = Level.INFO}) {
     // In debug builds, also print to console for easier debugging
     if (kDebugMode) {
       // Use debugPrint so output is throttled appropriately
+      // Print only the formatted message to avoid accidentally exposing
+      // error objects, stack traces, or sensitive payloads to stdout.
       debugPrint(message);
-      if (record.error != null) debugPrint('Error: ${record.error}');
-      if (record.stackTrace != null) debugPrint('StackTrace: ${record.stackTrace}');
     }
     // TODO: forward logs to an external logging/monitoring service in release
   });

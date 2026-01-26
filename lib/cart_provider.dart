@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'services/log.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -73,13 +74,13 @@ class CartProvider with ChangeNotifier {
           _saveToCache(uid, _cart);
         },
         onError: (error) {
-          print('Error loading cart from Supabase: $error');
+          logError('Error loading cart from Supabase', error);
           _isLoading = false;
           notifyListeners();
         },
       );
-    } catch (e) {
-      print('Error setting up cart listener: $e');
+    } catch (e, st) {
+      logError('Error setting up cart listener', e, st);
       _isLoading = false;
       notifyListeners();
     }
@@ -103,8 +104,8 @@ class CartProvider with ChangeNotifier {
         // Clear cache if it belongs to a different user
         await _clearCache();
       }
-    } catch (e) {
-      print('Error loading cart from cache: $e');
+    } catch (e, st) {
+      logError('Error loading cart from cache', e, st);
     }
   }
 
@@ -114,8 +115,8 @@ class CartProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('cart_user_id', uid);
       await prefs.setString('cart_data', jsonEncode(cartData));
-    } catch (e) {
-      print('Error saving cart to cache: $e');
+    } catch (e, st) {
+      logError('Error saving cart to cache', e, st);
     }
   }
 
@@ -125,8 +126,8 @@ class CartProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cart_user_id');
       await prefs.remove('cart_data');
-    } catch (e) {
-      print('Error clearing cart cache: $e');
+    } catch (e, st) {
+      logError('Error clearing cart cache', e, st);
     }
   }
 
@@ -199,8 +200,8 @@ class CartProvider with ChangeNotifier {
       
       // Also save to cache for offline access
       _saveToCache(uid, _cart);
-    } catch (e) {
-      print('Error saving cart to Supabase: $e');
+    } catch (e, st) {
+      logError('Error saving cart to Supabase', e, st);
     }
   }
 
@@ -234,12 +235,14 @@ class CartProvider with ChangeNotifier {
       if (success) {
         // Clear cart after successful order placement
         clear();
-        print('Order placed successfully: $code');
+        if (kDebugMode) {
+          // Dev-only: Order placed. Do not log full order codes in production.
+        }
       } else {
         throw Exception('Failed to place order');
       }
     } catch (e) {
-      print('Error placing order: $e');
+      logError('Error placing order', e);
       throw e; // Re-throw to handle in UI
     }
   }

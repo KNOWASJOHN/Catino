@@ -36,9 +36,7 @@ class FileUploadService {
         
         // Validate file size
         if (file.size > maxFileSizeBytes) {
-          throw FileUploadException(
-            'File size exceeds 10MB limit. Selected file: ${(file.size / (1024 * 1024)).toStringAsFixed(1)}MB'
-          );
+          throw FileUploadException('File size exceeds 10MB limit');
         }
 
         // Validate file type
@@ -56,7 +54,7 @@ class FileUploadService {
       return null;
     } catch (e) {
       if (e is FileUploadException) rethrow;
-      throw FileUploadException('Failed to pick file: $e');
+      throw FileUploadException('Failed to pick file');
     }
   }
 

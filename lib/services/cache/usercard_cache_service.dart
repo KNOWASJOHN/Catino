@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'user_session_cache.dart';
+import '../../services/log.dart';
 
 class UserCardCacheService {
   static const String _baseUserCardDataKey = 'usercard_data';
@@ -28,8 +30,8 @@ class UserCardCacheService {
           await prefs.setString(_userIdKey, currentUserId);
         }
       }
-    } catch (e) {
-      print('Error validating user cache: $e');
+    } catch (e, st) {
+      logError('Error validating user cache', e, st);
     }
   }
 
@@ -44,8 +46,8 @@ class UserCardCacheService {
           await prefs.remove(key);
         }
       }
-    } catch (e) {
-      print('Error clearing user caches: $e');
+    } catch (e, st) {
+      logError('Error clearing user caches', e, st);
     }
   }
 
@@ -56,14 +58,16 @@ class UserCardCacheService {
       
       final userCardDataKey = await _getUserCardDataKey();
       if (userCardDataKey == null) {
-        print('User not authenticated - cannot save UserCard data');
+        if (kDebugMode) {
+          // Dev-only: user not authenticated
+        }
         return;
       }
       
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(userCardDataKey, jsonEncode(data));
-    } catch (e) {
-      print('Error saving UserCard data to cache: $e');
+    } catch (e, st) {
+      logError('Error saving UserCard data to cache', e, st);
     }
   }
 
@@ -74,7 +78,9 @@ class UserCardCacheService {
       
       final userCardDataKey = await _getUserCardDataKey();
       if (userCardDataKey == null) {
-        print('User not authenticated - cannot retrieve UserCard data');
+        if (kDebugMode) {
+          // Dev-only: user not authenticated
+        }
         return null;
       }
       
@@ -86,8 +92,8 @@ class UserCardCacheService {
       }
 
       return jsonDecode(cachedData) as Map<String, dynamic>;
-    } catch (e) {
-      print('Error reading UserCard data from cache: $e');
+    } catch (e, st) {
+      logError('Error reading UserCard data from cache', e, st);
       return null;
     }
   }
@@ -100,8 +106,8 @@ class UserCardCacheService {
       
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(userCardDataKey);
-    } catch (e) {
-      print('Error clearing UserCard cache: $e');
+    } catch (e, st) {
+      logError('Error clearing UserCard cache', e, st);
     }
   }
 
@@ -111,8 +117,8 @@ class UserCardCacheService {
       await _clearAllUserCaches();
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_userIdKey);
-    } catch (e) {
-      print('Error clearing all users UserCard cache: $e');
+    } catch (e, st) {
+      logError('Error clearing all users UserCard cache', e, st);
     }
   }
 
@@ -124,8 +130,8 @@ class UserCardCacheService {
       
       final prefs = await SharedPreferences.getInstance();
       return prefs.containsKey(userCardDataKey);
-    } catch (e) {
-      print('Error checking cache existence: $e');
+    } catch (e, st) {
+      logError('Error checking cache existence', e, st);
       return false;
     }
   }

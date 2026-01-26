@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import '../services/log.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../components/print/upload.dart';
 import '../components/print/print_history.dart';
@@ -37,8 +39,8 @@ class _PrintPageState extends State<PrintPage> {
           _isLoading = false;
         });
       }
-    } catch (e) {
-      print('Error loading print jobs: $e');
+    } catch (e, st) {
+      logError('Error loading print jobs', e, st);
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -333,7 +335,7 @@ class _PrintPageState extends State<PrintPage> {
           return;
         }
       } catch (e) {
-        _showErrorSnackBar('Cannot open file: Malformed URL - ${e.toString()}');
+        _showErrorSnackBar('Cannot open file: Malformed URL');
         return;
       }
 
@@ -362,7 +364,7 @@ class _PrintPageState extends State<PrintPage> {
         }
       }
     } catch (e) {
-      _showErrorSnackBar('Error opening file: ${e.toString()}');
+      _showErrorSnackBar('Error opening file');
     }
   }
 
@@ -413,8 +415,9 @@ class _PrintPageState extends State<PrintPage> {
         } else {
           _showErrorSnackBar('Failed to delete print job');
         }
-      } catch (e) {
-        _showErrorSnackBar('Error deleting job: ${e.toString()}');
+      } catch (e, st) {
+        logError('Error deleting print job', e, st);
+        _showErrorSnackBar('Error deleting job');
       }
     }
   }

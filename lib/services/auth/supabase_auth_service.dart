@@ -35,7 +35,8 @@ class SupabaseAuthService {
         final userData = data.first;
         // Update cache with fresh data
         _profileCacheService.cacheProfileData(userData);
-        print('Profile data updated from Supabase listener');
+        // Dev-only marker: profile data updated. Avoid printing PII.
+        // if (kDebugMode) { logInfo('Profile data updated from Supabase listener'); }
       }
     });
   }
@@ -88,7 +89,7 @@ class SupabaseAuthService {
     } catch (e) {
       return {
         'success': false,
-        'message': 'An error occurred: ${e.toString()}',
+        'message': 'An internal error occurred',
       };
     }
   }
@@ -116,7 +117,7 @@ class SupabaseAuthService {
     } catch (e) {
       return {
         'success': false,
-        'message': 'An error occurred: ${e.toString()}',
+        'message': 'An internal error occurred',
       };
     }
   }
@@ -139,9 +140,9 @@ class SupabaseAuthService {
       // Clear user session cache
       _userSessionCache.clearUserSession();
       
-      print('User signed out and all caches cleared');
+      // Dev-only: user signed out and caches cleared. Avoid printing PII in logs.
     } catch (e) {
-      print('Error during sign out: $e');
+      // Dev-only: error during sign out; avoid printing exception details.
       // Still sign out even if cache clearing fails
       await _supabase.auth.signOut();
       _userSessionCache.clearUserSession();
@@ -157,10 +158,10 @@ class SupabaseAuthService {
         'message': 'Password reset link sent to your email',
       };
     } catch (e) {
-      print('Error sending password reset: $e');
+      // Dev-only: error sending password reset; avoid printing exception details.
       return {
         'success': false,
-        'message': 'Failed to send reset email: ${e.toString()}',
+        'message': 'Failed to send reset email',
       };
     }
   }
@@ -174,12 +175,11 @@ class SupabaseAuthService {
       if (!forceRefresh) {
         final cachedData = await _profileCacheService.getCachedProfileData();
         if (cachedData != null) {
-          print('Returning user data from cache');
+          // Dev-only: returning user data from cache; avoid printing PII.
           return cachedData;
         }
       }
-
-      print('Fetching user data from Supabase');
+      // Dev-only: fetching user data from Supabase; avoid printing PII.
       final response = await _supabase
           .from('users')
           .select()
@@ -190,7 +190,7 @@ class SupabaseAuthService {
       await _profileCacheService.cacheProfileData(response);
       return response;
     } catch (e) {
-      print('Error fetching user data: $e');
+      // Dev-only: error fetching user data; avoid printing exception details.
       // Fallback to cache
       return await _profileCacheService.getCachedProfileData();
     }
@@ -214,10 +214,10 @@ class SupabaseAuthService {
         await _profileCacheService.cacheProfileData(fullUserData);
       }
 
-      print('User data updated successfully');
+      // Dev-only: user data updated; avoid printing PII.
       return true;
     } catch (e) {
-      print('Error updating user data: $e');
+      // Dev-only: error updating user data; avoid printing exception details.
       return false;
     }
   }
@@ -232,9 +232,9 @@ class SupabaseAuthService {
         'token_updated_at': DateTime.now().millisecondsSinceEpoch,
       }).eq('id', currentUserId!);
 
-      print('FCM token updated in Supabase');
+      // Dev-only: FCM token updated; avoid printing tokens to stdout.
     } catch (e) {
-      print('Error updating FCM token: $e');
+      // Dev-only: error updating FCM token; avoid printing exception details.
     }
   }
 
@@ -252,10 +252,10 @@ class SupabaseAuthService {
       // Sign out
       await signOut();
 
-      print('User account deleted successfully');
+      // Dev-only: user account deleted; avoid printing PII.
       return true;
     } catch (e) {
-      print('Error deleting account: $e');
+      // Dev-only: error deleting account; avoid printing exception details.
       return false;
     }
   }

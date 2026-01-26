@@ -106,7 +106,7 @@ class PaymentService {
     Map<String, dynamic>? metadata,
   }) async {
     try {
-      logInfo('PaymentService: Starting payment for ₹$amount');
+      logInfo('PaymentService: Starting payment');
 
       // Step 1: Create order on backend
       final orderData = await _fetchOrderFromBackend(
@@ -123,7 +123,14 @@ class PaymentService {
       final orderId = orderData['id'] as String;
       final amountInPaise = orderData['amount'] as int;
 
-      logInfo('PaymentService: Order created - $orderId');
+      // Log masked order id in development only
+      if (kDebugMode) {
+        String _maskId(String? id) {
+          if (id == null || id.isEmpty) return '';
+          return id.length > 6 ? '****' + id.substring(id.length - 6) : '****';
+        }
+        logInfo('PaymentService: Order created - ${_maskId(orderId)}');
+      }
 
       // Step 2: Open checkout
       final result = await _openCheckout(
@@ -144,14 +151,14 @@ class PaymentService {
           );
         }
 
-        logInfo('PaymentService: Payment verified successfully');
+        if (kDebugMode) logInfo('PaymentService: Payment verified successfully');
         _showToast('Payment successful! ✓', isSuccess: true);
       }
 
       return result;
     } catch (e, stackTrace) {
-      logError('PaymentService: Payment failed - $e', stackTrace);
-      return PaymentResult.failure(message: e.toString());
+      logError('PaymentService: Payment failed', e, stackTrace);
+      return PaymentResult.failure(message: 'Payment failed');
     }
   }
 
@@ -159,7 +166,7 @@ class PaymentService {
   void dispose() {
     _razorpay.clear();
     _instance = null;
-    logInfo('PaymentService: Disposed');
+    if (kDebugMode) logInfo('PaymentService: Disposed');
   }
 
   // ============================================================================
@@ -222,14 +229,10 @@ class PaymentService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       }
-
-      logError(
-        'PaymentService: Order creation failed - ${response.statusCode}',
-        null,
-      );
+      if (kDebugMode) logError('PaymentService: Order creation failed - ${response.statusCode}');
       return null;
     } catch (e, stackTrace) {
-      logError('PaymentService: Order creation error - $e', stackTrace);
+      logError('PaymentService: Order creation error', e, stackTrace);
 
       // ========================================================================
       // DEVELOPMENT FALLBACK - REMOVE IN PRODUCTION
@@ -303,7 +306,7 @@ class PaymentService {
 
       return false;
     } catch (e, stackTrace) {
-      logError('PaymentService: Verification error - $e', stackTrace);
+      logError('PaymentService: Verification error', e, stackTrace);
 
       // ========================================================================
       // DEVELOPMENT FALLBACK - REMOVE IN PRODUCTION
@@ -372,12 +375,12 @@ class PaymentService {
       },
     };
 
-    logInfo('PaymentService: Opening checkout for order $orderId');
+    if (kDebugMode) logInfo('PaymentService: Opening checkout');
 
     try {
       _razorpay.open(options);
     } catch (e, stackTrace) {
-      logError('PaymentService: Checkout open failed - $e', stackTrace);
+      logError('PaymentService: Checkout open failed', e, stackTrace);
       _paymentCompleter?.complete(
         PaymentResult.failure(message: 'Failed to open payment screen'),
       );
@@ -393,10 +396,12 @@ class PaymentService {
 
   /// Handle successful payment
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    logInfo('PaymentService: Payment successful');
-    logInfo('  Payment ID: ${response.paymentId}');
-    logInfo('  Order ID: ${response.orderId}');
-    logInfo('  Signature: ${response.signature?.substring(0, 20)}...');
+    if (kDebugMode) {
+      String _maskId(String? id) => (id == null || id.isEmpty) ? '' : (id.length > 6 ? '****' + id.substring(id.length - 6) : '****');
+      logInfo('PaymentService: Payment successful');
+      logInfo('  Payment ID: ${_maskId(response.paymentId)}');
+      logInfo('  Order ID: ${_maskId(response.orderId)}');
+    }
 
     final result = PaymentResult.success(
       paymentId: response.paymentId ?? '',
