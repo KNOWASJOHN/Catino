@@ -19,7 +19,7 @@ class CartProvider with ChangeNotifier {
   StreamSubscription? _cartSubscription;
   bool _isLoading = false;
   bool get isLoading => _isLoading;
-  
+
   int get itemCount => _cart.values.fold(0, (sum, qty) => sum + qty);
 
   CartProvider() {
@@ -48,7 +48,7 @@ class CartProvider with ChangeNotifier {
   /// Load cart from Supabase with offline cache fallback
   Future<void> _loadCart() async {
     _cancelCartSubscription();
-    
+
     final uid = _currentUserId;
     if (uid == null) return;
 
@@ -64,21 +64,21 @@ class CartProvider with ChangeNotifier {
           .stream(primaryKey: ['user_id', 'food_item_id'])
           .eq('user_id', uid)
           .listen(
-        (data) {
-          _cart = {};
-          for (final item in data) {
-            _cart[item['food_item_id'] as String] = item['quantity'] as int;
-          }
-          _isLoading = false;
-          notifyListeners();
-          _saveToCache(uid, _cart);
-        },
-        onError: (error) {
-          logError('Error loading cart from Supabase', error);
-          _isLoading = false;
-          notifyListeners();
-        },
-      );
+            (data) {
+              _cart = {};
+              for (final item in data) {
+                _cart[item['food_item_id'] as String] = item['quantity'] as int;
+              }
+              _isLoading = false;
+              notifyListeners();
+              _saveToCache(uid, _cart);
+            },
+            onError: (error) {
+              logError('Error loading cart from Supabase', error);
+              _isLoading = false;
+              notifyListeners();
+            },
+          );
     } catch (e, st) {
       logError('Error setting up cart listener', e, st);
       _isLoading = false;
@@ -91,7 +91,7 @@ class CartProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cachedUserId = prefs.getString('cart_user_id');
-      
+
       // Only load cache if it belongs to the current user
       if (cachedUserId == uid) {
         final cartJson = prefs.getString('cart_data');
@@ -179,25 +179,26 @@ class CartProvider with ChangeNotifier {
   void _saveCart() async {
     final uid = _currentUserId;
     if (uid == null) return;
-    
+
     try {
       // First, delete all existing cart items for this user
-      await _supabase
-          .from('user_cart')
-          .delete()
-          .eq('user_id', uid);
-      
+      await _supabase.from('user_cart').delete().eq('user_id', uid);
+
       // Then insert the current cart items
       if (_cart.isNotEmpty) {
-        final cartData = _cart.entries.map((entry) => {
-          'user_id': uid,
-          'food_item_id': entry.key,
-          'quantity': entry.value,
-        }).toList();
-        
+        final cartData = _cart.entries
+            .map(
+              (entry) => {
+                'user_id': uid,
+                'food_item_id': entry.key,
+                'quantity': entry.value,
+              },
+            )
+            .toList();
+
         await _supabase.from('user_cart').insert(cartData);
       }
-      
+
       // Also save to cache for offline access
       _saveToCache(uid, _cart);
     } catch (e, st) {
@@ -214,10 +215,24 @@ class CartProvider with ChangeNotifier {
       final code = orderId.substring(6); // Shorter code for display
 
       // Convert cart items to OrderItem objects
-      final orderItems = cartItems.map((e) => OrderItem(
-        id: (e['item'] as FoodItem).id,
-        quantity: e['qty'] as int,
-      )).toList();
+      final orderItems = cartItems
+          .map(
+            (e) => OrderItem(
+              id: (e['item'] as FoodItem).id,
+              quantity: e['qty'] as int,
+            ),
+          )
+          .toList();
+
+      // Calculate total amount
+      double subtotal = cartItems.fold(
+        0,
+        (sum, entry) =>
+            sum + (entry['item'] as FoodItem).price * (entry['qty'] as int),
+      );
+      const double deliveryFee = 25.0;
+      double discount = subtotal > 499 ? 50 : 0;
+      double totalAmount = subtotal + deliveryFee - discount;
 
       // Create Order object with proper model structure
       final order = Order(
@@ -227,11 +242,12 @@ class CartProvider with ChangeNotifier {
         qrCode: 'https://api.qrserver.com/v1/create-qr-code/?data=$code',
         status: OrderStatus.pending,
         dateTime: DateTime.now(),
+        totalAmount: totalAmount,
       );
 
       // Use OrderService for proper status management and automatic notifications
       final success = await _orderService.addOrder(order);
-      
+
       if (success) {
         // Clear cart after successful order placement
         clear();

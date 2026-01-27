@@ -82,6 +82,7 @@ class Order {
   final String? paymentId;
   final String? orderId;
   final String? paymentStatus;
+  final double totalAmount;
 
   const Order({
     required this.id,
@@ -93,6 +94,7 @@ class Order {
     this.paymentId,
     this.orderId,
     this.paymentStatus,
+    required this.totalAmount,
   });
 
   /// Format date and time for display
@@ -115,6 +117,7 @@ class Order {
       'paymentId': paymentId,
       'orderId': orderId,
       'paymentStatus': paymentStatus,
+      'totalAmount': totalAmount,
     };
   }
 
@@ -133,6 +136,7 @@ class Order {
       paymentId: map['paymentId'],
       orderId: map['orderId'],
       paymentStatus: map['paymentStatus'],
+      totalAmount: (map['totalAmount'] ?? 0).toDouble(),
     );
   }
 
@@ -153,6 +157,7 @@ class Order {
       paymentId: map['payment_id'],
       orderId: map['order_id'],
       paymentStatus: map['payment_status'],
+      totalAmount: (map['total_amount'] ?? 0).toDouble(),
     );
   }
 
@@ -164,6 +169,7 @@ class Order {
     String? qrCode,
     OrderStatus? status,
     DateTime? dateTime,
+    double? totalAmount,
   }) {
     return Order(
       id: id ?? this.id,
@@ -175,6 +181,7 @@ class Order {
       paymentId: paymentId ?? this.paymentId,
       orderId: orderId ?? this.orderId,
       paymentStatus: paymentStatus ?? this.paymentStatus,
+      totalAmount: totalAmount ?? this.totalAmount,
     );
   }
 }

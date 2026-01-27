@@ -269,6 +269,16 @@ class CartProvider with ChangeNotifier {
           )
           .toList();
 
+      // Calculate total amount
+      double subtotal = cartItems.fold(
+        0,
+        (sum, entry) =>
+            sum + (entry['item'] as FoodItem).price * (entry['qty'] as int),
+      );
+      const double deliveryFee = 25.0;
+      double discount = subtotal > 499 ? 50 : 0;
+      double totalAmount = subtotal + deliveryFee - discount;
+
       // Create Order object with proper model structure
       final order = Order(
         id: orderId,
@@ -280,6 +290,7 @@ class CartProvider with ChangeNotifier {
         paymentId: paymentResult?.paymentId,
         orderId: paymentResult?.orderId,
         paymentStatus: paymentResult != null ? 'paid' : 'pending',
+        totalAmount: totalAmount,
       );
 
       // Use OrderService for proper status management and automatic notifications

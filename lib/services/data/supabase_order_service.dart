@@ -194,6 +194,7 @@ class SupabaseOrderService {
         'payment_id': order.paymentId,
         'order_id': order.orderId,
         'payment_status': order.paymentStatus,
+        'total_amount': order.totalAmount,
       };
 
       _logger.info('Inserting order to Supabase: $orderData');
