@@ -1,61 +1,25 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cantino/services/log.dart';
 import '../../models/order_model.dart';
 import '../../models/notification_model.dart';
 
 /// Service specifically for handling order-related notifications
-/// Now integrated with Supabase for notification storage
+/// Integrated with OneSignal via Supabase Edge Function
+/// When a notification is inserted into Supabase, the Edge Function automatically sends a push via OneSignal
 class OrderNotificationService {
-  static final OrderNotificationService _instance = OrderNotificationService._internal();
+  static final OrderNotificationService _instance =
+      OrderNotificationService._internal();
   factory OrderNotificationService() => _instance;
   OrderNotificationService._internal();
 
   final SupabaseClient _supabase = Supabase.instance.client;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
-  bool _initialized = false;
-
-  /// Initialize the notification service
-  /// Should be called when the app starts
-  Future<void> initialize() async {
-    if (_initialized) return;
-    
-    try {
-      // Initialize local notifications
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-      const initSettings = InitializationSettings(android: androidSettings);
-      
-      await _localNotifications.initialize(
-        initSettings,
-        onDidReceiveNotificationResponse: (details) {
-          logInfo('Notification tapped: ${details.payload}');
-        },
-      );
-
-      // Create notification channel for Android
-      const androidChannel = AndroidNotificationChannel(
-        'cantino_orders',
-        'Order Notifications',
-        description: 'Notifications for order status updates',
-        importance: Importance.high,
-      );
-
-      await _localNotifications
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(androidChannel);
-      
-      _initialized = true;
-      logInfo('Order notification service initialized successfully');
-    } catch (e) {
-      logError('Error initializing order notification service: $e', e);
-    }
-  }
 
   /// Send notification when a new order is placed
   Future<void> notifyOrderPlaced(Order order) async {
     await _createNotification(
       title: 'Order Placed',
-      message: 'Order ${order.code} (${order.totalItems} items) has been placed successfully',
+      message:
+          'Order ${order.code} (${order.totalItems} items) has been placed successfully',
       type: 'order',
       data: {
         'orderId': order.id,
@@ -67,10 +31,13 @@ class OrderNotificationService {
   }
 
   /// Send notification when order status changes
-  Future<void> notifyOrderStatusChanged(Order order, OrderStatus previousStatus) async {
+  Future<void> notifyOrderStatusChanged(
+    Order order,
+    OrderStatus previousStatus,
+  ) async {
     String title = 'Order Update';
     String message = 'Order ${order.code}';
-    
+
     switch (order.status) {
       case OrderStatus.completed:
         title = 'Order Complete!';
@@ -108,7 +75,8 @@ class OrderNotificationService {
   Future<void> notifyOrderCompleted(Order order) async {
     await _createNotification(
       title: 'Order Complete!',
-      message: 'Order ${order.code} (${order.totalItems} items) is ready for pickup',
+      message:
+          'Order ${order.code} (${order.totalItems} items) is ready for pickup',
       type: 'order',
       data: {
         'orderId': order.id,
@@ -135,6 +103,7 @@ class OrderNotificationService {
   }
 
   /// Create and store notification in Supabase
+  /// The Supabase webhook will trigger the Edge Function, which sends the push via OneSignal
   Future<void> _createNotification({
     required String title,
     required String message,
@@ -159,6 +128,7 @@ class OrderNotificationService {
       );
 
       // Store in Supabase notifications table
+      // This INSERT triggers the webhook → Edge Function → OneSignal API call
       await _supabase.from('notifications').insert({
         'id': notification.id,
         'user_id': notification.userId,
@@ -170,60 +140,12 @@ class OrderNotificationService {
         'data': notification.data,
       });
 
-      logInfo('Notification created in Supabase: $title');
-
-      // Show local notification
-      await _showLocalNotification(title, message, notification.id, data);
-      
+      logInfo(
+        'Notification created in Supabase (will be sent via OneSignal): $title',
+      );
     } catch (e) {
       logError('Error creating notification: $e', e);
     }
-  }
-
-  /// Show local push notification
-  Future<void> _showLocalNotification(
-    String title,
-    String message,
-    String notificationId,
-    Map<String, dynamic> data,
-  ) async {
-    try {
-      await _localNotifications.show(
-        notificationId.hashCode,
-        title,
-        message,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'cantino_orders',
-            'Order Notifications',
-            channelDescription: 'Notifications for order status updates',
-            importance: Importance.high,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
-          ),
-        ),
-        payload: data['orderId'],
-      );
-      
-      logInfo('Local notification shown: $title');
-    } catch (e) {
-      logError('Error showing local notification: $e', e);
-    }
-  }
-
-  /// Show immediate local notification only (for testing)
-  Future<void> showLocalOrderNotification({
-    required String orderId,
-    required String orderCode,
-    required String status,
-    required String message,
-  }) async {
-    await _showLocalNotification(
-      'Order Update',
-      message,
-      '${DateTime.now().millisecondsSinceEpoch}',
-      {'orderId': orderId, 'orderCode': orderCode, 'status': status},
-    );
   }
 
   /// Test method to show sample order notification

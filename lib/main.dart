@@ -16,8 +16,8 @@ import 'components/animations/page_transition.dart';
 import 'components/animations/circle_reveal_transition.dart';
 import 'pages/login_page.dart';
 import 'services/auth/supabase_auth_service.dart' as auth;
-import 'services/notifications/print_notification_service.dart';
-import 'services/notifications/order_notification_service.dart';
+
+import 'services/notifications/onesignal_service.dart';
 import 'config/supabase_config.dart';
 import 'providers/cart_provider.dart';
 import 'utils/logger_config.dart';
@@ -42,19 +42,25 @@ void main() async {
     throw Exception('Failed to initialize application services');
   }
 
-  // Initialize Print Notification Service
+  // Initialize OneSignal Push Notifications
   try {
-    await PrintNotificationService().initialize();
+    final oneSignalAppId = dotenv.env['ONESIGNAL_APP_ID'] ?? '';
+    if (oneSignalAppId.isNotEmpty &&
+        oneSignalAppId != 'YOUR_ONESIGNAL_APP_ID_HERE') {
+      await OneSignalService().initialize(oneSignalAppId);
+      await OneSignalService().requestPermission();
+    } else {
+      _logger.warning(
+        'OneSignal App ID not configured - push notifications disabled',
+      );
+    }
   } catch (e) {
-    // Continue even if notification service fails
+    // Continue even if OneSignal fails
+    _logger.warning('OneSignal initialization failed: $e');
   }
 
-  // Initialize Order Notification Service
-  try {
-    await OrderNotificationService().initialize();
-  } catch (e) {
-    // Continue even if notification service fails
-  }
+  // Print and Order notifications are now handled via Supabase Edge Function + OneSignal
+  // No local notification initialization needed
 
   runApp(const MyApp());
 }
@@ -123,7 +129,7 @@ class _MainScreenState extends State<MainScreen> {
       const PrintPage(),
       const Profile(),
     ];
-    _initializeFCM();
+    _initializeNotifications();
   }
 
   Future<void> _saveSelectedIndex(int index) async {
@@ -131,10 +137,11 @@ class _MainScreenState extends State<MainScreen> {
     await prefs.setInt('selectedIndex', index);
   }
 
-  // FCM removed - using Supabase for notifications
-  void _initializeFCM() async {
-    // FCM service removed
-    _logger.info('FCM service removed - using Supabase');
+  // OneSignal handles push notifications, local notifications still used for in-app
+  void _initializeNotifications() {
+    _logger.info(
+      'Push notifications handled by OneSignal + local notifications',
+    );
   }
 
   @override

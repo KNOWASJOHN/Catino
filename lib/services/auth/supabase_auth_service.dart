@@ -5,6 +5,7 @@ import '../cache/food_cache_service.dart';
 import '../cache/notification_cache_service.dart';
 import '../cache/usercard_cache_service.dart';
 import '../cache/user_session_cache.dart';
+import '../notifications/onesignal_service.dart';
 
 /// Authentication Service for handling user login, signup, and session management with Supabase
 class SupabaseAuthService {
@@ -12,7 +13,8 @@ class SupabaseAuthService {
   final ProfileCacheService _profileCacheService = ProfileCacheService();
   final PrintCacheService _printCacheService = PrintCacheService();
   final FoodCacheService _foodCacheService = FoodCacheService();
-  final NotificationCacheService _notificationCacheService = NotificationCacheService();
+  final NotificationCacheService _notificationCacheService =
+      NotificationCacheService();
   final UserCardCacheService _userCardCacheService = UserCardCacheService();
   final UserSessionCache _userSessionCache = UserSessionCache();
 
@@ -25,20 +27,20 @@ class SupabaseAuthService {
   /// Start listening to user data changes in Supabase
   void startListeningToUserData() {
     if (currentUserId == null) return;
-    
+
     _supabase
         .from('users')
         .stream(primaryKey: ['id'])
         .eq('id', currentUserId!)
         .listen((data) {
-      if (data.isNotEmpty) {
-        final userData = data.first;
-        // Update cache with fresh data
-        _profileCacheService.cacheProfileData(userData);
-        // Dev-only marker: profile data updated. Avoid printing PII.
-        // if (kDebugMode) { logInfo('Profile data updated from Supabase listener'); }
-      }
-    });
+          if (data.isNotEmpty) {
+            final userData = data.first;
+            // Update cache with fresh data
+            _profileCacheService.cacheProfileData(userData);
+            // Dev-only marker: profile data updated. Avoid printing PII.
+            // if (kDebugMode) { logInfo('Profile data updated from Supabase listener'); }
+          }
+        });
   }
 
   // Check if user is logged in
@@ -82,15 +84,9 @@ class SupabaseAuthService {
 
       return {'success': false, 'message': 'Failed to create user'};
     } on AuthException catch (e) {
-      return {
-        'success': false,
-        'message': e.message,
-      };
+      return {'success': false, 'message': e.message};
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'An internal error occurred',
-      };
+      return {'success': false, 'message': 'An internal error occurred'};
     }
   }
 
@@ -110,24 +106,21 @@ class SupabaseAuthService {
 
       return {'success': true, 'user': response.user};
     } on AuthException catch (e) {
-      return {
-        'success': false,
-        'message': e.message,
-      };
+      return {'success': false, 'message': e.message};
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'An internal error occurred',
-      };
+      return {'success': false, 'message': 'An internal error occurred'};
     }
   }
 
   /// Sign out and clear all cache services
   Future<void> signOut() async {
     try {
+      // Unlink OneSignal device from user
+      OneSignalService().logoutUser();
+
       // Sign out from Supabase
       await _supabase.auth.signOut();
-      
+
       // Clear all cache services for all users
       await Future.wait([
         _profileCacheService.clearAllUsersCache(),
@@ -136,10 +129,10 @@ class SupabaseAuthService {
         _notificationCacheService.clearAllUsersCache(),
         _userCardCacheService.clearAllUsersCache(),
       ]);
-      
+
       // Clear user session cache
       _userSessionCache.clearUserSession();
-      
+
       // Dev-only: user signed out and caches cleared. Avoid printing PII in logs.
     } catch (e) {
       // Dev-only: error during sign out; avoid printing exception details.
@@ -159,10 +152,7 @@ class SupabaseAuthService {
       };
     } catch (e) {
       // Dev-only: error sending password reset; avoid printing exception details.
-      return {
-        'success': false,
-        'message': 'Failed to send reset email',
-      };
+      return {'success': false, 'message': 'Failed to send reset email'};
     }
   }
 
@@ -203,10 +193,7 @@ class SupabaseAuthService {
       if (currentUserId == null) return false;
 
       // Update user data in Supabase
-      await _supabase
-          .from('users')
-          .update(userData)
-          .eq('id', currentUserId!);
+      await _supabase.from('users').update(userData).eq('id', currentUserId!);
 
       // Update cache with fresh data
       final fullUserData = await getUserData(forceRefresh: true);
@@ -227,10 +214,13 @@ class SupabaseAuthService {
     try {
       if (currentUserId == null) return;
 
-      await _supabase.from('users').update({
-        'fcm_token': token,
-        'token_updated_at': DateTime.now().millisecondsSinceEpoch,
-      }).eq('id', currentUserId!);
+      await _supabase
+          .from('users')
+          .update({
+            'fcm_token': token,
+            'token_updated_at': DateTime.now().millisecondsSinceEpoch,
+          })
+          .eq('id', currentUserId!);
 
       // Dev-only: FCM token updated; avoid printing tokens to stdout.
     } catch (e) {
@@ -244,10 +234,7 @@ class SupabaseAuthService {
       if (currentUserId == null) return false;
 
       // Delete user data from database (cascading deletes will handle related data)
-      await _supabase
-          .from('users')
-          .delete()
-          .eq('id', currentUserId!);
+      await _supabase.from('users').delete().eq('id', currentUserId!);
 
       // Sign out
       await signOut();

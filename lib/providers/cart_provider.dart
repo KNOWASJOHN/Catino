@@ -42,12 +42,15 @@ class CartProvider with ChangeNotifier {
         // User logged in or switched - load their cart
         _currentUserId = user.id;
         _loadCart();
+        // Start listening for order status changes (needs authenticated user)
+        _orderService.startListeningToOrders();
       } else if (user == null) {
         // User logged out - clear everything
         _currentUserId = null;
         _clearLocalCart();
         _cancelCartSubscription();
         _clearCache();
+        _orderService.stopListeningToOrders();
       }
     });
   }

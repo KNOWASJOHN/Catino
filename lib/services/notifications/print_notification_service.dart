@@ -1,11 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cantino/services/log.dart';
 import '../../models/print_job.dart';
 import '../../models/notification_model.dart';
 
 /// Service specifically for handling print-related notifications
-/// Integrated with Supabase for notification storage and local push notifications
+/// Integrated with OneSignal via Supabase Edge Function
+/// When a notification is inserted into Supabase, the Edge Function automatically sends a push via OneSignal
 class PrintNotificationService {
   static final PrintNotificationService _instance =
       PrintNotificationService._internal();
@@ -13,49 +13,6 @@ class PrintNotificationService {
   PrintNotificationService._internal();
 
   final SupabaseClient _supabase = Supabase.instance.client;
-  final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
-  bool _initialized = false;
-
-  /// Initialize the notification service
-  /// Should be called when the app starts
-  Future<void> initialize() async {
-    if (_initialized) return;
-
-    try {
-      // Initialize local notifications
-      const androidSettings = AndroidInitializationSettings(
-        '@mipmap/ic_launcher',
-      );
-      const initSettings = InitializationSettings(android: androidSettings);
-
-      await _localNotifications.initialize(
-        initSettings,
-        onDidReceiveNotificationResponse: (details) {
-          logInfo('Print notification tapped: ${details.payload}');
-        },
-      );
-
-      // Create notification channel for Android
-      const androidChannel = AndroidNotificationChannel(
-        'cantino_prints',
-        'Print Notifications',
-        description: 'Notifications for print job status updates',
-        importance: Importance.high,
-      );
-
-      await _localNotifications
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >()
-          ?.createNotificationChannel(androidChannel);
-
-      _initialized = true;
-      logInfo('Print notification service initialized successfully');
-    } catch (e) {
-      logError('Error initializing print notification service: $e', e);
-    }
-  }
 
   /// Send notification when a new print job is added
   Future<void> notifyPrintJobAdded(PrintJob job) async {
@@ -145,6 +102,7 @@ class PrintNotificationService {
   }
 
   /// Create and store notification in Supabase
+  /// The Supabase webhook will trigger the Edge Function, which sends the push via OneSignal
   Future<void> _createNotification({
     required String title,
     required String message,
@@ -169,6 +127,7 @@ class PrintNotificationService {
       );
 
       // Store in Supabase notifications table
+      // This INSERT triggers the webhook → Edge Function → OneSignal API call
       await _supabase.from('notifications').insert({
         'id': notification.id,
         'user_id': notification.userId,
@@ -180,59 +139,12 @@ class PrintNotificationService {
         'data': notification.data,
       });
 
-      logInfo('Print notification created in Supabase: $title');
-
-      // Show local notification
-      await _showLocalNotification(title, message, notification.id, data);
+      logInfo(
+        'Print notification created in Supabase (will be sent via OneSignal): $title',
+      );
     } catch (e) {
       logError('Error creating print notification: $e', e);
     }
-  }
-
-  /// Show local push notification
-  Future<void> _showLocalNotification(
-    String title,
-    String message,
-    String notificationId,
-    Map<String, dynamic> data,
-  ) async {
-    try {
-      await _localNotifications.show(
-        notificationId.hashCode,
-        title,
-        message,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'cantino_prints',
-            'Print Notifications',
-            channelDescription: 'Notifications for print job status updates',
-            importance: Importance.high,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
-          ),
-        ),
-        payload: data['printJobId'],
-      );
-
-      logInfo('Local print notification shown: $title');
-    } catch (e) {
-      logError('Error showing local print notification: $e', e);
-    }
-  }
-
-  /// Show immediate local notification only (no Firebase record)
-  Future<void> showLocalPrintNotification({
-    required String printJobId,
-    required String fileName,
-    required String status,
-    required String message,
-  }) async {
-    await _showLocalNotification(
-      'Print Job Update',
-      message,
-      '${DateTime.now().millisecondsSinceEpoch}',
-      {'printJobId': printJobId, 'fileName': fileName, 'status': status},
-    );
   }
 
   /// Test method to show sample print notification

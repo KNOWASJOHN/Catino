@@ -14,6 +14,15 @@ rootProject.layout.buildDirectory.value(newBuildDir)
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
+
+    afterEvaluate {
+        if (project.plugins.hasPlugin("com.android.library")) {
+            val android = project.extensions.getByType(com.android.build.gradle.LibraryExtension::class.java)
+            if (android.namespace == null || android.namespace!!.isEmpty()) {
+                android.namespace = project.group.toString().ifEmpty { "com.${project.name.replace("-", ".")}" }
+            }
+        }
+    }
 }
 subprojects {
     project.evaluationDependsOn(":app")
