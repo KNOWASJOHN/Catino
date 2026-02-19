@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// A sleek network error card that automatically appears as a centered
 /// popup card when connectivity is lost and dismisses when restored.
