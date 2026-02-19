@@ -21,7 +21,11 @@ class Header extends StatelessWidget {
             child: Row(
               children: [
                 SizedBox(width: 4),
-                Icon(Icons.storefront, size: 35, color: Colors.black),
+                Image.asset(
+                  'assets/logo/Catino.png',
+                  width: 45,
+                  height: 45,
+                ),
                 SizedBox(width: 2),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

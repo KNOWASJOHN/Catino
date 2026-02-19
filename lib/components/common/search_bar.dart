@@ -17,7 +17,8 @@ class _SearchMenuState extends State<SearchMenu>
     with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
   final SupabaseFoodService _foodService = SupabaseFoodService();
 
   List<FoodItem> _allFoodItems = [];
@@ -29,12 +30,19 @@ class _SearchMenuState extends State<SearchMenu>
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 200),
     );
-    _scaleAnimation = CurvedAnimation(
+    _fadeAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.linearToEaseOut,
     );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.15),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
     _animationController.forward();
     _loadFoodItems();
   }
@@ -91,11 +99,13 @@ class _SearchMenuState extends State<SearchMenu>
       child: Material(
         color: Colors.black.withValues(alpha: 0.3),
         child: Center(
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: GestureDetector(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: GestureDetector(
               onTap: () {}, // Prevent closing when tapping inside
-              child: Container(
+                child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 constraints: BoxConstraints(
                   maxHeight: MediaQuery.of(context).size.height * 0.7,
@@ -224,11 +234,8 @@ class _SearchMenuState extends State<SearchMenu>
                             return const LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.white,
-                                Colors.transparent,
-                              ],
-                              stops: [0.75 , 1.0],
+                              colors: [Colors.white, Colors.transparent],
+                              stops: [0.75, 1.0],
                             ).createShader(bounds);
                           },
                           blendMode: BlendMode.dstIn,
@@ -247,13 +254,9 @@ class _SearchMenuState extends State<SearchMenu>
                                     },
                                     child: Container(
                                       height: 120,
-                                      margin: const EdgeInsets.only(
-                                        bottom: 12,
-                                      ),
+                                      margin: const EdgeInsets.only(bottom: 12),
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(
-                                          20,
-                                        ),
+                                        borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
                                           color: Colors.grey.shade300,
                                           width: 1,
@@ -297,14 +300,12 @@ class _SearchMenuState extends State<SearchMenu>
                                                         },
                                                   )
                                                 : Container(
-                                                    color:
-                                                        Colors.grey.shade200,
+                                                    color: Colors.grey.shade200,
                                                     child: Icon(
                                                       Icons.fastfood,
                                                       size: 40,
-                                                      color: Colors
-                                                          .grey
-                                                          .shade400,
+                                                      color:
+                                                          Colors.grey.shade400,
                                                     ),
                                                   ),
                                           ),
@@ -347,8 +348,7 @@ class _SearchMenuState extends State<SearchMenu>
                                                           Container(
                                                             padding:
                                                                 const EdgeInsets.symmetric(
-                                                                  horizontal:
-                                                                      6,
+                                                                  horizontal: 6,
                                                                   vertical: 2,
                                                                 ),
                                                             decoration: BoxDecoration(
@@ -405,9 +405,7 @@ class _SearchMenuState extends State<SearchMenu>
                                                           ),
                                                         ],
                                                       ),
-                                                      const SizedBox(
-                                                        height: 4,
-                                                      ),
+                                                      const SizedBox(height: 4),
                                                       Text(
                                                         item.category,
                                                         style: TextStyle(
@@ -444,24 +442,25 @@ class _SearchMenuState extends State<SearchMenu>
                                                           Icon(
                                                             Icons.access_time,
                                                             size: 12,
-                                                            color: Colors
-                                                                .white70,
+                                                            color:
+                                                                Colors.white70,
                                                           ),
                                                           const SizedBox(
                                                             width: 2,
                                                           ),
                                                           Text(
                                                             '${item.preparationTime} min',
-                                                            style: const TextStyle(
-                                                              fontSize: 10,
-                                                              color: Colors
-                                                                  .white70,
-                                                              fontFamily:
-                                                                  'Unbounded',
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w300,
-                                                            ),
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontSize: 10,
+                                                                  color: Colors
+                                                                      .white70,
+                                                                  fontFamily:
+                                                                      'Unbounded',
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w300,
+                                                                ),
                                                           ),
                                                         ],
                                                       ),
@@ -473,48 +472,53 @@ class _SearchMenuState extends State<SearchMenu>
                                                     cartProvider.addItem(
                                                       item.id,
                                                     );
-                                                    ScaffoldMessenger.of(
-                                                      context,
-                                                    ).showSnackBar(
-                                                      SnackBar(
-                                                        content: Text(
-                                                          '${item.name} added to cart!',
-                                                          style:
-                                                              const TextStyle(
-                                                                fontFamily:
-                                                                    'Unbounded',
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500,
+                                                  },
+                                                  child: Stack(
+                                                    clipBehavior: Clip.none,
+                                                    children: [
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets.all(8),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.limeAccent,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
                                                               ),
                                                         ),
-                                                        backgroundColor:
-                                                            Colors.green,
-                                                        duration:
-                                                            const Duration(
-                                                              seconds: 2,
-                                                            ),
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                          8,
+                                                        child: const Icon(
+                                                          Icons.add_shopping_cart,
+                                                          color: Colors.black,
+                                                          size: 20,
                                                         ),
-                                                    decoration: BoxDecoration(
-                                                      color:
-                                                          Colors.limeAccent,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            12,
+                                                      ),
+                                                      if ((cartProvider.cart[item.id] ?? 0) > 0)
+                                                        Positioned(
+                                                          top: -6,
+                                                          right: -6,
+                                                          child: Container(
+                                                            padding: const EdgeInsets.all(3),
+                                                            decoration: const BoxDecoration(
+                                                              color: Colors.black,
+                                                              shape: BoxShape.circle,
+                                                            ),
+                                                            constraints: const BoxConstraints(
+                                                              minWidth: 18,
+                                                              minHeight: 18,
+                                                            ),
+                                                            child: Text(
+                                                              '${cartProvider.cart[item.id]}',
+                                                              style: const TextStyle(
+                                                                color: Colors.limeAccent,
+                                                                fontSize: 10,
+                                                                fontWeight: FontWeight.bold,
+                                                                fontFamily: 'Unbounded',
+                                                              ),
+                                                              textAlign: TextAlign.center,
+                                                            ),
                                                           ),
-                                                    ),
-                                                    child: const Icon(
-                                                      Icons.add_shopping_cart,
-                                                      color: Colors.black,
-                                                      size: 20,
-                                                    ),
+                                                        ),
+                                                    ],
                                                   ),
                                                 ),
                                               ],
@@ -537,6 +541,7 @@ class _SearchMenuState extends State<SearchMenu>
           ),
         ),
       ),
+    ),
     );
   }
 }

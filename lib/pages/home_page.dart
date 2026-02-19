@@ -256,20 +256,20 @@ class _HomePageState extends State<HomePage> {
     if (_userCardData == null) {
       userCardWidget = const UserCard(
         userName: 'User',
-        orderCode: 'N/A',
-        items: [],
-        status: 'N/A',
-        timestamp: 0,
       );
     } else {
       final data = _userCardData!;
+      final rawOrderCode = data['orderCode']?.toString();
+      final hasValidOrder = rawOrderCode != null &&
+          rawOrderCode.isNotEmpty &&
+          rawOrderCode != 'N/A';
       userCardWidget = UserCard(
         userName: data['userName']?.toString() ?? 'User',
-        orderCode: data['orderCode']?.toString() ?? 'N/A',
-        items: data['items'] is List<Map<String, dynamic>>
+        orderCode: hasValidOrder ? rawOrderCode : null,
+        items: hasValidOrder && data['items'] is List<Map<String, dynamic>>
             ? data['items'] as List<Map<String, dynamic>>
             : [],
-        status: data['status']?.toString() ?? 'N/A',
+        status: hasValidOrder ? data['status']?.toString() : null,
         timestamp: data['timestamp'] is int ? data['timestamp'] as int : 0,
       );
     }

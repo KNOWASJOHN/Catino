@@ -8,6 +8,7 @@ import 'components/common/navbar.dart';
 import 'components/common/header.dart';
 import 'components/notifications/notification_panel.dart';
 import 'components/common/search_bar.dart';
+import 'components/common/network_error_card.dart';
 import 'pages/profile_page.dart';
 import 'pages/print_page.dart';
 import 'pages/cart_page.dart';
@@ -259,6 +260,8 @@ class _MainScreenState extends State<MainScreen> {
               });
             },
           ),
+        // Global network error overlay
+        const NetworkErrorCard(),
       ],
     );
   }

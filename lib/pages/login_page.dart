@@ -63,15 +63,11 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 60),
+                  const SizedBox(height: 20),
 
                   // Logo and Title
-                  Icon(
-                    Icons.storefront,
-                    size: 80,
-                    color: Colors.limeAccent.shade700,
-                  ),
-                  const SizedBox(height: 16),
+                  Image.asset('assets/logo/Catino.png', width: 100, height: 100),
+                  const SizedBox(height: 10),
                   const Text(
                     'Welcome to Catino',
                     textAlign: TextAlign.center,

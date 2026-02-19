@@ -94,8 +94,8 @@ class _SignUpPageState extends State<SignUpPage> {
   String _generateStudentIdPreview() {
     String branchCode = branchCodes[_selectedBranch] ?? '___';
     String yearInput = _admissionYearController.text.trim();
-    String year = yearInput.isEmpty 
-        ? '__' 
+    String year = yearInput.isEmpty
+        ? '__'
         : (yearInput.length == 4 ? yearInput.substring(2) : yearInput);
     String roll = _admissionRollNumberController.text.trim();
     String formattedRoll = roll.isEmpty ? '___' : roll.padLeft(3, '0');
@@ -172,174 +172,183 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Logo and Title
-                  Icon(
-                    Icons.storefront,
-                    size: 60,
-                    color: Colors.limeAccent.shade700,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Create Account',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Unbounded',
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Fill in your details to get started',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Unbounded',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Step Indicator
-                  _buildStepIndicator(),
-
-                  const SizedBox(height: 32),
-
-                  // Form Fields based on current step
-                  if (_currentStep == 0) ..._buildPersonalInfoFields(),
-                  if (_currentStep == 1) ..._buildAcademicInfoFields(),
-                  if (_currentStep == 2) ..._buildAccountInfoFields(),
-
-                  const SizedBox(height: 32),
-
-                  // Navigation Buttons
-                  Row(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(14.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (_currentStep > 0)
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              setState(() => _currentStep--);
-                            },
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              side: BorderSide(
-                                color: Colors.limeAccent.shade700,
-                              ),
-                            ),
-                            child: const Text(
-                              'Back',
-                              style: TextStyle(
-                                fontFamily: 'Unbounded',
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black,
-                              ),
-                            ),
+                      const SizedBox(height: 10),
+                      // Logo and Title
+                      Image.asset(
+                          'assets/logo/Catino.png',
+                          width: 70,
+                          height: 70,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Create Account',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Unbounded',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      if (_currentStep > 0) const SizedBox(width: 16),
-                      Expanded(
-                        flex: _currentStep == 0 ? 1 : 1,
-                        child: ElevatedButton(
-                          onPressed: _isLoading
-                              ? null
-                              : () {
-                                  if (_currentStep < 2) {
-                                    if (_validateCurrentStep()) {
-                                      setState(() => _currentStep++);
-                                    }
-                                  } else {
-                                    _handleSignUp();
-                                  }
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.limeAccent.shade700,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.black,
-                                    ),
-                                  ),
-                                )
-                              : Text(
-                                  _currentStep == 2 ? 'Sign Up' : 'Next',
-                                  style: const TextStyle(
-                                    fontFamily: 'Unbounded',
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Login Link
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Already have an account? ',
-                        style: TextStyle(
-                          fontFamily: 'Unbounded',
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          'Login',
+                        const SizedBox(height: 8),
+                        Text(
+                          'Fill in your details to get started',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'Unbounded',
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.limeAccent.shade700,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey.shade600,
                           ),
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(height: 20),
+
+                        // Step Indicator
+                        _buildStepIndicator(),
+
+                        const SizedBox(height: 20),
+
+                        // Form Fields based on current step
+                        if (_currentStep == 0) ..._buildPersonalInfoFields(),
+                        if (_currentStep == 1) ..._buildAcademicInfoFields(),
+                        if (_currentStep == 2) ..._buildAccountInfoFields(),
+
+                        const SizedBox(height: 32),
+
+                        // Navigation Buttons
+                        Row(
+                          children: [
+                            if (_currentStep > 0)
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    setState(() => _currentStep--);
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    side: BorderSide(
+                                      color: Colors.limeAccent.shade700,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Back',
+                                    style: TextStyle(
+                                      fontFamily: 'Unbounded',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (_currentStep > 0) const SizedBox(width: 16),
+                            Expanded(
+                              flex: _currentStep == 0 ? 1 : 1,
+                              child: ElevatedButton(
+                                onPressed: _isLoading
+                                    ? null
+                                    : () {
+                                        if (_currentStep < 2) {
+                                          if (_validateCurrentStep()) {
+                                            setState(() => _currentStep++);
+                                          }
+                                        } else {
+                                          _handleSignUp();
+                                        }
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.limeAccent.shade700,
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.black,
+                                              ),
+                                        ),
+                                      )
+                                    : Text(
+                                        _currentStep == 2 ? 'Sign Up' : 'Next',
+                                        style: const TextStyle(
+                                          fontFamily: 'Unbounded',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Login Link
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Already have an account? ',
+                              style: TextStyle(
+                                fontFamily: 'Unbounded',
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: Text(
+                                'Login',
+                                style: TextStyle(
+                                  fontFamily: 'Unbounded',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.limeAccent.shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
+              ),
+            Align(
+              alignment: Alignment.topLeft,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.pop(context),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

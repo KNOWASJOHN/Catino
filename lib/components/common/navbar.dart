@@ -138,6 +138,19 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
 
 
+  /// Programmatically select a tab — identical to tapping the nav item.
+  void selectIndex(int index) {
+    if (_selectedIndex != index && !widget.isTransitioning) {
+      setState(() {
+        _previousIndex = _selectedIndex;
+        _selectedIndex = index;
+      });
+      _updateItemPositions();
+      _bubbleController.forward(from: 0.0);
+      widget.onItemSelected(index);
+    }
+  }
+
   void _updateItemPositions() {
 
     final RenderBox? stackBox = _stackKey.currentContext?.findRenderObject() as RenderBox?;
