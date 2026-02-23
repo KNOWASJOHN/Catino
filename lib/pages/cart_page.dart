@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/theme.dart';
+import '../utils/toast_helper.dart';
 import 'package:provider/provider.dart';
 import '../components/common/skeleton_loader.dart';
 import '../providers/cart_provider.dart';
@@ -823,46 +824,17 @@ class _CartState extends State<Cart> {
                                                                   Navigator.of(
                                                                     context,
                                                                   ).pop();
-                                                                  ScaffoldMessenger.of(
-                                                                    context,
-                                                                  ).showSnackBar(
-                                                                    SnackBar(
-                                                                      content: const Text(
-                                                                        'Payment successful! Order placed.',
-                                                                        style: TextStyle(
-                                                                          fontFamily:
-                                                                              'Unbounded',
-                                                                        ),
-                                                                      ),
-                                                                      backgroundColor: Colors
-                                                                          .green
-                                                                          .shade600,
-                                                                    ),
-                                                                  );
+                                                                  AppToast.show(context, 'Payment successful! Order placed.');
                                                                 } else {
                                                                   // Payment failed or cancelled
                                                                   final isCancelled =
                                                                       result
                                                                           .isCancelled;
-                                                                  ScaffoldMessenger.of(
+                                                                  AppToast.show(
                                                                     context,
-                                                                  ).showSnackBar(
-                                                                    SnackBar(
-                                                                      content: Text(
-                                                                        isCancelled
-                                                                            ? 'Payment Cancelled'
-                                                                            : (result.errorMessage ??
-                                                                                  'Payment failed'),
-                                                                        style: const TextStyle(
-                                                                          fontFamily:
-                                                                              'Unbounded',
-                                                                        ),
-                                                                      ),
-                                                                      backgroundColor:
-                                                                          isCancelled
-                                                                          ? Colors.orange.shade700
-                                                                          : Colors.red.shade600,
-                                                                    ),
+                                                                    isCancelled ? 'Payment Cancelled' : (result.errorMessage ?? 'Payment failed'),
+                                                                    isError: !isCancelled,
+                                                                    isWarning: isCancelled,
                                                                   );
                                                                 }
                                                               },

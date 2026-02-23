@@ -55,6 +55,10 @@ class _MealDialogState extends State<MealDialog> {
 
     return Dialog(
       backgroundColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide.none,
+      ),
       child: Container(
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.90,
@@ -63,7 +67,6 @@ class _MealDialogState extends State<MealDialog> {
         decoration: BoxDecoration(
           color: AppColors.surface, // Solid dark gray
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
@@ -75,12 +78,6 @@ class _MealDialogState extends State<MealDialog> {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.05),
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.white.withOpacity(0.1),
-                      width: 1,
-                    ),
-                  ),
                 ),
                 child: Row(
                   children: [

@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import '../utils/toast_helper.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../services/log.dart';
@@ -527,15 +529,40 @@ class _PrintPageState extends State<PrintPage> {
         GestureDetector(
           onTap: () {
             Clipboard.setData(ClipboardData(text: value));
-            ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(
-                content: Text(
-                  '$label copied',
-                  style: const TextStyle(fontFamily: 'Unbounded', fontSize: 10),
+            final fToast = FToast()..init(ctx);
+            fToast.showToast(
+              toastDuration: const Duration(seconds: 1),
+              gravity: ToastGravity.BOTTOM,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.4), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.25),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-              backgroundColor: AppColors.primary,
-                behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 1),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.copy_rounded, color: AppColors.primary, size: 16),
+                    const SizedBox(width: 10),
+                    Text(
+                      '$label copied',
+                      style: TextStyle(
+                        fontFamily: 'Unbounded',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -816,28 +843,10 @@ class _PrintPageState extends State<PrintPage> {
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(fontFamily: 'Unbounded', fontSize: 12),
-        ),
-        backgroundColor: AppColors.red,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    AppToast.show(context, message, isError: true);
   }
 
   void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(fontFamily: 'Unbounded', fontSize: 12),
-        ),
-        backgroundColor: AppColors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    AppToast.show(context, message);
   }
 }

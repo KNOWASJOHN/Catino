@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth/supabase_auth_service.dart';
+import '../utils/toast_helper.dart';
 import '../components/common/network_error_card.dart';
 import 'signup_page.dart';
 import '../theme/theme.dart';
@@ -43,12 +44,7 @@ class _LoginPageState extends State<LoginPage> {
       // Navigation will be handled by StreamBuilder in main.dart
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message']),
-            backgroundColor: AppColors.red,
-          ),
-        );
+        AppToast.show(context, result['message'], isError: true);
       }
     }
   }
@@ -347,12 +343,7 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () async {
                         final email = emailController.text.trim();
                         if (email.isEmpty || !email.contains('@')) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Please enter a valid email'),
-                              backgroundColor: AppColors.red,
-                            ),
-                          );
+                          AppToast.show(context, 'Please enter a valid email', isError: true);
                           return;
                         }
 
@@ -360,13 +351,10 @@ class _LoginPageState extends State<LoginPage> {
                         final result = await _authService.resetPassword(email);
 
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(result['message']),
-                              backgroundColor: result['success']
-                                  ? AppColors.green
-                                  : AppColors.red,
-                            ),
+                          AppToast.show(
+                            context,
+                            result['message'],
+                            isError: !result['success'],
                           );
                         }
                       },

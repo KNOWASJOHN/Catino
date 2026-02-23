@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/theme.dart';
+import '../utils/toast_helper.dart';
 import '../services/auth/supabase_auth_service.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -137,35 +138,18 @@ class _SignUpPageState extends State<SignUpPage> {
 
       if (result['success']) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Account created successfully!'),
-              backgroundColor: AppColors.green,
-            ),
-          );
+          AppToast.show(context, 'Account created successfully!');
           Navigator.pop(context); // Go back to login
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result['message']),
-              backgroundColor: AppColors.red,
-              duration: const Duration(seconds: 4),
-            ),
-          );
+          AppToast.show(context, result['message'], isError: true);
         }
       }
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('An unexpected error occurred'),
-            backgroundColor: AppColors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        AppToast.show(context, 'An unexpected error occurred', isError: true);
       }
     }
   }

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../utils/toast_helper.dart';
 import '../theme/theme.dart';
 import 'package:flutter/foundation.dart';
 import '../services/log.dart';
@@ -172,16 +173,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
 
   void _showMessage(String message, {required bool isError}) {
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            message,
-            style: const TextStyle(fontFamily: 'Unbounded'),
-          ),
-          backgroundColor: isError ? Colors.red : AppColors.primary,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      AppToast.show(context, message, isError: isError);
     }
   }
 

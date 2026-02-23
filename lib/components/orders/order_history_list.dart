@@ -3,6 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cantino/models/order_model.dart';
 import 'package:cantino/services/data/order_service.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter/services.dart';
+import '../../utils/toast_helper.dart';
 import 'dart:async';
 import 'dart:ui';
 import '../common/skeleton_loader.dart';
@@ -169,8 +172,8 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
     setState(() => _deletingOrders.add(orderId));
 
     try {
-    // Dev-only: attempting to delete order (do not log full order IDs in production)
-    final success = await _orderService.deleteOrder(orderId);
+      // Dev-only: attempting to delete order (do not log full order IDs in production)
+      final success = await _orderService.deleteOrder(orderId);
 
       if (success && mounted) {
         _showSuccessSnackBar('Order deleted successfully');
@@ -212,10 +215,28 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
 
   /// Shows QR code dialog with order details
   void _showQrCodeDialog(Order order) {
-    showDialog(
+    showGeneralDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.7),
-      builder: (context) => _QrCodeDialog(order: order),
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: AppColors.barrierMedium,
+      transitionDuration: const Duration(milliseconds: 320),
+      transitionBuilder: (ctx, animation, _, child) {
+        return SlideTransition(
+          position:
+              Tween<Offset>(
+                begin: const Offset(0, 0.08),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              ),
+          child: FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (ctx, _, __) => _QrCodeDialog(order: order),
     );
   }
 
@@ -223,24 +244,12 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
 
   /// Shows a success message to the user
   void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    AppToast.show(context, message);
   }
 
   /// Shows an error message to the user
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    AppToast.show(context, message, isError: true);
   }
 
   // ========== Build Methods ==========
@@ -278,10 +287,7 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
                     size: 24,
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'Order History',
-                    style: AppTextStyles.panelTitle,
-                  ),
+                  const Text('Order History', style: AppTextStyles.panelTitle),
                 ],
               ),
             ),
@@ -742,86 +748,442 @@ class _QrCodeDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        side: const BorderSide(color: AppColors.border, width: 1),
+    final paymentId = order.paymentId ?? '';
+    final orderId = order.orderId ?? '';
+    final hasPaymentIds = paymentId.isNotEmpty || orderId.isNotEmpty;
+    final qrData = order.qrCode.isNotEmpty ? order.qrCode : order.id;
+
+    return Align(
+      alignment: Alignment.center,
+      child: Material(
+        color: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    AppColors.dialogGradientStart,
+                    AppColors.dialogGradientMid,
+                    AppColors.dialogGradientEnd,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.15),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.6),
+                    blurRadius: 24,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -50,
+                    right: -40,
+                    child: Container(
+                      width: 180,
+                      height: 180,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.05),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -60,
+                    left: -30,
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.04),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 60,
+                    right: 80,
+                    child: Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.03),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Image.asset('assets/logo/Catino.png', height: 26),
+                            const Spacer(),
+                            _buildStatusChip(order.status),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '#${order.code}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Unbounded',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w300,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  '${order.totalItems} item${order.totalItems != 1 ? 's' : ''}',
+                                  style: TextStyle(
+                                    fontFamily: 'Unbounded',
+                                    fontSize: 10,
+                                    color: Colors.white.withOpacity(0.65),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (hasPaymentIds) ...[
+                                  const SizedBox(height: 12),
+                                  Center(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (paymentId.isNotEmpty)
+                                          _buildCardCopyField(
+                                            'PAY ID',
+                                            paymentId,
+                                            context,
+                                          ),
+                                        if (paymentId.isNotEmpty &&
+                                            orderId.isNotEmpty)
+                                          const SizedBox(height: 8),
+                                        if (orderId.isNotEmpty)
+                                          _buildCardCopyField(
+                                            'ORDER ID',
+                                            orderId,
+                                            context,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          height: 0.6,
+                          color: Colors.white.withOpacity(0.2),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'DATE',
+                                  style: TextStyle(
+                                    fontFamily: 'Unbounded',
+                                    fontSize: 7,
+                                    color: Colors.white.withOpacity(0.5),
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  order.formattedDateTime,
+                                  style: const TextStyle(
+                                    fontFamily: 'Unbounded',
+                                    fontSize: 9,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'ITEMS',
+                                  style: TextStyle(
+                                    fontFamily: 'Unbounded',
+                                    fontSize: 7,
+                                    color: Colors.white.withOpacity(0.5),
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  '${order.totalItems}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Unbounded',
+                                    fontSize: 9,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 20),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'AMOUNT',
+                                  style: TextStyle(
+                                    fontFamily: 'Unbounded',
+                                    fontSize: 7,
+                                    color: Colors.white.withOpacity(0.5),
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  '₹${order.totalAmount.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Unbounded',
+                                    fontSize: 9,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          height: 0.6,
+                          color: Colors.white.withOpacity(0.2),
+                        ),
+                        const SizedBox(height: 12),
+                        Center(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(1),
+                                  color: Colors.white,
+                                  child: QrImageView(
+                                    data: qrData,
+                                    version: QrVersions.auto,
+                                    size: 100,
+                                    backgroundColor: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildCardPaymentBadge(
+                                order.paymentStatus ?? 'pending',
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          height: 0.6,
+                          color: Colors.white.withOpacity(0.2),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildCardButton(
+                                label: 'Close',
+                                icon: Icons.close_rounded,
+                                solid: false,
+                                onTap: () => Navigator.pop(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    );
+  }
+
+  Widget _buildCardCopyField(String label, String value, BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _buildTitle(),
-            const SizedBox(height: 24),
-            _buildQrCode(),
-            const SizedBox(height: 16),
-            _buildStatusBadge(),
-            const SizedBox(height: 20),
-            _buildDateTime(),
-            const SizedBox(height: 28),
-            _buildCloseButton(context),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Unbounded',
+                fontSize: 9,
+                color: Colors.white.withOpacity(0.5),
+                letterSpacing: 0.8,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: const TextStyle(
+                fontFamily: 'Unbounded',
+                fontSize: 12,
+                fontWeight: FontWeight.w300,
+                color: Colors.white,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
-      ),
-    );
-  }
+        GestureDetector(
+          // ...existing code...
+          onTap: () {
+            Clipboard.setData(ClipboardData(text: value));
 
-  Widget _buildTitle() {
-    return Text(
-      'Order #${order.code}',
-      style: const TextStyle(
-        color: Colors.white,
-        fontFamily: 'Unbounded',
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        letterSpacing: -0.5,
-      ),
-    );
-  }
-
-  Widget _buildQrCode() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.borderHighlight, width: 1),
-      ),
-      child: QrImageView(
-        data: order.qrCode,
-        version: QrVersions.auto,
-        size: 180.0,
-        backgroundColor: Colors.white,
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: order.status.color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: order.status.color.withOpacity(0.4),
-          width: 1.5,
+            final fToast = FToast()..init(context);
+            fToast.showToast(
+              toastDuration: const Duration(seconds: 1),
+              gravity: ToastGravity.BOTTOM,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  '$label copied',
+                  style: const TextStyle(
+                    fontFamily: 'Unbounded',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            );
+          },
+          // ...existing code...
+          child: Padding(
+            padding: const EdgeInsets.only(left: 6),
+            child: Icon(
+              Icons.copy_rounded,
+              size: 12,
+              color: Colors.white.withOpacity(0.4),
+            ),
+          ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildCardPaymentBadge(String status) {
+    Color color;
+    String label;
+    IconData icon;
+    switch (status.toLowerCase()) {
+      case 'paid':
+        color = AppColors.statusSuccess;
+        label = 'PAID';
+        icon = Icons.check_circle_rounded;
+        break;
+      case 'failed':
+        color = AppColors.statusError;
+        label = 'FAILED';
+        icon = Icons.cancel_rounded;
+        break;
+      default:
+        color = AppColors.statusWarning;
+        label = 'PENDING';
+        icon = Icons.schedule_rounded;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withOpacity(0.14), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(order.status.icon, color: order.status.color, size: 18),
-          const SizedBox(width: 8),
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 6),
           Text(
-            order.status.displayText,
+            'PAYMENT',
             style: TextStyle(
-              color: order.status.color,
               fontFamily: 'Unbounded',
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
+              fontSize: 7,
+              color: Colors.white.withOpacity(0.5),
+              letterSpacing: 0.8,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Unbounded',
+                fontSize: 8,
+                fontWeight: FontWeight.w700,
+                color: color,
+                letterSpacing: 0.8,
+              ),
             ),
           ),
         ],
@@ -829,48 +1191,57 @@ class _QrCodeDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildDateTime() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.borderHighlight, width: 1),
-      ),
-      child: Text(
-        order.formattedDateTime,
-        style: TextStyle(
-          color: Colors.white.withOpacity(0.8),
-          fontFamily: 'Unbounded',
-          fontSize: 13,
-          letterSpacing: 0.3,
+  Widget _buildCardButton({
+    required String label,
+    required IconData icon,
+    required bool solid,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: solid ? Colors.white.withOpacity(0.22) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 12, color: Colors.white),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Unbounded',
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildCloseButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () => Navigator.pop(context),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.surfaceCard,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            side: const BorderSide(color: AppColors.borderHighlight, width: 1),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          elevation: 0,
-        ),
-        child: const Text(
-          'Close',
-          style: TextStyle(
-            fontFamily: 'Unbounded',
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
+  Widget _buildStatusChip(OrderStatus status) {
+    final chipColor = status.color;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: chipColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: chipColor.withOpacity(0.6), width: 1),
+      ),
+      child: Text(
+        status.displayText,
+        style: TextStyle(
+          fontFamily: 'Unbounded',
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+          color: chipColor,
         ),
       ),
     );
