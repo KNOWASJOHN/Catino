@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../theme/theme.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// A sleek network error card that automatically appears as a centered
@@ -157,7 +158,7 @@ class _NetworkErrorCardState extends State<NetworkErrorCard>
                             Icon(
                               Icons.wifi,
                               size: iconSize,
-                              color: const Color(0xFF1B1F3B),
+                              color: AppColors.networkErrorSurface,
                             ),
                             Positioned(
                               bottom: 0,
@@ -174,7 +175,7 @@ class _NetworkErrorCardState extends State<NetworkErrorCard>
                                     width: iconSize * 0.32,
                                     height: iconSize * 0.32,
                                     decoration: const BoxDecoration(
-                                      color: Color(0xFFE53935),
+                                      color: AppColors.networkErrorBadge,
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
@@ -199,7 +200,7 @@ class _NetworkErrorCardState extends State<NetworkErrorCard>
                           fontFamily: 'Unbounded',
                           fontSize: isSmallScreen ? 22 : 26,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1B1F3B),
+                          color: AppColors.networkErrorSurface,
                           letterSpacing: -0.5,
                           decoration: TextDecoration.none,
                         ),
@@ -230,7 +231,7 @@ class _NetworkErrorCardState extends State<NetworkErrorCard>
                         child: ElevatedButton(
                           onPressed: _isChecking ? null : _handleRetry,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1B1F3B),
+                            backgroundColor: AppColors.networkErrorSurface,
                             disabledBackgroundColor: const Color(
                               0xFF1B1F3B,
                             ).withOpacity(0.6),

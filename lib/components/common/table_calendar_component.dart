@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/theme.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'dart:ui';
 import 'package:cantino/components/common/meal_dialog.dart';
@@ -175,13 +176,13 @@ class _TableCalendarComponentState extends State<TableCalendarComponent> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          const Color(0xFFCDFF00).withOpacity(0.6),
-                          const Color(0xFFCDFF00).withOpacity(0.4),
+                          AppColors.primaryBright.withOpacity(0.6),
+                          AppColors.primaryBright.withOpacity(0.4),
                         ],
                       ),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: const Color(0xFFCDFF00),
+                        color: AppColors.primaryBright,
                         width: 2,
                       ),
                     ),

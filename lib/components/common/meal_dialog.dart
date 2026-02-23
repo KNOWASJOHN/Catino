@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/theme.dart';
 import 'package:cantino/models/meal_model.dart';
 import 'package:cantino/services/meal_service.dart';
 import 'dart:ui';
@@ -60,7 +61,7 @@ class _MealDialogState extends State<MealDialog> {
           maxHeight: MediaQuery.of(context).size.height * 0.65,
         ),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E), // Solid dark gray
+          color: AppColors.surface, // Solid dark gray
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
         ),

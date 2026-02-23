@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/theme.dart';
 import '../../models/notification_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/cache/notification_cache_service.dart';
@@ -555,9 +556,9 @@ class _NotificationPanelState extends State<NotificationPanel> {
       case 'order':
         return Colors.green;
       case 'announcement':
-        return Colors.orange;
+        return AppColors.statusPending;
       default:
-        return Colors.blue;
+        return AppColors.notificationDot;
     }
   }
 
@@ -593,7 +594,7 @@ class _NotificationPanelState extends State<NotificationPanel> {
         decoration: BoxDecoration(
           color: isRead
               ? Colors.transparent
-              : Colors.blue.withValues(alpha: 0.05),
+              : AppColors.notificationDot.withValues(alpha: 0.05),
           border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
         ),
         child: Row(
@@ -646,7 +647,7 @@ class _NotificationPanelState extends State<NotificationPanel> {
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: Colors.blue,
+                            color: AppColors.notificationDot,
                             shape: BoxShape.circle,
                           ),
                         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth/supabase_auth_service.dart';
 import '../components/common/network_error_card.dart';
 import 'signup_page.dart';
+import '../theme/theme.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -45,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result['message']),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.red,
           ),
         );
       }
@@ -116,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: Colors.limeAccent.shade700,
+                              color: AppColors.primaryCta,
                               width: 2,
                             ),
                           ),
@@ -166,7 +167,7 @@ class _LoginPageState extends State<LoginPage> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: Colors.limeAccent.shade700,
+                              color: AppColors.primaryCta,
                               width: 2,
                             ),
                           ),
@@ -208,7 +209,7 @@ class _LoginPageState extends State<LoginPage> {
                       ElevatedButton(
                         onPressed: _isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.limeAccent.shade700,
+                          backgroundColor: AppColors.primaryCta,
                           foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -266,7 +267,7 @@ class _LoginPageState extends State<LoginPage> {
                                 fontFamily: 'Unbounded',
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.limeAccent.shade700,
+                                color: AppColors.primaryCta,
                               ),
                             ),
                           ),
@@ -347,9 +348,9 @@ class _LoginPageState extends State<LoginPage> {
                         final email = emailController.text.trim();
                         if (email.isEmpty || !email.contains('@')) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please enter a valid email'),
-                              backgroundColor: Colors.red,
+                            SnackBar(
+                              content: const Text('Please enter a valid email'),
+                              backgroundColor: AppColors.red,
                             ),
                           );
                           return;
@@ -363,8 +364,8 @@ class _LoginPageState extends State<LoginPage> {
                             SnackBar(
                               content: Text(result['message']),
                               backgroundColor: result['success']
-                                  ? Colors.green
-                                  : Colors.red,
+                                  ? AppColors.green
+                                  : AppColors.red,
                             ),
                           );
                         }
@@ -374,7 +375,7 @@ class _LoginPageState extends State<LoginPage> {
                         style: TextStyle(
                           fontFamily: 'Unbounded',
                           fontWeight: FontWeight.w600,
-                          color: Colors.limeAccent.shade700,
+                          color: AppColors.primaryCta,
                         ),
                       ),
                     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/theme.dart';
 import 'package:flutter/foundation.dart';
 import '../services/auth/supabase_auth_service.dart';
 import '../services/log.dart';
@@ -191,7 +192,7 @@ class _ProfileState extends State<Profile> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Colors.limeAccent.shade700, Colors.limeAccent.shade400],
+          colors: [AppColors.primaryCta, AppColors.primaryCtaAlt],
         ),
         borderRadius: BorderRadius.circular(20),
       ),
@@ -335,7 +336,7 @@ class _ProfileState extends State<Profile> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.limeAccent.shade400,
+              color: AppColors.primaryCtaAlt,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 20, color: Colors.black),
@@ -391,7 +392,7 @@ class _ProfileState extends State<Profile> {
               decoration: BoxDecoration(
                 color: isDestructive
                     ? Colors.red.shade50
-                    : Colors.limeAccent.shade400,
+                    : AppColors.primaryCtaAlt,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -448,7 +449,7 @@ class _ProfileState extends State<Profile> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.limeAccent.shade400,
+              color: AppColors.primaryCtaAlt,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 20, color: Colors.black),
@@ -499,7 +500,7 @@ class _ProfileState extends State<Profile> {
                 }
               }
             },
-            activeThumbColor: Colors.limeAccent.shade700,
+            activeThumbColor: AppColors.primaryCta,
           ),
         ],
       ),
@@ -514,7 +515,7 @@ class _ProfileState extends State<Profile> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.limeAccent.shade400,
+              color: AppColors.primaryCtaAlt,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(Icons.restaurant_menu, size: 20, color: Colors.black),
@@ -595,7 +596,7 @@ class _ProfileState extends State<Profile> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.limeAccent.shade400,
+                  color: AppColors.primaryCtaAlt,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.favorite, size: 20, color: Colors.black),
@@ -625,7 +626,7 @@ class _ProfileState extends State<Profile> {
                 decoration: BoxDecoration(
                   color: Colors.black,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.limeAccent.shade700),
+                  border: Border.all(color: AppColors.primaryCta),
                 ),
                 child: Text(
                   item,
@@ -633,7 +634,7 @@ class _ProfileState extends State<Profile> {
                     fontFamily: 'Unbounded',
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
-                    color: Colors.limeAccent.shade700,
+                    color: AppColors.primaryCta,
                   ),
                 ),
               );

@@ -3,6 +3,7 @@ import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../../providers/cart_provider.dart';
+import '../../theme/theme.dart';
 
 
 
@@ -361,11 +362,11 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                     color: const Color.fromARGB(0, 0, 0, 0).withValues(alpha: 0.10),
 
-                    borderRadius: BorderRadius.circular(40),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
 
                     border: Border.all(
 
-                      color: const Color.fromARGB(0, 255, 255, 255).withValues(alpha: 0.25),
+                      color: AppColors.glassNavBarBorder,
 
                       width: 1.5,
 
@@ -399,7 +400,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
       decoration: BoxDecoration(
 
-        borderRadius: BorderRadius.circular(50),
+        borderRadius: BorderRadius.circular(AppRadius.pill2),
 
         gradient: LinearGradient(
 
@@ -409,11 +410,11 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
           colors: [
 
-            Colors.white.withValues(alpha: 0.2),
+            AppColors.white.withValues(alpha: 0.2),
 
-            Colors.white.withValues(alpha: 0.1),
+            AppColors.white.withValues(alpha: 0.1),
 
-            Colors.white.withValues(alpha: 0.2),
+            AppColors.white.withValues(alpha: 0.2),
 
           ],
 
@@ -481,7 +482,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                               shape: BoxShape.circle,
 
-                              color: Colors.lime.shade400,
+                              color: AppColors.primaryCtaAlt,
 
                               gradient: LinearGradient(
 
@@ -491,9 +492,9 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                                 colors: [
 
-                                  Colors.lime.shade300,
+                                  AppColors.primaryCtaGradientStart,
 
-                                  Colors.lime.shade500,
+                                  AppColors.primaryCtaGradientEnd,
 
                                 ],
 
@@ -503,7 +504,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                                 BoxShadow(
 
-                                  color: Colors.lime.shade400.withValues(alpha: 0.5),
+                                  color: AppColors.primaryCtaAlt.withValues(alpha: 0.5),
 
                                   blurRadius: 12,
 
@@ -787,7 +788,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                       decoration: BoxDecoration(
 
-                        color: Colors.red.shade400,
+                        color: AppColors.redShade400,
 
                         shape: BoxShape.circle,
 
@@ -795,7 +796,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                           BoxShadow(
 
-                            color: Colors.red.shade400.withValues(alpha: 0.3),
+                            color: AppColors.redShade400.withValues(alpha: 0.3),
 
                             blurRadius: 4,
 
@@ -821,17 +822,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
 
                         cartCount > 99 ? '99+' : cartCount.toString(),
 
-                        style: TextStyle(
-
-                          color: Colors.grey.shade800,
-
-                          fontSize: 10,
-
-                          fontWeight: FontWeight.bold,
-
-                          fontFamily: 'Unbounded',
-
-                        ),
+                        style: AppTextStyles.navBadge,
 
                         textAlign: TextAlign.center,
 

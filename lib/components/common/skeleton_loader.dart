@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/theme.dart';
 
 class SkeletonLoader extends StatefulWidget {
   final double width;
@@ -12,8 +13,8 @@ class SkeletonLoader extends StatefulWidget {
     required this.width,
     required this.height,
     this.borderRadius = 8.0,
-    this.baseColor = const Color(0xFF2d2d2d),
-    this.highlightColor = const Color(0xFF3d3d3d),
+    this.baseColor = AppColors.skeletonBase,
+    this.highlightColor = AppColors.skeletonHighlight,
   });
 
   @override
@@ -85,9 +86,9 @@ class SkeletonCard extends StatelessWidget {
       margin: margin,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1e1e1e), // Card bg
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2d2d2d)),
+        color: AppColors.surface, // Card bg
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -147,9 +148,9 @@ class UserCardSkeleton extends StatelessWidget {
       height: 200,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1e1e1e),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF2d2d2d)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xxxl),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,8 +207,8 @@ class FoodSectionSkeleton extends StatelessWidget {
         itemCount: 4,
         itemBuilder: (context, index) => Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF2d2d2d)),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.border),
           ),
           child: const SkeletonLoader(
             width: double.infinity,

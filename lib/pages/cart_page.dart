@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/theme.dart';
 import 'package:provider/provider.dart';
 import '../components/common/skeleton_loader.dart';
 import '../providers/cart_provider.dart';
@@ -61,7 +62,7 @@ class _CartState extends State<Cart> {
                       Icon(
                         Icons.shopping_cart_outlined,
                         size: 84,
-                        color: Colors.lime.shade600,
+                        color: AppColors.cartEmptyIcon,
                       ),
                       const SizedBox(height: 20),
                       const Text(
@@ -184,7 +185,7 @@ class _CartState extends State<Cart> {
                                   child: Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: Colors.black87,
+                                      color: AppColors.surface,
                                       borderRadius: BorderRadius.circular(
                                         25,
                                       ), // Add this line
@@ -229,7 +230,7 @@ class _CartState extends State<Cart> {
                                               Text(
                                                 '₹${item.price.toStringAsFixed(2)}',
                                                 style: const TextStyle(
-                                                  color: Colors.limeAccent,
+                                                  color: AppColors.priceText,
                                                   fontWeight: FontWeight.w600,
                                                   fontFamily: 'Unbounded',
                                                 ),
@@ -340,9 +341,9 @@ class _CartState extends State<Cart> {
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                     colors: [
-                                      Colors.lime.shade50,
+                                      AppColors.cartSurface50,
                                       Colors.white,
-                                      Colors.lime.shade50,
+                                      AppColors.cartSurface50,
                                     ],
                                   ),
                                   boxShadow: [
@@ -397,7 +398,7 @@ class _CartState extends State<Cart> {
                                               borderRadius:
                                                   BorderRadius.circular(16),
                                               border: Border.all(
-                                                color: Colors.lime.shade100,
+                                                color: AppColors.cartSurface100,
                                                 width: 2,
                                               ),
                                               boxShadow: [
@@ -550,8 +551,8 @@ class _CartState extends State<Cart> {
                                                   decoration: BoxDecoration(
                                                     gradient: LinearGradient(
                                                       colors: [
-                                                        Colors.lime.shade100,
-                                                        Colors.lime.shade50,
+                                                        AppColors.cartSurface100,
+                                                        AppColors.cartSurface50,
                                                       ],
                                                     ),
                                                     borderRadius:
@@ -631,7 +632,7 @@ class _CartState extends State<Cart> {
                                               child: ElevatedButton(
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor:
-                                                      Colors.lime.shade400,
+                                                      AppColors.primaryCtaAlt,
                                                   foregroundColor:
                                                       Colors.black87,
                                                   elevation: 0,

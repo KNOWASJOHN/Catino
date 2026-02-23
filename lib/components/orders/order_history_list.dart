@@ -6,13 +6,9 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:async';
 import 'dart:ui';
 import '../common/skeleton_loader.dart';
+import '../../theme/theme.dart';
 
-// Design constants
-const _kPrimaryAccent = Color(0xFFCDFF00);
-const _kCardRadius = 18.0;
-const _kDialogRadius = 24.0;
-const _kQrCodeRadius = 16.0;
-const _kStatusBadgeRadius = 8.0;
+// Design constants — numeric values kept local; colors/radii come from theme.
 const _kPageSize = 20;
 const _kScrollThreshold = 200.0;
 
@@ -257,20 +253,13 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
         maxHeight: MediaQuery.of(context).size.height * 0.7,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF1e1e1e),
-        borderRadius: BorderRadius.circular(_kDialogRadius),
-        border: Border.all(color: const Color(0xFF2d2d2d), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 15,
-            spreadRadius: 2,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xxxl),
+        border: Border.all(color: AppColors.border, width: 1),
+        boxShadow: AppShadows.dialog,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(_kDialogRadius),
+        borderRadius: BorderRadius.circular(AppRadius.xxxl),
         child: Column(
           children: [
             // Simple header
@@ -278,7 +267,7 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
               decoration: const BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(color: Color(0xFF2d2d2d), width: 1),
+                  bottom: BorderSide(color: AppColors.border, width: 1),
                 ),
               ),
               child: Row(
@@ -291,13 +280,7 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
                   const SizedBox(width: 12),
                   const Text(
                     'Order History',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: 'Unbounded',
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.3,
-                    ),
+                    style: AppTextStyles.panelTitle,
                   ),
                 ],
               ),
@@ -351,17 +334,15 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: [
-                                      const Color(0xFFFF006E).withOpacity(0.2),
-                                      const Color(0xFFFF006E).withOpacity(0.5),
+                                      AppColors.danger.withOpacity(0.2),
+                                      AppColors.danger.withOpacity(0.5),
                                     ],
                                   ),
                                   borderRadius: BorderRadius.circular(
-                                    _kCardRadius,
+                                    AppRadius.xl,
                                   ),
                                   border: Border.all(
-                                    color: const Color(
-                                      0xFFFF006E,
-                                    ).withOpacity(0.7),
+                                    color: AppColors.danger.withOpacity(0.7),
                                     width: 2,
                                   ),
                                 ),
@@ -374,27 +355,17 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: [
-                                        const Color(
-                                          0xFFFF006E,
-                                        ).withOpacity(0.4),
-                                        const Color(
-                                          0xFFFF006E,
-                                        ).withOpacity(0.6),
+                                        AppColors.danger.withOpacity(0.4),
+                                        AppColors.danger.withOpacity(0.6),
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: const Color(0xFFFF006E),
+                                      color: AppColors.danger,
                                       width: 2,
                                     ),
                                     boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(
-                                          0xFFFF006E,
-                                        ).withOpacity(0.5),
-                                        blurRadius: 15,
-                                        spreadRadius: 2,
-                                      ),
+                                      AppShadows.accentGlow(AppColors.danger),
                                     ],
                                   ),
                                   child: const Icon(
@@ -446,22 +417,16 @@ class _OrderItemCard extends StatelessWidget {
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFF2a2a2a),
-            borderRadius: BorderRadius.circular(_kCardRadius),
-            border: Border.all(color: const Color(0xFF3a3a3a), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            color: AppColors.surfaceCard,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: AppColors.borderHighlight, width: 1),
+            boxShadow: AppShadows.card,
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: isDeleting ? null : onTap,
-              borderRadius: BorderRadius.circular(_kCardRadius),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               splashColor: Colors.white.withOpacity(0.05),
               highlightColor: Colors.white.withOpacity(0.02),
               child: Padding(
@@ -505,13 +470,7 @@ class _OrderItemCard extends StatelessWidget {
       children: [
         Text(
           '#${order.code}',
-          style: const TextStyle(
-            color: Colors.white,
-            fontFamily: 'Unbounded',
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.5,
-          ),
+          style: AppTextStyles.orderCode,
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 8),
@@ -528,7 +487,7 @@ class _OrderItemCard extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 6),
-        Container(height: 1, width: 50, color: const Color(0xFF3a3a3a)),
+        Container(height: 1, width: 50, color: AppColors.borderHighlight),
         const SizedBox(height: 6),
         _buildItemCount(),
       ],
@@ -540,7 +499,7 @@ class _OrderItemCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: order.status.color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(_kStatusBadgeRadius),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(
           color: order.status.color.withOpacity(0.5),
           width: 1,
@@ -667,17 +626,17 @@ class _EmptyOrdersState extends StatelessWidget {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: _kPrimaryAccent.withOpacity(0.1),
+              color: AppColors.primaryBright.withOpacity(0.1),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: _kPrimaryAccent.withOpacity(0.3),
+                color: AppColors.primaryBright.withOpacity(0.3),
                 width: 2,
               ),
             ),
             child: const Icon(
               Icons.receipt_long_rounded,
               size: 50,
-              color: _kPrimaryAccent,
+              color: AppColors.primaryBright,
             ),
           ),
           const SizedBox(height: 24),
@@ -716,10 +675,10 @@ class _DeleteConfirmDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFF1e1e1e),
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xFF2d2d2d), width: 1),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        side: const BorderSide(color: AppColors.border, width: 1),
       ),
       title: const Text(
         'Delete Order',
@@ -753,7 +712,7 @@ class _DeleteConfirmDialog extends StatelessWidget {
         ElevatedButton(
           onPressed: () => Navigator.pop(context, true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFdc3545),
+            backgroundColor: AppColors.deleteConfirmButton,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -784,10 +743,10 @@ class _QrCodeDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: const Color(0xFF1e1e1e),
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(_kDialogRadius),
-        side: const BorderSide(color: Color(0xFF2d2d2d), width: 1),
+        borderRadius: BorderRadius.circular(AppRadius.xxxl),
+        side: const BorderSide(color: AppColors.border, width: 1),
       ),
       child: Container(
         padding: const EdgeInsets.all(32),
@@ -827,8 +786,8 @@ class _QrCodeDialog extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(_kQrCodeRadius),
-        border: Border.all(color: const Color(0xFF3a3a3a), width: 1),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.borderHighlight, width: 1),
       ),
       child: QrImageView(
         data: order.qrCode,
@@ -874,9 +833,9 @@ class _QrCodeDialog extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF2a2a2a),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF3a3a3a), width: 1),
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.borderHighlight, width: 1),
       ),
       child: Text(
         order.formattedDateTime,
@@ -896,11 +855,11 @@ class _QrCodeDialog extends StatelessWidget {
       child: ElevatedButton(
         onPressed: () => Navigator.pop(context),
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2a2a2a),
+          backgroundColor: AppColors.surfaceCard,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Color(0xFF3a3a3a), width: 1),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            side: const BorderSide(color: AppColors.borderHighlight, width: 1),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14),
           elevation: 0,

@@ -1,4 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../services/log.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../components/print/upload.dart';
@@ -6,6 +9,7 @@ import '../components/print/print_history.dart';
 import '../models/print_job.dart';
 import '../services/data/print_service.dart';
 import 'pdf_viewer_page.dart';
+import '../theme/theme.dart';
 
 class PrintPage extends StatefulWidget {
   const PrintPage({super.key});
@@ -66,7 +70,7 @@ class _PrintPageState extends State<PrintPage> {
                           children: [
                             CircularProgressIndicator(
                               valueColor: const AlwaysStoppedAnimation<Color>(
-                                Color(0xFF00C853),
+                                AppColors.primary,
                               ),
                             ),
                             SizedBox(height: 16),
@@ -104,7 +108,7 @@ class _PrintPageState extends State<PrintPage> {
                             ElevatedButton(
                               onPressed: _loadPrintJobs,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF00C853),
+                              backgroundColor: AppColors.primary,
                               ),
                               child: Text(
                                 'Retry',
@@ -133,183 +137,573 @@ class _PrintPageState extends State<PrintPage> {
   }
 
   void _showJobDetails(PrintJob job) {
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Print Job #${job.code}',
-          style: TextStyle(
-            fontFamily: 'Unbounded',
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailRow('File', job.fileName),
-            _buildDetailRow('Date', job.formattedDateTime),
-            _buildDetailRow('Status', job.status.displayText),
-            _buildDetailRow('Pages', '${job.pageCount}'),
-            _buildDetailRow('Price', '₹${job.price.toStringAsFixed(2)}'),
-            if (job.paymentId != null && job.paymentId!.isNotEmpty) ...[
-              SizedBox(height: 8),
-              Divider(),
-              SizedBox(height: 8),
-              Text(
-                'Payment Information',
-                style: TextStyle(
-                  fontFamily: 'Unbounded',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.grey[800],
-                ),
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: AppColors.barrierMedium,
+      transitionDuration: const Duration(milliseconds: 320),
+      transitionBuilder: (ctx, animation, _, child) {
+        return SlideTransition(
+          position:
+              Tween<Offset>(
+                begin: const Offset(0, 0.08),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
               ),
-              SizedBox(height: 8),
-              _buildDetailRow('Payment ID', job.paymentId ?? 'N/A'),
-              _buildDetailRow('Order ID', job.orderId ?? 'N/A'),
-              _buildPaymentStatusRow(job.paymentStatus ?? 'pending'),
-            ],
-            if (job.fileUrl.isNotEmpty) ...[
-              SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _openFile(job.fileUrl, job.fileName),
-                      icon: Icon(Icons.open_in_new, size: 16),
-                      label: Text(
-                        'View File',
-                        style: TextStyle(fontFamily: 'Unbounded', fontSize: 10),
+          child: FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (ctx, _, __) {
+        return Align(
+          alignment: Alignment.center,
+          child: Material(
+            color: Colors.transparent,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        AppColors.dialogGradientStart,
+                        AppColors.dialogGradientMid,
+                        AppColors.dialogGradientEnd,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.15),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.6),
+                        blurRadius: 24,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 8),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF00C853),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // Decorative circles
+                      Positioned(
+                        top: -50,
+                        right: -40,
+                        child: Container(
+                          width: 180,
+                          height: 180,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.05),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () => _deleteJob(job),
-                    child: Icon(Icons.delete, size: 16),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                      Positioned(
+                        bottom: -60,
+                        left: -30,
+                        child: Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.04),
+                          ),
+                        ),
                       ),
-                      minimumSize: Size(48, 36),
-                    ),
+                      Positioned(
+                        top: 60,
+                        right: 80,
+                        child: Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.03),
+                          ),
+                        ),
+                      ),
+                      // Card content
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ── Row 1: Logo + Status ──
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'assets/logo/Catino.png',
+                                  height: 26,
+                                ),
+                                const Spacer(),
+                                _buildStatusChip(job.status.displayText),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            // ── Job code + Payment IDs ──
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '#${job.code}',
+                                        style: const TextStyle(
+                                          fontFamily: 'Unbounded',
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                          letterSpacing: 3,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        job.fileName,
+                                        style: TextStyle(
+                                          fontFamily: 'Unbounded',
+                                          fontSize: 9,
+                                          color: Colors.white.withOpacity(0.65),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (job.paymentId != null &&
+                                    job.paymentId!.isNotEmpty) ...[
+                                  const SizedBox(width: 12),
+                                  SizedBox(
+                                    width: 130,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _buildCardCopyField(
+                                          'PAY ID',
+                                          job.paymentId ?? 'N/A',
+                                          ctx,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        _buildCardCopyField(
+                                          'ORDER ID',
+                                          job.orderId ?? 'N/A',
+                                          ctx,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            // ── Thin divider ──
+                            Container(
+                              height: 0.6,
+                              color: Colors.white.withOpacity(0.2),
+                            ),
+                            const SizedBox(height: 14),
+                            // ── DATE / PAGES / AMOUNT ──
+                            Row(
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'DATE',
+                                      style: TextStyle(
+                                        fontFamily: 'Unbounded',
+                                        fontSize: 7,
+                                        color: Colors.white.withOpacity(0.5),
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      job.formattedDateTime,
+                                      style: const TextStyle(
+                                        fontFamily: 'Unbounded',
+                                        fontSize: 9,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                                const Spacer(),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      'PAGES',
+                                      style: TextStyle(
+                                        fontFamily: 'Unbounded',
+                                        fontSize: 7,
+                                        color: Colors.white.withOpacity(0.5),
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      '${job.pageCount}',
+                                      style: const TextStyle(
+                                        fontFamily: 'Unbounded',
+                                        fontSize: 9,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      'AMOUNT',
+                                      style: TextStyle(
+                                        fontFamily: 'Unbounded',
+                                        fontSize: 7,
+                                        color: Colors.white.withOpacity(0.5),
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      '₹${job.price.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontFamily: 'Unbounded',
+                                        fontSize: 9,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            // ── Payment badge + QR section ──
+                            if (job.paymentId != null &&
+                                job.paymentId!.isNotEmpty) ...[
+                              const SizedBox(height: 14),
+                              Container(
+                                height: 0.6,
+                                color: Colors.white.withOpacity(0.2),
+                              ),
+                              const SizedBox(height: 12),
+                              Center(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(1),
+                                        color: Colors.white,
+                                        child: QrImageView(
+                                          data:
+                                              job.orderId ??
+                                              job.paymentId ??
+                                              '',
+                                          version: QrVersions.auto,
+                                          size: 100,
+                                          backgroundColor: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildCardPaymentBadge(
+                                      job.paymentStatus ?? 'pending',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            // ── Divider before actions ──
+                            const SizedBox(height: 14),
+                            Container(
+                              height: 0.6,
+                              color: Colors.white.withOpacity(0.2),
+                            ),
+                            const SizedBox(height: 12),
+                            // ── Action buttons ──
+                            Row(
+                              children: [
+                                if (job.fileUrl.isNotEmpty) ...[
+                                  Expanded(
+                                    child: _buildCardButton(
+                                      label: 'View',
+                                      icon: Icons.open_in_new_rounded,
+                                      solid: true,
+                                      onTap: () {
+                                        Navigator.pop(ctx);
+                                        _openFile(job.fileUrl, job.fileName);
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildCardIconButton(
+                                    icon: Icons.delete_outline_rounded,
+                                    color: Colors.red.shade400,
+                                    onTap: () => _deleteJob(job),
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                Expanded(
+                                  child: _buildCardButton(
+                                    label: 'Close',
+                                    icon: Icons.close_rounded,
+                                    solid: false,
+                                    onTap: () => Navigator.pop(ctx),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close', style: TextStyle(fontFamily: 'Unbounded')),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 60,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontFamily: 'Unbounded',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontFamily: 'Unbounded',
-                fontSize: 12,
-                color: Colors.black87,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPaymentStatusRow(String status) {
-    Color statusColor;
-    String statusText;
-
-    switch (status.toLowerCase()) {
-      case 'paid':
-        statusColor = Colors.green;
-        statusText = 'Paid ✓';
-        break;
-      case 'failed':
-        statusColor = Colors.red;
-        statusText = 'Failed';
-        break;
-      case 'pending':
-      default:
-        statusColor = Colors.orange;
-        statusText = 'Pending';
-        break;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 60,
-            child: Text(
-              'Payment:',
-              style: TextStyle(
-                fontFamily: 'Unbounded',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: statusColor, width: 1),
-              ),
-              child: Text(
-                statusText,
-                style: TextStyle(
-                  fontFamily: 'Unbounded',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: statusColor,
                 ),
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCardCopyField(String label, String value, BuildContext ctx) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 7,
+                  color: Colors.white.withOpacity(0.5),
+                  letterSpacing: 0.8,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        GestureDetector(
+          onTap: () {
+            Clipboard.setData(ClipboardData(text: value));
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '$label copied',
+                  style: const TextStyle(fontFamily: 'Unbounded', fontSize: 10),
+                ),
+              backgroundColor: AppColors.primary,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.only(left: 6),
+            child: Icon(
+              Icons.copy_rounded,
+              size: 12,
+              color: Colors.white.withOpacity(0.4),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCardPaymentBadge(String status) {
+    Color color;
+    String label;
+    IconData icon;
+    switch (status.toLowerCase()) {
+      case 'paid':
+        color = AppColors.statusSuccess;
+        label = 'PAID';
+        icon = Icons.check_circle_rounded;
+        break;
+      case 'failed':
+        color = AppColors.statusError;
+        label = 'FAILED';
+        icon = Icons.cancel_rounded;
+        break;
+      default:
+        color = AppColors.statusWarning;
+        label = 'PENDING';
+        icon = Icons.schedule_rounded;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withOpacity(0.14), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 6),
+          Text(
+            'PAYMENT',
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontSize: 7,
+              color: Colors.white.withOpacity(0.5),
+              letterSpacing: 0.8,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Unbounded',
+                fontSize: 8,
+                fontWeight: FontWeight.w700,
+                color: color,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCardButton({
+    required String label,
+    required IconData icon,
+    required bool solid,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: solid ? Colors.white.withOpacity(0.22) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 12, color: Colors.white),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Unbounded',
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardIconButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.22),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withOpacity(0.4), width: 1),
+        ),
+        child: Icon(icon, size: 14, color: color),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(String statusText) {
+    Color chipColor;
+    switch (statusText.toLowerCase()) {
+      case 'completed':
+        chipColor = AppColors.primary;
+        break;
+      case 'printing':
+        chipColor = Colors.blue;
+        break;
+      case 'ready':
+        chipColor = AppColors.statusReady;
+        break;
+      case 'failed':
+        chipColor = AppColors.red;
+        break;
+      default:
+        chipColor = AppColors.statusPending;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: chipColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: chipColor.withOpacity(0.6), width: 1),
+      ),
+      child: Text(
+        statusText,
+        style: TextStyle(
+          fontFamily: 'Unbounded',
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+          color: chipColor,
+        ),
       ),
     );
   }
@@ -392,7 +786,7 @@ class _PrintPageState extends State<PrintPage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.deleteConfirmButton,
               foregroundColor: Colors.white,
             ),
             child: Text('Delete', style: TextStyle(fontFamily: 'Unbounded')),
@@ -428,7 +822,7 @@ class _PrintPageState extends State<PrintPage> {
           message,
           style: TextStyle(fontFamily: 'Unbounded', fontSize: 12),
         ),
-        backgroundColor: Colors.red,
+        backgroundColor: AppColors.red,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -441,7 +835,7 @@ class _PrintPageState extends State<PrintPage> {
           message,
           style: TextStyle(fontFamily: 'Unbounded', fontSize: 12),
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: AppColors.green,
         behavior: SnackBarBehavior.floating,
       ),
     );

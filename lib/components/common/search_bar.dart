@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/theme.dart';
 import 'package:provider/provider.dart';
 import '../../models/food_item.dart';
 import '../../services/data/supabase_food_service.dart';
@@ -480,7 +481,7 @@ class _SearchMenuState extends State<SearchMenu>
                                                         padding:
                                                             const EdgeInsets.all(8),
                                                         decoration: BoxDecoration(
-                                                          color: Colors.limeAccent,
+                                                          color: AppColors.priceText,
                                                           borderRadius:
                                                               BorderRadius.circular(
                                                                 12,
@@ -509,7 +510,7 @@ class _SearchMenuState extends State<SearchMenu>
                                                             child: Text(
                                                               '${cartProvider.cart[item.id]}',
                                                               style: const TextStyle(
-                                                                color: Colors.limeAccent,
+                                                                color: AppColors.priceText,
                                                                 fontSize: 10,
                                                                 fontWeight: FontWeight.bold,
                                                                 fontFamily: 'Unbounded',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/theme.dart';
 import '../../models/print_job.dart';
 import '../../utils/pricing_config.dart';
 
@@ -159,7 +160,7 @@ class PrintHistory extends StatelessWidget {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: Color(0xFF00C853),
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -190,9 +191,9 @@ class PrintHistory extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: Colors.limeAccent.shade700.withOpacity(0.1),
+        color: AppColors.primaryCta.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.limeAccent.shade700, width: 2),
+        border: Border.all(color: AppColors.primaryCta, width: 2),
       ),
       child: Center(
         child: Text(

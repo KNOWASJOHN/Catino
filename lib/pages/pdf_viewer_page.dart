@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../theme/theme.dart';
 import 'package:flutter/foundation.dart';
 import '../services/log.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
@@ -177,7 +178,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
             message,
             style: const TextStyle(fontFamily: 'Unbounded'),
           ),
-          backgroundColor: isError ? Colors.red : const Color(0xFF00C853),
+          backgroundColor: isError ? Colors.red : AppColors.primary,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -316,19 +317,19 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isEnabled
-                ? const Color(0xFF00C853).withOpacity(0.1)
+                ? AppColors.primary.withOpacity(0.1)
                 : Colors.grey.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isEnabled
-                  ? const Color(0xFF00C853)
+                  ? AppColors.primary
                   : Colors.grey.withOpacity(0.3),
             ),
           ),
           child: Icon(
             icon,
             color: isEnabled
-                ? const Color(0xFF00C853)
+                ? AppColors.primary
                 : Colors.grey.withOpacity(0.5),
             size: 24,
           ),
@@ -428,12 +429,12 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00C853).withOpacity(0.1),
+                  color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   icon,
-                  color: const Color(0xFF00C853),
+                  color: AppColors.primary,
                   size: 20,
                 ),
               ),
@@ -507,7 +508,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
               'Close',
               style: TextStyle(
                 fontFamily: 'Unbounded',
-                color: const Color(0xFF00C853),
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -614,7 +615,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00C853),
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -661,7 +662,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                       width: 50,
                       height: 50,
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00C853)),
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                         strokeWidth: 3,
                       ),
                     ),
@@ -729,7 +730,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                   icon: const Icon(Icons.refresh_rounded),
                   label: const Text('Retry'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00C853),
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                   ),
                 ),

@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logging/logging.dart';
 import 'providers/notification_provider.dart';
 import 'pages/home_page.dart';
+import 'theme/theme.dart';
 import 'components/common/navbar.dart';
 import 'components/common/header.dart';
 import 'components/notifications/notification_panel.dart';
@@ -78,6 +79,8 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        theme: appLightTheme,
+        darkTheme: appDarkTheme,
         home: StreamBuilder(
           stream: auth.SupabaseAuthService().authStateChanges,
           builder: (context, snapshot) {

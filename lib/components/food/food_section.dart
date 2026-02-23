@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/theme.dart';
 import '../../models/food_item.dart';
 import '../../services/data/supabase_food_service.dart';
 import '../common/skeleton_loader.dart';
@@ -93,7 +94,7 @@ class _FoodSectionState extends State<FoodSection> {
                           : null,
                       strokeWidth: 2,
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF00C853),
+                        AppColors.primary,
                       ),
                     ),
                   ),
@@ -179,7 +180,7 @@ class _FoodSectionState extends State<FoodSection> {
                       fontFamily: 'Unbounded',
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: Colors.limeAccent,
+                      color: AppColors.priceText,
                       shadows: [
                         Shadow(
                           offset: Offset(2, 2),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/theme.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../services/data/supabase_food_service.dart';
@@ -52,7 +53,7 @@ class CategorySection extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.black87,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -67,7 +68,7 @@ class CategorySection extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00C853),
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(icon, color: Colors.white, size: 20),
@@ -90,14 +91,14 @@ class CategorySection extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.limeAccent,
+                    color: AppColors.priceText,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     'View All',
                     style: const TextStyle(
                       fontFamily: 'Unbounded',
-                      color: Colors.black87,
+                      color: AppColors.surface,
                       fontWeight: FontWeight.w600,
                       fontSize: 11,
                     ),
@@ -291,7 +292,7 @@ class FoodItemCard extends StatelessWidget {
     return Card(
       elevation: 8,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: Colors.black87,
+      color: AppColors.surface,
       shadowColor: Colors.black.withOpacity(0.3),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -354,7 +355,7 @@ class FoodItemCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: foodItem.isVegetarian
-                                ? const Color(0xFF00C853)
+                                ? AppColors.primary
                                 : Colors.red.shade700,
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: [
@@ -426,7 +427,7 @@ class FoodItemCard extends StatelessWidget {
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: 'Unbounded',
-                                color: Colors.limeAccent,
+                                color: AppColors.priceText,
                               ),
                             ),
                           ),
@@ -482,7 +483,7 @@ class FoodItemCard extends StatelessWidget {
                           if (quantity == 0)
                             Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFF00C853),
+                                color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(8),
                                 boxShadow: [
                                   BoxShadow(
@@ -497,7 +498,7 @@ class FoodItemCard extends StatelessWidget {
                               child: ElevatedButton(
                                 onPressed: onAdd,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF00C853),
+                                  backgroundColor: AppColors.primary,
                                   shadowColor: Colors.transparent,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
@@ -524,7 +525,7 @@ class FoodItemCard extends StatelessWidget {
                           else
                             Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFF00C853),
+                                color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(8),
                                 boxShadow: [
                                   BoxShadow(

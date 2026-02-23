@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/theme.dart';
 import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -40,7 +41,7 @@ class UserCard extends StatelessWidget {
     return Container(
       width: MediaQuery.of(context).size.width * 0.95,
       decoration: BoxDecoration(
-        color: Colors.black87,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.grey.shade300, width: 2),
       ),
@@ -125,7 +126,7 @@ class UserCard extends StatelessWidget {
                   fontFamily: 'Unbounded',
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Colors.black87,
+                  color: AppColors.surface,
                 ),
               ),
             ),

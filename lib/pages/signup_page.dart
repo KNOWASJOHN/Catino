@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/theme.dart';
 import '../services/auth/supabase_auth_service.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -137,9 +138,9 @@ class _SignUpPageState extends State<SignUpPage> {
       if (result['success']) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account created successfully!'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text('Account created successfully!'),
+              backgroundColor: AppColors.green,
             ),
           );
           Navigator.pop(context); // Go back to login
@@ -149,7 +150,7 @@ class _SignUpPageState extends State<SignUpPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(result['message']),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.red,
               duration: const Duration(seconds: 4),
             ),
           );
@@ -159,10 +160,10 @@ class _SignUpPageState extends State<SignUpPage> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An unexpected error occurred'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 4),
+          SnackBar(
+            content: const Text('An unexpected error occurred'),
+            backgroundColor: AppColors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -243,7 +244,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     side: BorderSide(
-                                      color: Colors.limeAccent.shade700,
+                                      color: AppColors.primaryCta,
                                     ),
                                   ),
                                   child: const Text(
@@ -273,7 +274,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                         }
                                       },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.limeAccent.shade700,
+                                  backgroundColor: AppColors.primaryCta,
                                   foregroundColor: Colors.black,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 16,
@@ -330,7 +331,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                   fontFamily: 'Unbounded',
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.limeAccent.shade700,
+                                  color: AppColors.primaryCta,
                                 ),
                               ),
                             ),
@@ -367,7 +368,7 @@ class _SignUpPageState extends State<SignUpPage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isActive
-                    ? Colors.limeAccent.shade700
+                    ? AppColors.primaryCta
                     : Colors.grey.shade300,
               ),
               child: Center(
@@ -386,7 +387,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 width: 40,
                 height: 2,
                 color: index < _currentStep
-                    ? Colors.limeAccent.shade700
+                    ? AppColors.primaryCta
                     : Colors.grey.shade300,
               ),
           ],
@@ -513,7 +514,7 @@ class _SignUpPageState extends State<SignUpPage> {
           Switch(
             value: _isHosteler,
             onChanged: (value) => setState(() => _isHosteler = value),
-            activeThumbColor: Colors.limeAccent.shade700,
+            activeThumbColor: AppColors.primaryCta,
           ),
         ],
       ),
@@ -604,7 +605,7 @@ class _SignUpPageState extends State<SignUpPage> {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.limeAccent.shade700, width: 2),
+            borderSide: BorderSide(color: AppColors.primaryCta, width: 2),
           ),
         ),
         validator: (value) {
@@ -638,7 +639,7 @@ class _SignUpPageState extends State<SignUpPage> {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.limeAccent.shade700, width: 2),
+            borderSide: BorderSide(color: AppColors.primaryCta, width: 2),
           ),
         ),
         validator: (value) {
@@ -675,7 +676,7 @@ class _SignUpPageState extends State<SignUpPage> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.limeAccent.shade700, width: 2),
+          borderSide: BorderSide(color: AppColors.primaryCta, width: 2),
         ),
       ),
       validator: validator,
@@ -733,7 +734,7 @@ class _SignUpPageState extends State<SignUpPage> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.limeAccent.shade700, width: 2),
+          borderSide: BorderSide(color: AppColors.primaryCta, width: 2),
         ),
       ),
     );
@@ -745,3 +746,4 @@ class _SignUpPageState extends State<SignUpPage> {
     return true;
   }
 }
+
