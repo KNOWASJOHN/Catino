@@ -65,7 +65,6 @@ class _FoodSectionState extends State<FoodSection> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading food items: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -85,7 +84,7 @@ class _FoodSectionState extends State<FoodSection> {
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
                 return Container(
-                  color: Colors.grey[300],
+                  color: Colors.grey[200],
                   child: Center(
                     child: CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
@@ -102,19 +101,14 @@ class _FoodSectionState extends State<FoodSection> {
               },
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  color: Colors.grey[300],
+                  color: Colors.grey[200],
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.image_not_supported,
-                        size: 40,
-                        color: Colors.grey[500],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Image not available',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 10),
+                        Icons.image_not_supported_outlined,
+                        size: 32,
+                        color: Colors.grey[400],
                       ),
                     ],
                   ),

@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/cache/notification_cache_service.dart';
 import 'dart:async';
 
+// ignore_for_file: deprecated_member_use
+
 class NotificationPanel extends StatefulWidget {
   final VoidCallback onClose;
 
@@ -37,7 +39,6 @@ class _NotificationPanelState extends State<NotificationPanel> {
     super.dispose();
   }
 
-  /// Load notifications from cache first for instant UI
   Future<void> _loadCachedNotifications() async {
     try {
       final cached = await _cacheService.getCachedNotifications();
@@ -47,12 +48,9 @@ class _NotificationPanelState extends State<NotificationPanel> {
           _cacheLoaded = true;
         });
       }
-    } catch (e) {
-      print('Error loading cached notifications: $e');
-    }
+    } catch (_) {}
   }
 
-  /// Setup explicit realtime subscription for instant updates
   void _setupRealtimeSubscription() {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return;
@@ -60,7 +58,6 @@ class _NotificationPanelState extends State<NotificationPanel> {
     _notificationStreamController =
         StreamController<List<Map<String, dynamic>>>.broadcast();
 
-    // Subscribe to realtime changes
     _realtimeChannel = Supabase.instance.client
         .channel('notifications-panel-$userId')
         .onPostgresChanges(
@@ -73,18 +70,14 @@ class _NotificationPanelState extends State<NotificationPanel> {
             value: userId,
           ),
           callback: (payload) {
-            print('🔔 Realtime event received: ${payload.eventType}');
-            // Trigger a refresh by fetching latest data
             _fetchAndBroadcastNotifications();
           },
         )
         .subscribe();
 
-    // Initial fetch
     _fetchAndBroadcastNotifications();
   }
 
-  /// Fetch notifications and broadcast to stream
   Future<void> _fetchAndBroadcastNotifications() async {
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -99,43 +92,40 @@ class _NotificationPanelState extends State<NotificationPanel> {
 
       if (_notificationStreamController != null &&
           !_notificationStreamController!.isClosed) {
-        _notificationStreamController!.add(
-          response,
-        );
+        _notificationStreamController!.add(response);
       }
-    } catch (e) {
-      print('Error fetching notifications: $e');
-    }
+    } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: MediaQuery.of(context).size.width * 0.7,
-      height: MediaQuery.of(context).size.height * 0.4,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.5),
-              blurRadius: 10,
-              offset: const Offset(-2, 0),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+      width: MediaQuery.of(context).size.width * 0.75,
+      height: MediaQuery.of(context).size.height * 0.45,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: Colors.grey.shade200, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.10),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
                 decoration: BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300),
+                    bottom: BorderSide(color: Colors.grey.shade200, width: 1),
                   ),
                 ),
                 child: Row(
@@ -147,81 +137,91 @@ class _NotificationPanelState extends State<NotificationPanel> {
                         style: TextStyle(
                           decoration: TextDecoration.none,
                           fontFamily: 'Unbounded',
-                          fontSize: 16,
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Colors.black,
+                          color: const Color(0xFF1A1A1A),
                         ),
                       ),
                     ),
                     Row(
                       children: [
-                        // Clear All button
                         if (_isClearing)
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
+                          SizedBox(
+                            width: 14,
+                            height: 14,
                             child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                              strokeWidth: 1.5,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.red,
+                                AppColors.statusError,
                               ),
                             ),
                           )
                         else
                           GestureDetector(
                             onTap: _showClearAllDialog,
-                            child: Text(
-                              'Clear All',
-                              style: TextStyle(
-                                decoration: TextDecoration.none,
-                                fontFamily: 'Unbounded',
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.red.shade600,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.statusError.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                                border: Border.all(
+                                  color: AppColors.statusError.withOpacity(0.25),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                'Clear All',
+                                style: TextStyle(
+                                  decoration: TextDecoration.none,
+                                  fontFamily: 'Unbounded',
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.statusError,
+                                ),
                               ),
                             ),
                           ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         GestureDetector(
                           onTap: widget.onClose,
-                          child: const Icon(Icons.close, size: 20),
+                          child: Container(
+                            width: 26,
+                            height: 26,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              border: Border.all(
+                                color: Colors.grey.shade300,
+                                width: 1,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 14,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-              // Notifications List with Realtime Updates
+              // Notifications List
               Expanded(
                 child: Builder(
                   builder: (context) {
                     final userId =
                         Supabase.instance.client.auth.currentUser?.id;
 
-                    // If no user is logged in, show login message
                     if (userId == null) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.account_circle_outlined,
-                              size: 48,
-                              color: Colors.grey.shade400,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Please log in to view notifications',
-                              style: TextStyle(
-                                decoration: TextDecoration.none,
-                                fontFamily: 'Unbounded',
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
+                      return _buildEmptyState(
+                        icon: Icons.account_circle_outlined,
+                        label: 'Log in to view notifications',
+                        color: AppColors.primary,
                       );
                     }
 
@@ -229,172 +229,114 @@ class _NotificationPanelState extends State<NotificationPanel> {
                       stream: _notificationStreamController?.stream,
                       builder: (context, snapshot) {
                         if (snapshot.hasError) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  size: 48,
-                                  color: Colors.red.shade400,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Error loading notifications',
-                                  style: TextStyle(
-                                    decoration: TextDecoration.none,
-                                    fontFamily: 'Unbounded',
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w400,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '${snapshot.error}',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    decoration: TextDecoration.none,
-                                    fontFamily: 'Unbounded',
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w300,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          return _buildEmptyState(
+                            icon: Icons.error_outline_rounded,
+                            label: 'Error loading notifications',
+                            color: AppColors.statusError,
                           );
                         }
 
-                        // Check if we have data from stream or cache
                         List<NotificationModel>? notifications;
 
                         if (snapshot.hasData) {
-                          // Use stream data when available
                           final notificationMaps =
                               snapshot.data ?? <Map<String, dynamic>>[];
                           notifications = notificationMaps
-                              .map(
-                                (map) => NotificationModel.fromSupabaseMap(map),
-                              )
+                              .map((map) => NotificationModel.fromSupabaseMap(map))
                               .toList()
                               .cast<NotificationModel>();
 
-                          // Update cache in background
                           if (notifications.isNotEmpty) {
                             _cacheService.cacheNotifications(notifications);
                           }
-                        } else if (_cacheLoaded &&
-                            _cachedNotifications != null) {
-                          // Use cached data while stream loads (instant UI!)
+                        } else if (_cacheLoaded && _cachedNotifications != null) {
                           notifications = _cachedNotifications;
                         }
 
                         if (notifications != null) {
                           if (notifications.isEmpty) {
-                            return Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.notifications_none,
-                                    size: 48,
-                                    color: Colors.grey.shade400,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'No notifications yet',
-                                    style: TextStyle(
-                                      decoration: TextDecoration.none,
-                                      fontFamily: 'Unbounded',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w400,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            return _buildEmptyState(
+                              icon: Icons.notifications_none_rounded,
+                              label: 'No notifications yet',
+                              color: AppColors.primary,
                             );
                           }
 
-                          return Stack(
-                            children: [
-                              ListView.builder(
-                                padding: const EdgeInsets.all(5),
-                                shrinkWrap: true,
-                                physics: const BouncingScrollPhysics(),
-                                itemCount: notifications.length,
-                                itemBuilder: (context, index) {
-                                  final notification = notifications![index];
-                                  final isDeleting = _deletingNotifications
-                                      .contains(notification.id);
+                          return ShaderMask(
+                            shaderCallback: (Rect bounds) {
+                              return const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Colors.black, Colors.transparent],
+                                stops: [0.78, 1.0],
+                              ).createShader(bounds);
+                            },
+                            blendMode: BlendMode.dstIn,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: notifications.length,
+                              itemBuilder: (context, index) {
+                                final notification = notifications![index];
+                                final isDeleting = _deletingNotifications
+                                    .contains(notification.id);
 
-                                  return Dismissible(
-                                    key: Key(notification.id),
-                                    direction: DismissDirection.endToStart,
-                                    background: Container(
-                                      alignment: Alignment.centerRight,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20,
-                                      ),
-                                      margin: const EdgeInsets.symmetric(
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red.shade50,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Container(
-                                        width: 60,
-                                        height: 60,
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.red.shade100,
-                                          borderRadius: BorderRadius.circular(
-                                            30,
-                                          ),
-                                        ),
-                                        child: Icon(
-                                          Icons.delete_outline,
-                                          color: Colors.red.shade700,
-                                          size: 24,
-                                        ),
-                                      ),
+                                return Dismissible(
+                                  key: Key(notification.id),
+                                  direction: DismissDirection.endToStart,
+                                  background: Container(
+                                    alignment: Alignment.centerRight,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
                                     ),
-                                    confirmDismiss: (direction) async {
-                                      return await _deleteNotification(
-                                        notification.id,
-                                      );
-                                    },
-                                    child: AnimatedOpacity(
-                                      opacity: isDeleting ? 0.5 : 1.0,
-                                      duration: const Duration(
-                                        milliseconds: 200,
-                                      ),
-                                      child: _buildNotificationItem(
-                                        notification.title,
-                                        notification.message,
-                                        _getTimeAgo(notification.createdAt),
-                                        _getNotificationIcon(notification.type),
-                                        _getNotificationColor(
-                                          notification.type,
-                                        ),
-                                        notification.isRead,
-                                        () => _markAsRead(notification.id),
-                                        isDeleting,
-                                      ),
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 2,
+                                      horizontal: 8,
                                     ),
-                                  );
-                                },
-                              ),
-                              // Show subtle loading indicator while stream is connecting (but cache is shown)
-                            ],
+                                    decoration: BoxDecoration(
+                                      color: AppColors.statusError.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(AppRadius.md),
+                                    ),
+                                    child: Icon(
+                                      Icons.delete_sweep_outlined,
+                                      color: AppColors.statusError,
+                                      size: 22,
+                                    ),
+                                  ),
+                                  confirmDismiss: (direction) async {
+                                    return await _deleteNotification(notification.id);
+                                  },
+                                  child: AnimatedOpacity(
+                                    opacity: isDeleting ? 0.4 : 1.0,
+                                    duration: const Duration(milliseconds: 200),
+                                    child: _buildNotificationItem(
+                                      notification.title,
+                                      notification.message,
+                                      _getTimeAgo(notification.createdAt),
+                                      _getNotificationIcon(notification.type),
+                                      _getNotificationColor(notification.type),
+                                      notification.isRead,
+                                      () => _markAsRead(notification.id),
+                                      isDeleting,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           );
                         }
 
-                        // Fallback loading state
-                        return const Center(
-                          child: CircularProgressIndicator(),
+                        return Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.primary,
+                              ),
+                            ),
+                          ),
                         );
                       },
                     );
@@ -408,21 +350,50 @@ class _NotificationPanelState extends State<NotificationPanel> {
     );
   }
 
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: color.withOpacity(0.2), width: 1),
+            ),
+            child: Icon(icon, size: 22, color: color.withOpacity(0.7)),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              decoration: TextDecoration.none,
+              fontFamily: 'Unbounded',
+              fontSize: 9,
+              fontWeight: FontWeight.w400,
+              color: Colors.grey.shade400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _markAsRead(String notificationId) async {
     try {
-      // Update the database - the realtime subscription will trigger a refresh
       await Supabase.instance.client
           .from('notifications')
           .update({'is_read': true})
           .eq('id', notificationId);
-
-      print('✅ Marked notification as read: $notificationId');
-
-      // Trigger immediate refresh to update UI
       await _fetchAndBroadcastNotifications();
-    } catch (e) {
-      print('❌ Error marking as read: $e');
-    }
+    } catch (_) {}
   }
 
   Future<bool> _deleteNotification(String notificationId) async {
@@ -435,17 +406,11 @@ class _NotificationPanelState extends State<NotificationPanel> {
           .from('notifications')
           .delete()
           .eq('id', notificationId);
-
-      // Remove from cache as well
       await _cacheService.removeNotificationFromCache(notificationId);
-
-      // Trigger immediate refresh
       await _fetchAndBroadcastNotifications();
-
-      return true; // Allow dismissal
-    } catch (e) {
-      print('Error deleting notification: $e');
-      return false; // Prevent dismissal on error
+      return true;
+    } catch (_) {
+      return false;
     } finally {
       if (mounted) {
         setState(() {
@@ -456,9 +421,7 @@ class _NotificationPanelState extends State<NotificationPanel> {
   }
 
   Future<void> _clearAllNotifications() async {
-    setState(() {
-      _isClearing = true;
-    });
+    setState(() => _isClearing = true);
 
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -467,21 +430,11 @@ class _NotificationPanelState extends State<NotificationPanel> {
             .from('notifications')
             .delete()
             .eq('user_id', userId);
-
-        // Clear cache as well
         await _cacheService.clearCache();
-
-        // Trigger immediate refresh
         await _fetchAndBroadcastNotifications();
       }
-    } catch (e) {
-      print('Error clearing all notifications: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isClearing = false;
-        });
-      }
+    } catch (_) {} finally {
+      if (mounted) setState(() => _isClearing = false);
     }
   }
 
@@ -490,20 +443,27 @@ class _NotificationPanelState extends State<NotificationPanel> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            side: BorderSide(color: Colors.grey.shade200, width: 1),
+          ),
           title: const Text(
-            'Clear All Notifications',
+            'Clear All',
             style: TextStyle(
               fontFamily: 'Unbounded',
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1A1A1A),
             ),
           ),
-          content: const Text(
-            'Are you sure you want to delete all notifications? This action cannot be undone.',
+          content: Text(
+            'Delete all notifications? This cannot be undone.',
             style: TextStyle(
               fontFamily: 'Unbounded',
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
+              fontSize: 10,
+              fontWeight: FontWeight.w300,
+              color: Colors.grey.shade500,
             ),
           ),
           actions: [
@@ -513,9 +473,9 @@ class _NotificationPanelState extends State<NotificationPanel> {
                 'Cancel',
                 style: TextStyle(
                   fontFamily: 'Unbounded',
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade600,
+                  color: Colors.grey.shade400,
                 ),
               ),
             ),
@@ -524,13 +484,13 @@ class _NotificationPanelState extends State<NotificationPanel> {
                 Navigator.of(context).pop();
                 _clearAllNotifications();
               },
-              child: Text(
+              child: const Text(
                 'Clear All',
                 style: TextStyle(
                   fontFamily: 'Unbounded',
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Colors.red.shade600,
+                  color: AppColors.statusError,
                 ),
               ),
             ),
@@ -543,22 +503,22 @@ class _NotificationPanelState extends State<NotificationPanel> {
   IconData _getNotificationIcon(String type) {
     switch (type) {
       case 'order':
-        return Icons.shopping_bag;
+        return Icons.shopping_bag_rounded;
       case 'announcement':
-        return Icons.campaign;
+        return Icons.campaign_rounded;
       default:
-        return Icons.notifications;
+        return Icons.notifications_rounded;
     }
   }
 
   Color _getNotificationColor(String type) {
     switch (type) {
       case 'order':
-        return Colors.green;
+        return AppColors.statusSuccess;
       case 'announcement':
-        return AppColors.statusPending;
+        return AppColors.statusWarning;
       default:
-        return AppColors.notificationDot;
+        return AppColors.primary;
     }
   }
 
@@ -566,15 +526,10 @@ class _NotificationPanelState extends State<NotificationPanel> {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
-    }
+    if (difference.inDays > 0) return '${difference.inDays}d ago';
+    if (difference.inHours > 0) return '${difference.inHours}h ago';
+    if (difference.inMinutes > 0) return '${difference.inMinutes}m ago';
+    return 'Just now';
   }
 
   Widget _buildNotificationItem(
@@ -590,23 +545,27 @@ class _NotificationPanelState extends State<NotificationPanel> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isRead
               ? Colors.transparent
-              : AppColors.notificationDot.withValues(alpha: 0.05),
-          border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+              : Colors.grey.shade50,
+          border: Border(
+            bottom: BorderSide(color: Colors.grey.shade100, width: 1),
+          ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(6),
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
               ),
-              child: Icon(icon, color: iconColor, size: 16),
+              child: Icon(icon, color: iconColor, size: 15),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -618,36 +577,35 @@ class _NotificationPanelState extends State<NotificationPanel> {
                       Expanded(
                         child: Text(
                           title,
-                          maxLines: 2,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             decoration: TextDecoration.none,
                             fontFamily: 'Unbounded',
-                            fontSize: 13,
-                            fontWeight: isRead
-                                ? FontWeight.w400
-                                : FontWeight.w600,
-                            color: Colors.black,
+                            fontSize: 10,
+                            fontWeight:
+                                isRead ? FontWeight.w400 : FontWeight.w600,
+                            color: const Color(0xFF1A1A1A),
                           ),
                         ),
                       ),
                       if (isDeleting)
-                        const SizedBox(
-                          width: 12,
-                          height: 12,
+                        SizedBox(
+                          width: 10,
+                          height: 10,
                           child: CircularProgressIndicator(
                             strokeWidth: 1.5,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.red,
+                              AppColors.statusError,
                             ),
                           ),
                         )
                       else if (!isRead)
                         Container(
-                          width: 8,
-                          height: 8,
+                          width: 6,
+                          height: 6,
                           decoration: const BoxDecoration(
-                            color: AppColors.notificationDot,
+                            color: AppColors.primary,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -661,22 +619,20 @@ class _NotificationPanelState extends State<NotificationPanel> {
                     style: TextStyle(
                       decoration: TextDecoration.none,
                       fontFamily: 'Unbounded',
-                      fontSize: 11,
+                      fontSize: 9,
                       fontWeight: FontWeight.w300,
-                      color: Colors.grey.shade700,
+                      color: Colors.grey.shade500,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     time,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       decoration: TextDecoration.none,
                       fontFamily: 'Unbounded',
-                      fontSize: 9,
+                      fontSize: 8,
                       fontWeight: FontWeight.w300,
-                      color: Colors.grey.shade500,
+                      color: Colors.grey.shade400,
                     ),
                   ),
                 ],

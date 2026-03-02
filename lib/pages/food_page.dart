@@ -53,11 +53,11 @@ class CategorySection extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -81,7 +81,7 @@ class CategorySection extends StatelessWidget {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Unbounded',
-                      color: Colors.white,
+                      color: Color(0xFF1A1A1A),
                     ),
                   ),
                 ),
@@ -290,10 +290,10 @@ class FoodItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
-      elevation: 8,
+      elevation: 6,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: AppColors.surface,
-      shadowColor: Colors.black.withOpacity(0.3),
+      color: Colors.white,
+      shadowColor: Colors.black.withOpacity(0.25),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final maxH = constraints.maxHeight.isFinite
@@ -398,7 +398,7 @@ class FoodItemCard extends StatelessWidget {
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Unbounded',
-                          color: Colors.white,
+                          color: Color(0xFF1A1A1A),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -409,7 +409,7 @@ class FoodItemCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 8,
                           fontFamily: 'Unbounded',
-                          color: Colors.white70,
+                          color: Colors.black54,
                           fontWeight: FontWeight.w300,
                         ),
                       ),
@@ -439,16 +439,16 @@ class FoodItemCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white24,
+                                color: Colors.orange.shade100,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 foodItem.tags.first,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 7,
-                                  color: Colors.white70,
+                                  color: Colors.orange.shade800,
                                   fontFamily: 'Unbounded',
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -465,14 +465,14 @@ class FoodItemCard extends StatelessWidget {
                           Icon(
                             Icons.access_time,
                             size: 10,
-                            color: Colors.white60,
+                            color: Colors.black38,
                           ),
                           const SizedBox(width: 1),
                           Text(
                             '${foodItem.preparationTime} min',
                             style: const TextStyle(
                               fontSize: 8,
-                              color: Colors.white60,
+                              color: Colors.black38,
                               fontFamily: 'Unbounded',
                               fontWeight: FontWeight.w300,
                             ),
@@ -487,11 +487,9 @@ class FoodItemCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(
-                                      0xFF00C853,
-                                    ).withOpacity(0.3),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
+                                    color: AppColors.primary.withOpacity(0.4),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
@@ -529,11 +527,9 @@ class FoodItemCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(
-                                      0xFF00C853,
-                                    ).withOpacity(0.3),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
+                                    color: AppColors.primary.withOpacity(0.4),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
@@ -562,13 +558,13 @@ class FoodItemCard extends StatelessWidget {
                                       vertical: 1,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.white24,
+                                      color: Colors.orange.shade100,
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
                                       '$quantity',
                                       style: const TextStyle(
-                                        color: Colors.white,
+                                        color: Color(0xFF1A1A1A),
                                         fontWeight: FontWeight.bold,
                                         fontSize: 10,
                                         fontFamily: 'Unbounded',

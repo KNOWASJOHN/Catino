@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
@@ -152,7 +150,6 @@ class PaymentService {
         }
 
         if (kDebugMode) logInfo('PaymentService: Payment verified successfully');
-        _showToast('Payment successful! ✓', isSuccess: true);
       }
 
       return result;
@@ -425,8 +422,6 @@ class PaymentService {
       message = 'Payment cancelled';
     }
 
-    _showToast(message, isSuccess: false);
-
     final result = PaymentResult.failure(message: message, code: response.code);
 
     _paymentCompleter?.complete(result);
@@ -437,8 +432,6 @@ class PaymentService {
     logInfo(
       'PaymentService: External wallet selected - ${response.walletName}',
     );
-
-    _showToast('Redirecting to ${response.walletName}...', isSuccess: true);
 
     final result = PaymentResult.externalWallet(
       walletName: response.walletName ?? 'Unknown',
@@ -451,19 +444,6 @@ class PaymentService {
   // UTILITIES
   // ============================================================================
 
-  /// Show a toast message
-  void _showToast(String message, {required bool isSuccess}) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: isSuccess
-          ? const Color(0xFF22C55E)
-          : const Color(0xFFEF4444),
-      textColor: const Color(0xFFFFFFFF),
-      fontSize: 14.0,
-    );
-  }
 }
 
 // ==============================================================================

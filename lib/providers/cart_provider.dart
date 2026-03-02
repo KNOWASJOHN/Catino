@@ -299,9 +299,14 @@ class CartProvider with ChangeNotifier {
       // Use OrderService for proper status management and automatic notifications
       final success = await _orderService.addOrder(order);
 
-      if (success) {
-        // Clear cart after successful order placement
+      // Always clear the cart after a confirmed payment, regardless of
+      // whether the order DB write succeeded, so the user is never left
+      // with a full cart after money has already been charged.
+      if (paymentResult != null && paymentResult.isSuccess) {
         clear();
+      }
+
+      if (success) {
         _logger.info('Order placed successfully: $code');
       } else {
         throw Exception('Failed to place order');

@@ -13,38 +13,33 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
   final SupabaseAuthService _authService = SupabaseAuthService();
-  
-  // User data - will be loaded from cache/Firebase
-  String userName = 'Loading...';
-  String userEmail = 'Loading...';
-  String userPhone = 'Loading...';
-  String student_id = 'Loading...';
-  String branch = 'Loading...';
-  String semester = 'Loading...';
-  String hostel = 'Loading...';
+
+  String userName = '';
+  String userEmail = '';
+  String userPhone = '';
+  String student_id = '';
+  String branch = '';
+  String semester = '';
+  String hostel = '';
   String profilePicUrl = '';
 
   bool notificationsEnabled = true;
   String dietaryPreference = 'Both';
-
-  // Sample order data - will be replaced with real data later
-  String lastOrderedItem = 'No orders yet';
-  List<String> favoriteItems = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
-    // Start listening to real-time updates
     _authService.startListeningToUserData();
   }
 
   Future<void> _loadUserData({bool forceRefresh = false}) async {
-    // Load from cache first (or Firebase if forced refresh)
+    if (!forceRefresh) setState(() => _isLoading = true);
     final userData = await _authService.getUserData(forceRefresh: forceRefresh);
     if (userData != null && mounted) {
       setState(() {
-        userName = userData['user_name'] ?? 'User'; // ✅ Use 'user_name' instead of 'name'
+        userName = userData['user_name'] ?? 'User';
         userEmail = userData['email'] ?? '';
         userPhone = userData['phone'] ?? '';
         student_id = userData['student_id'] ?? '';
@@ -54,254 +49,479 @@ class _ProfileState extends State<Profile> {
         profilePicUrl = userData['profilePicUrl'] ?? '';
         notificationsEnabled = userData['notifications_enabled'] ?? true;
         dietaryPreference = userData['dietary_preference'] ?? 'Both';
+        _isLoading = false;
       });
+    } else if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       body: RefreshIndicator(
-        onRefresh: () async {
-          await _loadUserData(forceRefresh: true);
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            children: [
-              // Profile Header with Picture and Basic Info
-              SizedBox(height: MediaQuery.of(context).size.height * 0.15),
-
-              _buildProfileHeader(),
-
-              const SizedBox(height: 20),
-
-              // User Info Section
-              _buildSection(
-                title: 'Personal Information',
-                children: [
-                  _buildInfoTile(Icons.person, 'Name', userName),
-                  _buildInfoTile(Icons.phone, 'Phone', userPhone),
-                  _buildInfoTile(Icons.email, 'Email', userEmail),
+        color: AppColors.primaryCta,
+        backgroundColor: Colors.white,
+        onRefresh: () => _loadUserData(forceRefresh: true),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  _buildSliverHeader(context),
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        0,
+                        16,
+                        MediaQuery.of(context).padding.bottom,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 20),
+                          _buildInfoCard(),
+                          const SizedBox(height: 12),
+                          _buildPreferencesCard(),
+                          const SizedBox(height: 12),
+                          _buildAccountCard(),
+                          const SizedBox(height: 12),
+                          _buildLogoutButton(),
+                          const SizedBox(height: 12),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
+      ),
+    );
+  }
 
-            const SizedBox(height: 16),
+  // ── Sliver App Bar / Header ──────────────────────────────────────────────
 
-            // Academic Info Section
-            _buildSection(
-              title: 'Academic Details',
-              children: [
-                _buildInfoTile(Icons.badge, 'Student ID', student_id),
-                _buildInfoTile(Icons.school, 'Branch', branch),
-                _buildInfoTile(Icons.calendar_today, 'Semester', semester),
-                _buildInfoTile(Icons.home, 'Hostel & Room', hostel),
+  Widget _buildSliverHeader(BuildContext context) {
+    return SliverAppBar(
+      expandedHeight: MediaQuery.of(context).size.width * 0.5,
+      collapsedHeight: 0,
+      toolbarHeight: 0,
+      pinned: false,
+      floating: true,
+      snap: true,
+      backgroundColor: Colors.grey.shade100,
+      elevation: 0,
+      flexibleSpace: FlexibleSpaceBar(
+        collapseMode: CollapseMode.parallax,
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primaryCta.withOpacity(0.85),
+                AppColors.primaryCtaGradientEnd,
               ],
             ),
-
-            const SizedBox(height: 16),
-
-            // Order History Section
-            _buildSection(
-              title: 'Order & Favorites',
-              children: [
-                _buildActionTile(
-                  Icons.history,
-                  'Order History',
-                  'View all your past orders',
-                  () {
-                    // Navigate to order history page
-                    if (kDebugMode) logInfo('Navigate to Order History');
-                  },
-                ),
-                _buildInfoTile(Icons.fastfood, 'Last Ordered', lastOrderedItem),
-                _buildFavoritesList(),
-              ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _buildAvatar(),
+                  const SizedBox(width: 18),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName.isEmpty ? 'Your Profile' : userName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'Unbounded',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (student_id.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            student_id,
+                            style: const TextStyle(
+                              fontFamily: 'Unbounded',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                        if (branch.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '$branch · Sem $semester',
+                              style: const TextStyle(
+                                fontFamily: 'Unbounded',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-
-            const SizedBox(height: 16),
-
-            // Preferences Section
-            _buildSection(
-              title: 'Preferences',
-              children: [
-                _buildSwitchTile(
-                  Icons.notifications,
-                  'Order Notifications',
-                  'Get updates on order status',
-                  notificationsEnabled,
-                  (value) {
-                    setState(() {
-                      notificationsEnabled = value;
-                    });
-                  },
-                ),
-                _buildDietaryPreference(),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // Account Management Section
-            _buildSection(
-              title: 'Manage Account',
-              children: [
-                _buildActionTile(
-                  Icons.edit,
-                  'Edit Profile',
-                  'Update your personal information',
-                  () {
-                    // Navigate to edit profile page
-                    if (kDebugMode) logInfo('Navigate to Edit Profile');
-                  },
-                ),
-                _buildActionTile(
-                  Icons.lock,
-                  'Change Password',
-                  'Update your login credentials',
-                  () {
-                    // Navigate to change password page
-                    if (kDebugMode) logInfo('Navigate to Change Password');
-                  },
-                ),
-                _buildActionTile(
-                  Icons.logout,
-                  'Logout',
-                  'Sign out of your account',
-                  () {
-                    _showLogoutDialog();
-                  },
-                  isDestructive: true,
-                ),
-              ],
-            ),
-
-            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildProfileHeader() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primaryCta, AppColors.primaryCtaAlt],
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          // Profile Picture
-          Stack(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
+  Widget _buildAvatar() {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        CircleAvatar(
+          radius: 42,
+          backgroundColor: Colors.white.withOpacity(0.25),
+          child: CircleAvatar(
+            radius: 39,
+            backgroundColor: Colors.white,
+            backgroundImage: profilePicUrl.isNotEmpty
+                ? NetworkImage(profilePicUrl)
+                : null,
+            child: profilePicUrl.isEmpty
+                ? Text(
+                    userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+                    style: TextStyle(
+                      fontFamily: 'Unbounded',
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryCta,
                     ),
-                  ],
-                ),
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.white,
-                  child: profilePicUrl.isEmpty
-                      ? Icon(Icons.person, size: 50, color: Colors.black)
-                      : ClipOval(
-                          child: Image.network(
-                            profilePicUrl,
-                            fit: BoxFit.cover,
-                            width: 100,
-                            height: 100,
-                          ),
-                        ),
+                  )
+                : null,
+          ),
+        ),
+        Positioned(
+          bottom: -2,
+          right: -2,
+          child: GestureDetector(
+            onTap: () {
+              if (kDebugMode) logInfo('Change profile picture');
+            },
+            child: Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey.shade300, width: 1.5),
+              ),
+              child: Icon(
+                Icons.camera_alt_rounded,
+                size: 14,
+                color: AppColors.primaryCta,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Cards ────────────────────────────────────────────────────────────────
+
+  Widget _buildInfoCard() {
+    return _Card(
+      children: [
+        _InfoRow(Icons.person_outline_rounded, 'Name', userName),
+        _Divider(),
+        _InfoRow(Icons.phone_outlined, 'Phone', userPhone),
+        _Divider(),
+        _InfoRow(Icons.email_outlined, 'Email', userEmail),
+        _Divider(),
+        _InfoRow(Icons.home_outlined, 'Hostel & Room', hostel),
+        _Divider(),
+        _InfoRow(Icons.history_rounded, 'Last Order', 'No orders yet'),
+      ],
+    );
+  }
+
+  Widget _buildPreferencesCard() {
+    return _Card(
+      label: 'Preferences',
+      children: [
+        // Notifications toggle
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              Icon(
+                Icons.notifications_outlined,
+                size: 20,
+                color: AppColors.primaryCta,
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Text(
+                  'Order Notifications',
+                  style: TextStyle(
+                    fontFamily: 'Unbounded',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 5,
-                      ),
-                    ],
+              Switch(
+                value: notificationsEnabled,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                activeColor: AppColors.primaryCta,
+                trackColor: WidgetStateProperty.resolveWith(
+                  (states) => states.contains(WidgetState.selected)
+                      ? AppColors.primaryCta.withOpacity(0.3)
+                      : Colors.grey.shade300,
+                ),
+                thumbColor: WidgetStateProperty.resolveWith(
+                  (states) => states.contains(WidgetState.selected)
+                      ? AppColors.primaryCta
+                      : Colors.grey.shade400,
+                ),
+                onChanged: (newValue) async {
+                  setState(() => notificationsEnabled = newValue);
+                  final updated = await _authService.updateUserData({
+                    'notifications_enabled': newValue,
+                  });
+                  if (updated) {
+                    final fresh = await _authService.getUserData(
+                      forceRefresh: true,
+                    );
+                    if (fresh != null && mounted) {
+                      setState(() {
+                        notificationsEnabled =
+                            fresh['notifications_enabled'] ?? newValue;
+                      });
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        _Divider(),
+        // Dietary preference
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Row(
+            children: [
+              Icon(
+                Icons.restaurant_menu_outlined,
+                size: 20,
+                color: AppColors.primaryCta,
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Text(
+                  'Diet',
+                  style: TextStyle(
+                    fontFamily: 'Unbounded',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
                   ),
-                  child: IconButton(
-                    iconSize: 20,
-                    padding: EdgeInsets.all(4),
-                    constraints: BoxConstraints(),
-                    icon: Icon(Icons.camera_alt, color: Colors.black, size: 18),
-                    onPressed: () {
-                      // Handle profile picture change
-                      if (kDebugMode) logInfo('Change profile picture');
-                    },
+                ),
+              ),
+              DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: dietaryPreference,
+                  dropdownColor: Colors.white,
+                  iconEnabledColor: AppColors.primaryCta,
+                  style: TextStyle(
+                    fontFamily: 'Unbounded',
+                    fontSize: 11,
+                    color: AppColors.primaryCta,
                   ),
+                  borderRadius: BorderRadius.circular(12),
+                  items: ['Vegetarian', 'Non-Vegetarian', 'Both'].map((v) {
+                    return DropdownMenuItem(value: v, child: Text(v));
+                  }).toList(),
+                  onChanged: (newValue) async {
+                    if (newValue == null) return;
+                    setState(() => dietaryPreference = newValue);
+                    final updated = await _authService.updateUserData({
+                      'dietary_preference': newValue,
+                    });
+                    if (updated) {
+                      final fresh = await _authService.getUserData(
+                        forceRefresh: true,
+                      );
+                      if (fresh != null && mounted) {
+                        setState(() {
+                          dietaryPreference =
+                              fresh['dietary_preference'] ?? newValue;
+                        });
+                      }
+                    }
+                  },
                 ),
               ),
             ],
           ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  userName,
-                  style: const TextStyle(
-                    fontFamily: 'Unbounded',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  student_id,
-                  style: const TextStyle(
-                    fontFamily: 'Unbounded',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w300,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAccountCard() {
+    return _Card(
+      label: 'Account',
+      children: [
+        _ActionRow(
+          icon: Icons.history_rounded,
+          label: 'Order History',
+          onTap: () {
+            if (kDebugMode) logInfo('Navigate to Order History');
+          },
+        ),
+        _Divider(),
+        _ActionRow(
+          icon: Icons.edit_outlined,
+          label: 'Edit Profile',
+          onTap: () {
+            if (kDebugMode) logInfo('Navigate to Edit Profile');
+          },
+        ),
+        _Divider(),
+        _ActionRow(
+          icon: Icons.lock_outline_rounded,
+          label: 'Change Password',
+          onTap: () {
+            if (kDebugMode) logInfo('Navigate to Change Password');
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: _showLogoutDialog,
+        icon: const Icon(Icons.logout_rounded, size: 18),
+        label: const Text(
+          'Log Out',
+          style: TextStyle(
+            fontFamily: 'Unbounded',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.redAccent,
+          side: const BorderSide(color: Colors.redAccent, width: 1.2),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Logout Dialog ────────────────────────────────────────────────────────
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          'Log Out?',
+          style: TextStyle(
+            fontFamily: 'Unbounded',
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        content: Text(
+          'You will be signed out of your account.',
+          style: TextStyle(
+            fontFamily: 'Unbounded',
+            fontSize: 12,
+            color: Colors.black54,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'Unbounded',
+                color: Colors.grey.shade500,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _authService.signOut();
+            },
+            child: const Text(
+              'Log Out',
+              style: TextStyle(
+                fontFamily: 'Unbounded',
+                color: Colors.redAccent,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildSection({
-    required String title,
-    required List<Widget> children,
-  }) {
+// ── Shared sub-widgets ───────────────────────────────────────────────────────
+
+class _Card extends StatelessWidget {
+  final String? label;
+  final List<Widget> children;
+
+  const _Card({this.label, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200, width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
@@ -309,58 +529,62 @@ class _ProfileState extends State<Profile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontFamily: 'Unbounded',
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
+          if (label != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+              child: Text(
+                label!,
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black38,
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
-          ),
-          const Divider(height: 1),
           ...children,
         ],
       ),
     );
   }
+}
 
-  Widget _buildInfoTile(IconData icon, String label, String value) {
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _InfoRow(this.icon, this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.primaryCtaAlt,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 20, color: Colors.black),
-          ),
-          const SizedBox(width: 16),
+          Icon(icon, size: 18, color: AppColors.primaryCta),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Unbounded',
-                    fontSize: 11,
+                    fontSize: 9,
                     fontWeight: FontWeight.w400,
-                    color: Colors.grey.shade600,
+                    color: Colors.black45,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  value,
+                  value.isEmpty ? '—' : value,
                   style: const TextStyle(
                     fontFamily: 'Unbounded',
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: Colors.black87,
                   ),
@@ -372,326 +596,60 @@ class _ProfileState extends State<Profile> {
       ),
     );
   }
+}
 
-  Widget _buildActionTile(
-    IconData icon,
-    String title,
-    String subtitle,
-    VoidCallback onTap, {
-    bool isDestructive = false,
-  }) {
+class _ActionRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ActionRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDestructive
-                    ? Colors.red.shade50
-                    : AppColors.primaryCtaAlt,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                size: 20,
-                color: isDestructive ? Colors.red : Colors.black,
-              ),
-            ),
-            const SizedBox(width: 16),
+            Icon(icon, size: 18, color: AppColors.primaryCta),
+            const SizedBox(width: 14),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: 'Unbounded',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: isDestructive ? Colors.red : Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontFamily: 'Unbounded',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey.shade400),
+            Icon(Icons.chevron_right_rounded, size: 18, color: Colors.black26),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildSwitchTile(
-    IconData icon,
-    String title,
-    String subtitle,
-    bool value,
-    Function(bool) onChanged,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.primaryCtaAlt,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 20, color: Colors.black),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontFamily: 'Unbounded',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontFamily: 'Unbounded',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: (newValue) async {
-              onChanged(newValue);
-              // Update in Firebase
-              final updated = await _authService.updateUserData({
-                'notifications_enabled': newValue,
-              });
-              if (updated) {
-                // Refresh cache with latest data from Supabase
-                final freshData = await _authService.getUserData(forceRefresh: true);
-                if (freshData != null) {
-                  // Optionally update local state if needed
-                  setState(() {
-                    notificationsEnabled = freshData['notifications_enabled'] ?? newValue;
-                  });
-                }
-              }
-            },
-            activeThumbColor: AppColors.primaryCta,
-          ),
-        ],
-      ),
-    );
-  }
+class _Divider extends StatelessWidget {
+  const _Divider();
 
-  Widget _buildDietaryPreference() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.primaryCtaAlt,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(Icons.restaurant_menu, size: 20, color: Colors.black),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Dietary Preference',
-                  style: TextStyle(
-                    fontFamily: 'Unbounded',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Filter food items',
-                  style: TextStyle(
-                    fontFamily: 'Unbounded',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          DropdownButton<String>(
-            value: dietaryPreference,
-            underline: const SizedBox(),
-            items: ['Vegetarian', 'Non-Vegetarian', 'Both'].map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(
-                  value,
-                  style: const TextStyle(fontFamily: 'Unbounded', fontSize: 12),
-                ),
-              );
-            }).toList(),
-            onChanged: (String? newValue) async {
-              if (newValue != null) {
-                setState(() {
-                  dietaryPreference = newValue;
-                });
-                // Update in Firebase
-                final updated = await _authService.updateUserData({
-                  'dietary_preference': newValue,
-                });
-                if (updated) {
-                  // Refresh cache with latest data from Supabase
-                  final freshData = await _authService.getUserData(forceRefresh: true);
-                  if (freshData != null) {
-                    setState(() {
-                      dietaryPreference = freshData['dietary_preference'] ?? newValue;
-                    });
-                  }
-                }
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFavoritesList() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryCtaAlt,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.favorite, size: 20, color: Colors.black),
-              ),
-              const SizedBox(width: 16),
-              const Text(
-                'Favorite Items',
-                style: TextStyle(
-                  fontFamily: 'Unbounded',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: favoriteItems.map((item) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primaryCta),
-                ),
-                child: Text(
-                  item,
-                  style: TextStyle(
-                    fontFamily: 'Unbounded',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.primaryCta,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Logout',
-            style: TextStyle(
-              fontFamily: 'Unbounded',
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: const Text(
-            'Are you sure you want to logout?',
-            style: TextStyle(fontFamily: 'Unbounded', fontSize: 13),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontFamily: 'Unbounded',
-                  color: Colors.grey.shade600,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                await _authService.signOut();
-              },
-              child: const Text(
-                'Logout',
-                style: TextStyle(
-                  fontFamily: 'Unbounded',
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+  @override
+  Widget build(BuildContext context) {
+    return Divider(
+      height: 1,
+      thickness: 0.5,
+      color: Colors.grey.shade200,
+      indent: 48,
+      endIndent: 0,
     );
   }
 }

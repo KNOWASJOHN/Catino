@@ -236,7 +236,13 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
           ),
         );
       },
-      pageBuilder: (ctx, _, __) => _QrCodeDialog(order: order),
+      pageBuilder: (ctx, _, __) => _QrCodeDialog(
+        order: order,
+        onDelete: () {
+          Navigator.pop(ctx);
+          _showDeleteConfirmDialog(order);
+        },
+      ),
     );
   }
 
@@ -306,88 +312,74 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
                         )
                       : _orders.isEmpty
                       ? const _EmptyOrdersState()
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                          physics: const ClampingScrollPhysics(),
-                          itemCount: _orders.length + (_isLoadingMore ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (index == _orders.length) {
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white.withOpacity(0.7),
+                      : ShaderMask(
+                          shaderCallback: (Rect bounds) {
+                            return const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.white,
+                                Colors.white,
+                                Colors.transparent,
+                              ],
+                              stops: [0.0, 0.05, 0.9, 1.0],
+                            ).createShader(bounds);
+                          },
+                          blendMode: BlendMode.dstIn,
+                          child: ListView.separated(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.only(top: 4, bottom: 24),
+                            physics: const ClampingScrollPhysics(),
+                            itemCount: _orders.length + (_isLoadingMore ? 1 : 0),
+                            separatorBuilder: (_, __) => Divider(
+                              height: 1,
+                              indent: 72,
+                              endIndent: 20,
+                              color: AppColors.borderHighlight,
+                            ),
+                            itemBuilder: (context, index) {
+                              if (index == _orders.length) {
+                                return Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white.withOpacity(0.4),
+                                      ),
+                                    ),
                                   ),
+                                );
+                              }
+                              final order = _orders[index];
+                              return Dismissible(
+                                key: Key(order.id),
+                                direction: DismissDirection.endToStart,
+                                confirmDismiss: (direction) async {
+                                  await _showDeleteConfirmDialog(order);
+                                  return false;
+                                },
+                                background: Container(
+                                  alignment: Alignment.centerRight,
+                                  color: AppColors.danger.withOpacity(0.12),
+                                  padding: const EdgeInsets.only(right: 24),
+                                  child: Icon(
+                                    Icons.delete_outline_rounded,
+                                    color: AppColors.danger,
+                                    size: 22,
+                                  ),
+                                ),
+                                child: _OrderItemCard(
+                                  order: order,
+                                  isDeleting: _deletingOrders.contains(order.id),
+                                  onTap: () => _showQrCodeDialog(order),
                                 ),
                               );
-                            }
-
-                            final order = _orders[index];
-                            return Dismissible(
-                              key: Key(order.id),
-                              direction: DismissDirection.endToStart,
-                              confirmDismiss: (direction) async {
-                                await _showDeleteConfirmDialog(order);
-                                return false;
-                              },
-                              background: Container(
-                                margin: const EdgeInsets.only(bottom: 15),
-                                alignment: Alignment.centerRight,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppColors.danger.withOpacity(0.2),
-                                      AppColors.danger.withOpacity(0.5),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.xl,
-                                  ),
-                                  border: Border.all(
-                                    color: AppColors.danger.withOpacity(0.7),
-                                    width: 2,
-                                  ),
-                                ),
-                                padding: const EdgeInsets.only(right: 24),
-                                child: Container(
-                                  width: 64,
-                                  height: 64,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        AppColors.danger.withOpacity(0.4),
-                                        AppColors.danger.withOpacity(0.6),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: AppColors.danger,
-                                      width: 2,
-                                    ),
-                                    boxShadow: [
-                                      AppShadows.accentGlow(AppColors.danger),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.delete_outline_rounded,
-                                    color: Colors.white,
-                                    size: 32,
-                                  ),
-                                ),
-                              ),
-                              child: _OrderItemCard(
-                                order: order,
-                                isDeleting: _deletingOrders.contains(order.id),
-                                onTap: () => _showQrCodeDialog(order),
-                              ),
-                            );
-                          },
+                            },
+                          ),
                         ),
                 ],
               ),
@@ -417,204 +409,117 @@ class _OrderItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Opacity(
-        opacity: isDeleting ? 0.5 : 1.0,
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceCard,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: AppColors.borderHighlight, width: 1),
-            boxShadow: AppShadows.card,
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: isDeleting ? null : onTap,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              splashColor: Colors.white.withOpacity(0.05),
-              highlightColor: Colors.white.withOpacity(0.02),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
+    return Opacity(
+      opacity: isDeleting ? 0.4 : 1.0,
+      child: InkWell(
+        onTap: isDeleting ? null : onTap,
+        splashColor: AppColors.primary.withOpacity(0.06),
+        highlightColor: AppColors.primary.withOpacity(0.03),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Code badge
+              _buildCodeBadge(),
+              const SizedBox(width: 14),
+              // Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildStatusIcon(),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildOrderDetails()),
-                    const SizedBox(width: 12),
-                    _buildQrCodeIndicator(),
+                    Text(
+                      '#${order.code}',
+                      style: const TextStyle(
+                        fontFamily: 'Unbounded',
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _metaLine(),
+                      style: TextStyle(
+                        fontFamily: 'Unbounded',
+                        fontSize: 7.5,
+                        color: Colors.white.withOpacity(0.4),
+                        height: 1.4,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(width: 10),
+              // Amount + status
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '₹${order.totalAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontFamily: 'Unbounded',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: order.status.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        order.status.displayText,
+                        style: TextStyle(
+                          fontFamily: 'Unbounded',
+                          fontSize: 7,
+                          fontWeight: FontWeight.w600,
+                          color: order.status.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildStatusIcon() {
+  Widget _buildCodeBadge() {
     return Container(
-      width: 52,
-      height: 52,
+      width: 42,
+      height: 42,
       decoration: BoxDecoration(
-        color: order.status.color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
+        color: order.status.color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: order.status.color.withOpacity(0.3),
           width: 1.5,
         ),
       ),
-      child: Icon(order.status.icon, color: order.status.color, size: 26),
+      child: Icon(order.status.icon, color: order.status.color, size: 20),
     );
   }
 
-  Widget _buildOrderDetails() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '#${order.code}',
-          style: AppTextStyles.orderCode,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 8),
-        _buildStatusBadge(),
-        const SizedBox(height: 8),
-        Text(
-          order.formattedDateTime,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontFamily: 'Unbounded',
-            fontSize: 12,
-            letterSpacing: 0.2,
-          ),
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 6),
-        Container(height: 1, width: 50, color: AppColors.borderHighlight),
-        const SizedBox(height: 6),
-        _buildItemCount(),
-      ],
-    );
-  }
-
-  Widget _buildStatusBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: order.status.color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(
-          color: order.status.color.withOpacity(0.5),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(order.status.icon, color: order.status.color, size: 12),
-          const SizedBox(width: 6),
-          Text(
-            order.status.displayText,
-            style: TextStyle(
-              color: order.status.color,
-              fontFamily: 'Unbounded',
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.3,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildItemCount() {
-    return Row(
-      children: [
-        Icon(
-          Icons.shopping_bag_outlined,
-          size: 14,
-          color: Colors.white.withOpacity(0.6),
-        ),
-        const SizedBox(width: 6),
-        Flexible(
-          child: Text(
-            '${order.totalItems} item${order.totalItems != 1 ? 's' : ''}',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.6),
-              fontFamily: 'Unbounded',
-              fontSize: 12,
-              letterSpacing: 0.2,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQrCodeIndicator() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: order.status.color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: order.status.color.withOpacity(0.3),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: order.status.color.withOpacity(0.2),
-                blurRadius: 8,
-                spreadRadius: 1,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Icon(
-            Icons.qr_code_2_rounded,
-            color: order.status.color.withValues(alpha: 0.5),
-            size: 28,
-          ),
-        ),
-        if (order.totalItems > 0) ...[
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-            constraints: const BoxConstraints(minWidth: 24),
-            decoration: BoxDecoration(
-              color: order.status.color.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: order.status.color.withOpacity(0.3),
-                  blurRadius: 6,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            child: Text(
-              '${order.totalItems}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontFamily: 'Unbounded',
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ],
-    );
+  String _metaLine() {
+    return '${order.formattedDateTime}  ·  '
+        '${order.totalItems} item${order.totalItems != 1 ? 's' : ''}';
   }
 }
 
@@ -743,8 +648,9 @@ class _DeleteConfirmDialog extends StatelessWidget {
 /// Dialog displaying order QR code and details
 class _QrCodeDialog extends StatelessWidget {
   final Order order;
+  final VoidCallback onDelete;
 
-  const _QrCodeDialog({required this.order});
+  const _QrCodeDialog({required this.order, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -839,61 +745,63 @@ class _QrCodeDialog extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '#${order.code}',
-                                  style: const TextStyle(
-                                    fontFamily: 'Unbounded',
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w300,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  '${order.totalItems} item${order.totalItems != 1 ? 's' : ''}',
-                                  style: TextStyle(
-                                    fontFamily: 'Unbounded',
-                                    fontSize: 10,
-                                    color: Colors.white.withOpacity(0.65),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                if (hasPaymentIds) ...[
-                                  const SizedBox(height: 12),
-                                  Center(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        if (paymentId.isNotEmpty)
-                                          _buildCardCopyField(
-                                            'PAY ID',
-                                            paymentId,
-                                            context,
-                                          ),
-                                        if (paymentId.isNotEmpty &&
-                                            orderId.isNotEmpty)
-                                          const SizedBox(height: 8),
-                                        if (orderId.isNotEmpty)
-                                          _buildCardCopyField(
-                                            'ORDER ID',
-                                            orderId,
-                                            context,
-                                          ),
-                                      ],
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '#${order.code}',
+                                    style: const TextStyle(
+                                      fontFamily: 'Unbounded',
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
                                     ),
                                   ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    '${order.totalItems} item${order.totalItems != 1 ? 's' : ''}',
+                                    style: TextStyle(
+                                      fontFamily: 'Unbounded',
+                                      fontSize: 9,
+                                      color: Colors.white.withOpacity(0.65),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ],
-                              ],
+                              ),
                             ),
+                            if (hasPaymentIds) ...[
+                              const SizedBox(width: 12),
+                              SizedBox(
+                                width: 130,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (paymentId.isNotEmpty)
+                                      _buildCardCopyField(
+                                        'PAY ID',
+                                        paymentId,
+                                        context,
+                                      ),
+                                    if (paymentId.isNotEmpty &&
+                                        orderId.isNotEmpty)
+                                      const SizedBox(height: 8),
+                                    if (orderId.isNotEmpty)
+                                      _buildCardCopyField(
+                                        'ORDER ID',
+                                        orderId,
+                                        context,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -1029,6 +937,12 @@ class _QrCodeDialog extends StatelessWidget {
                                 onTap: () => Navigator.pop(context),
                               ),
                             ),
+                            const SizedBox(width: 8),
+                            _buildCardIconButton(
+                              icon: Icons.delete_outline_rounded,
+                              color: Colors.red.shade400,
+                              onTap: onDelete,
+                            ),
                           ],
                         ),
                       ],
@@ -1045,38 +959,38 @@ class _QrCodeDialog extends StatelessWidget {
 
   Widget _buildCardCopyField(String label, String value, BuildContext context) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Unbounded',
-                fontSize: 9,
-                color: Colors.white.withOpacity(0.5),
-                letterSpacing: 0.8,
-                fontWeight: FontWeight.w700,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 7,
+                  color: Colors.white.withOpacity(0.5),
+                  letterSpacing: 0.8,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: const TextStyle(
-                fontFamily: 'Unbounded',
-                fontSize: 12,
-                fontWeight: FontWeight.w300,
-                color: Colors.white,
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         ),
         GestureDetector(
-          // ...existing code...
           onTap: () {
             Clipboard.setData(ClipboardData(text: value));
 
@@ -1222,6 +1136,25 @@ class _QrCodeDialog extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCardIconButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.22),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withOpacity(0.4), width: 1),
+        ),
+        child: Icon(icon, size: 14, color: color),
       ),
     );
   }

@@ -23,16 +23,16 @@ class _QtyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey.shade800,
-          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: Colors.grey.shade300, width: 1),
         ),
         padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 18, color: Colors.white),
+        child: Icon(icon, size: 16, color: Colors.black87),
       ),
     );
   }
@@ -48,10 +48,49 @@ class _CartState extends State<Cart> {
     _foodFuture = _foodService.getAllFoodItems();
   }
 
+  Widget _summaryRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? iconColor,
+    Color? valueColor,
+  }) {
+    final muted = Colors.grey.shade500;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 15, color: iconColor ?? muted),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Unbounded',
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+                color: muted,
+              ),
+            ),
+          ],
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Unbounded',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: valueColor ?? const Color(0xFF1A1A1A),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Colors.grey.shade50,
       body: Consumer<CartProvider>(
         builder: (context, cartProvider, child) {
           final cart = cartProvider.cart;
@@ -60,31 +99,42 @@ class _CartState extends State<Cart> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.shopping_cart_outlined,
-                        size: 84,
-                        color: AppColors.cartEmptyIcon,
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.shopping_cart_outlined,
+                          size: 38,
+                          color: AppColors.primary.withOpacity(0.7),
+                        ),
                       ),
                       const SizedBox(height: 20),
                       const Text(
-                        'Your Cart is Empty',
+                        'Cart is Empty',
                         style: TextStyle(
                           fontFamily: 'Unbounded',
-                          fontSize: 28,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
+                          color: Color(0xFF1A1A1A),
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.all(5),
-                        child: Text(
-                          'Browse delicious meals and add them to your cart.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Unbounded',
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                          ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Browse meals and add them to your cart.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'Unbounded',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w300,
+                          color: Colors.grey.shade500,
                         ),
                       ),
                     ],
@@ -157,179 +207,146 @@ class _CartState extends State<Cart> {
                                 direction: DismissDirection.endToStart,
                                 background: Container(
                                   alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 20),
                                   decoration: BoxDecoration(
-                                    color: Colors
-                                        .grey
-                                        .shade100, // Match the scaffold background
-                                    borderRadius: BorderRadius.circular(25),
+                                    color: Colors.red.shade50,
+                                    borderRadius: BorderRadius.circular(AppRadius.xl),
                                   ),
-                                  child: Container(
-                                    color: Colors.transparent,
-                                    width: 80,
-                                    height: 80,
-                                    padding: const EdgeInsets.all(5),
-                                    child: const Icon(
-                                      Icons.delete_sweep_outlined,
-                                      size: 30,
-                                      color: Colors.red,
-                                    ),
+                                  child: Icon(
+                                    Icons.delete_sweep_outlined,
+                                    size: 26,
+                                    color: Colors.red.shade400,
                                   ),
                                 ),
                                 onDismissed: (direction) {
                                   cartProvider.removeItem(item.id);
                                 },
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.surface,
-                                      borderRadius: BorderRadius.circular(
-                                        25,
-                                      ), // Add this line
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.3),
-                                          blurRadius: 8,
-                                          spreadRadius: 0,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                                    border: Border.all(
+                                      color: Colors.grey.shade200,
+                                      width: 1,
                                     ),
-                                    child: Row(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            15,
-                                          ),
-                                          child: Image.network(
-                                            item.imageUrl,
-                                            width: 95,
-                                            height: 85,
-                                            fit: BoxFit.cover,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(AppRadius.md),
+                                        child: Image.network(
+                                          item.imageUrl,
+                                          width: 88,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => Container(
+                                            width: 88,
+                                            height: 80,
+                                            color: Colors.grey.shade200,
+                                            child: Icon(
+                                              Icons.fastfood_outlined,
+                                              color: Colors.grey.shade400,
+                                              size: 28,
+                                            ),
                                           ),
                                         ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                item.name,
-                                                style: const TextStyle(
-                                                  fontFamily: 'Unbounded',
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: Colors.white,
-                                                ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item.name,
+                                              style: const TextStyle(
+                                                fontFamily: 'Unbounded',
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF1A1A1A),
                                               ),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                '₹${item.price.toStringAsFixed(2)}',
-                                                style: const TextStyle(
-                                                  color: AppColors.priceText,
-                                                  fontWeight: FontWeight.w600,
-                                                  fontFamily: 'Unbounded',
-                                                ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '₹${item.price.toStringAsFixed(0)} each',
+                                              style: TextStyle(
+                                                fontFamily: 'Unbounded',
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w400,
+                                                color: Colors.grey.shade500,
                                               ),
-                                              const SizedBox(height: 8),
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      _QtyButton(
-                                                        icon: Icons.remove,
-                                                        onTap: () {
-                                                          if (qty > 1) {
-                                                            cartProvider
-                                                                .updateQuantity(
-                                                                  item.id,
-                                                                  qty - 1,
-                                                                );
-                                                          } else {
-                                                            cartProvider
-                                                                .removeItem(
-                                                                  item.id,
-                                                                );
-                                                          }
-                                                        },
-                                                      ),
-                                                      AnimatedSwitcher(
-                                                        duration:
-                                                            const Duration(
-                                                              milliseconds: 220,
-                                                            ),
-                                                        transitionBuilder:
-                                                            (child, anim) =>
-                                                                ScaleTransition(
-                                                                  scale: anim,
-                                                                  child: child,
-                                                                ),
-                                                        child: Padding(
-                                                          key: ValueKey<int>(
-                                                            qty,
-                                                          ),
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                horizontal:
-                                                                    12.0,
-                                                              ),
-                                                          child: Text(
-                                                            '$qty',
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontFamily:
-                                                                      'Unbounded',
-                                                                  fontSize: 16,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                  color: Colors
-                                                                      .white,
-                                                                ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    _QtyButton(
+                                                      icon: Icons.remove,
+                                                      onTap: () {
+                                                        if (qty > 1) {
+                                                          cartProvider.updateQuantity(item.id, qty - 1);
+                                                        } else {
+                                                          cartProvider.removeItem(item.id);
+                                                        }
+                                                      },
+                                                    ),
+                                                    AnimatedSwitcher(
+                                                      duration: const Duration(milliseconds: 220),
+                                                      transitionBuilder: (child, anim) =>
+                                                          ScaleTransition(scale: anim, child: child),
+                                                      child: Padding(
+                                                        key: ValueKey<int>(qty),
+                                                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                                                        child: Text(
+                                                          '$qty',
+                                                          style: const TextStyle(
+                                                            fontFamily: 'Unbounded',
+                                                            fontSize: 14,
+                                                            fontWeight: FontWeight.w700,
+                                                            color: Color(0xFF1A1A1A),
                                                           ),
                                                         ),
                                                       ),
-                                                      _QtyButton(
-                                                        icon: Icons.add,
-                                                        onTap: () =>
-                                                            cartProvider
-                                                                .addItem(
-                                                                  item.id,
-                                                                ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  Text(
-                                                    '₹${(item.price * qty).toStringAsFixed(2)}',
-                                                    style: const TextStyle(
-                                                      fontFamily: 'Unbounded',
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                      color: Colors.white,
                                                     ),
+                                                    _QtyButton(
+                                                      icon: Icons.add,
+                                                      onTap: () => cartProvider.addItem(item.id),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Text(
+                                                  '₹${(item.price * qty).toStringAsFixed(0)}',
+                                                  style: const TextStyle(
+                                                    fontFamily: 'Unbounded',
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: AppColors.primary,
                                                   ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               );
                             },
                           ),
 
-                          // Draggable checkout card with ribbon effect
+                          // Draggable checkout card
                           DraggableScrollableSheet(
                             initialChildSize: 0.25,
                             minChildSize: 0.25,
@@ -338,46 +355,33 @@ class _CartState extends State<Cart> {
                             builder: (context, scrollController) {
                               return Container(
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      AppColors.cartSurface50,
-                                      Colors.white,
-                                      AppColors.cartSurface50,
-                                    ],
-                                  ),
+                                  color: Colors.white,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.15),
+                                      color: Colors.black.withOpacity(0.12),
                                       blurRadius: 20,
-                                      spreadRadius: 5,
-                                      offset: const Offset(0, -5),
+                                      spreadRadius: 2,
+                                      offset: const Offset(0, -4),
                                     ),
                                   ],
                                   borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(30),
-                                    topRight: Radius.circular(30),
+                                    topLeft: Radius.circular(AppRadius.xxxl),
+                                    topRight: Radius.circular(AppRadius.xxxl),
                                   ),
                                 ),
                                 child: ListView(
                                   controller: scrollController,
                                   padding: EdgeInsets.zero,
                                   children: [
-                                    // Drag handle indicator
+                                    // Drag handle
                                     Center(
                                       child: Container(
-                                        margin: const EdgeInsets.only(
-                                          top: 12,
-                                          bottom: 8,
-                                        ),
-                                        width: 50,
-                                        height: 5,
+                                        margin: const EdgeInsets.only(top: 12, bottom: 8),
+                                        width: 40,
+                                        height: 4,
                                         decoration: BoxDecoration(
-                                          color: Colors.grey.shade400,
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
+                                          color: Colors.grey.shade300,
+                                          borderRadius: BorderRadius.circular(AppRadius.pill),
                                         ),
                                       ),
                                     ),
@@ -395,212 +399,72 @@ class _CartState extends State<Cart> {
                                           Container(
                                             padding: const EdgeInsets.all(16),
                                             decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
+                                              color: Colors.grey.shade50,
+                                              borderRadius: BorderRadius.circular(AppRadius.lg),
                                               border: Border.all(
-                                                color: AppColors.cartSurface100,
-                                                width: 2,
+                                                color: Colors.grey.shade200,
+                                                width: 1,
                                               ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.lime
-                                                      .withOpacity(0.1),
-                                                  blurRadius: 10,
-                                                  spreadRadius: 2,
-                                                ),
-                                              ],
                                             ),
                                             child: Column(
                                               children: [
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        Icon(
-                                                          Icons.receipt_long,
-                                                          size: 18,
-                                                          color: Colors
-                                                              .grey
-                                                              .shade700,
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 8,
-                                                        ),
-                                                        Text(
-                                                          'Subtotal',
-                                                          style: TextStyle(
-                                                            fontFamily:
-                                                                'Unbounded',
-                                                            fontSize: 13,
-                                                            color: Colors
-                                                                .grey
-                                                                .shade700,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    Text(
-                                                      '₹${subtotal.toStringAsFixed(2)}',
-                                                      style: const TextStyle(
-                                                        fontFamily: 'Unbounded',
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                  ],
+                                                _summaryRow(
+                                                  icon: Icons.receipt_long_rounded,
+                                                  label: 'Subtotal',
+                                                  value: '₹${subtotal.toStringAsFixed(0)}',
                                                 ),
                                                 const SizedBox(height: 10),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        Icon(
-                                                          Icons.delivery_dining,
-                                                          size: 18,
-                                                          color: Colors
-                                                              .grey
-                                                              .shade700,
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 8,
-                                                        ),
-                                                        Text(
-                                                          'Delivery',
-                                                          style: TextStyle(
-                                                            fontFamily:
-                                                                'Unbounded',
-                                                            fontSize: 13,
-                                                            color: Colors
-                                                                .grey
-                                                                .shade700,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    Text(
-                                                      '₹${deliveryFee.toStringAsFixed(2)}',
-                                                      style: const TextStyle(
-                                                        fontFamily: 'Unbounded',
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                  ],
+                                                _summaryRow(
+                                                  icon: Icons.delivery_dining_rounded,
+                                                  label: 'Delivery',
+                                                  value: '₹${deliveryFee.toStringAsFixed(0)}',
                                                 ),
                                                 if (discount > 0) ...[
                                                   const SizedBox(height: 10),
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Row(
-                                                        children: [
-                                                          Icon(
-                                                            Icons.local_offer,
-                                                            size: 18,
-                                                            color: Colors
-                                                                .green
-                                                                .shade700,
-                                                          ),
-                                                          const SizedBox(
-                                                            width: 8,
-                                                          ),
-                                                          Text(
-                                                            'Discount',
-                                                            style: TextStyle(
-                                                              fontFamily:
-                                                                  'Unbounded',
-                                                              fontSize: 13,
-                                                              color: Colors
-                                                                  .green
-                                                                  .shade700,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      Text(
-                                                        '-₹${discount.toStringAsFixed(2)}',
-                                                        style: const TextStyle(
-                                                          fontFamily:
-                                                              'Unbounded',
-                                                          fontSize: 14,
-                                                          color: Colors.green,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
-                                                      ),
-                                                    ],
+                                                  _summaryRow(
+                                                    icon: Icons.local_offer_rounded,
+                                                    label: 'Discount',
+                                                    value: '-₹${discount.toStringAsFixed(0)}',
+                                                    valueColor: Colors.green.shade600,
+                                                    iconColor: Colors.green.shade600,
                                                   ),
                                                 ],
-                                                const SizedBox(height: 16),
+                                                const SizedBox(height: 14),
                                                 Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        vertical: 12,
-                                                        horizontal: 16,
-                                                      ),
+                                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                                   decoration: BoxDecoration(
-                                                    gradient: LinearGradient(
-                                                      colors: [
-                                                        AppColors.cartSurface100,
-                                                        AppColors.cartSurface50,
-                                                      ],
+                                                    color: Colors.white,
+                                                    borderRadius: BorderRadius.circular(AppRadius.md),
+                                                    border: Border.all(
+                                                      color: Colors.grey.shade200,
+                                                      width: 1.5,
                                                     ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
-                                                        ),
                                                   ),
                                                   child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                     children: [
                                                       Row(
                                                         children: [
-                                                          Icon(
-                                                            Icons.shopping_bag,
-                                                            color: Colors
-                                                                .lime
-                                                                .shade900,
-                                                          ),
-                                                          const SizedBox(
-                                                            width: 8,
-                                                          ),
+                                                          Icon(Icons.shopping_bag_rounded, color: AppColors.primary, size: 18),
+                                                          const SizedBox(width: 8),
                                                           const Text(
                                                             'Total',
                                                             style: TextStyle(
-                                                              fontSize: 18,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w800,
-                                                              fontFamily:
-                                                                  'Unbounded',
+                                                              fontSize: 14,
+                                                              fontWeight: FontWeight.w700,
+                                                              fontFamily: 'Unbounded',
+                                                              color: Color(0xFF1A1A1A),
                                                             ),
                                                           ),
                                                         ],
                                                       ),
                                                       Text(
-                                                        '₹${total.toStringAsFixed(2)}',
-                                                        style: TextStyle(
-                                                          fontSize: 20,
-                                                          fontWeight:
-                                                              FontWeight.w900,
-                                                          fontFamily:
-                                                              'Unbounded',
-                                                          color: Colors
-                                                              .lime
-                                                              .shade900,
+                                                        '₹${total.toStringAsFixed(0)}',
+                                                        style: const TextStyle(
+                                                          fontSize: 18,
+                                                          fontWeight: FontWeight.w800,
+                                                          fontFamily: 'Unbounded',
+                                                          color: AppColors.primary,
                                                         ),
                                                       ),
                                                     ],
@@ -613,193 +477,101 @@ class _CartState extends State<Cart> {
                                           const SizedBox(height: 20),
 
                                           // Checkout Button
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.lime
-                                                      .withOpacity(0.4),
-                                                  blurRadius: 15,
-                                                  spreadRadius: 2,
-                                                  offset: const Offset(0, 5),
-                                                ),
-                                              ],
-                                            ),
-                                            child: SizedBox(
-                                              width: double.infinity,
-                                              height: 56,
-                                              child: ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor:
-                                                      AppColors.primaryCtaAlt,
-                                                  foregroundColor:
-                                                      Colors.black87,
-                                                  elevation: 0,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          16,
-                                                        ),
-                                                  ),
-                                                ),
-                                                onPressed: () {
-                                                  showModalBottomSheet(
-                                                    context: context,
-                                                    isScrollControlled: true,
-                                                    backgroundColor:
-                                                        Colors.transparent,
-                                                    builder: (context) => Container(
+                                          GestureDetector(
+                                            onTap: () {
+                                              showModalBottomSheet(
+                                                context: context,
+                                                isScrollControlled: true,
+                                                backgroundColor:
+                                                    Colors.transparent,
+                                                builder: (context) => Container(
                                                       decoration: BoxDecoration(
-                                                        gradient:
-                                                            LinearGradient(
-                                                              begin: Alignment
-                                                                  .topCenter,
-                                                              end: Alignment
-                                                                  .bottomCenter,
-                                                              colors: [
-                                                                Colors
-                                                                    .lime
-                                                                    .shade50,
-                                                                Colors.white,
-                                                              ],
-                                                            ),
-                                                        borderRadius:
-                                                            const BorderRadius.vertical(
-                                                              top:
-                                                                  Radius.circular(
-                                                                    24,
-                                                                  ),
-                                                            ),
+                                                        color: Colors.white,
+                                                        borderRadius: const BorderRadius.vertical(
+                                                          top: Radius.circular(AppRadius.xxxl),
+                                                        ),
                                                       ),
-                                                      padding:
-                                                          EdgeInsets.fromLTRB(
-                                                            24,
-                                                            24,
-                                                            24,
-                                                            MediaQuery.of(
-                                                                      context,
-                                                                    )
-                                                                    .viewInsets
-                                                                    .bottom +
-                                                                24,
-                                                          ),
+                                                      padding: EdgeInsets.fromLTRB(
+                                                        24, 24, 24,
+                                                        MediaQuery.of(context).viewInsets.bottom + 24,
+                                                      ),
                                                       child: Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
                                                         children: [
                                                           Row(
                                                             children: [
-                                                              Icon(
-                                                                Icons
-                                                                    .check_circle,
-                                                                color: Colors
-                                                                    .lime
-                                                                    .shade700,
-                                                                size: 32,
+                                                              Container(
+                                                                width: 36,
+                                                                height: 36,
+                                                                decoration: BoxDecoration(
+                                                                  color: AppColors.primary.withOpacity(0.1),
+                                                                  borderRadius: BorderRadius.circular(AppRadius.md),
+                                                                ),
+                                                                child: const Icon(
+                                                                  Icons.check_circle_outline_rounded,
+                                                                  color: AppColors.primary,
+                                                                  size: 20,
+                                                                ),
                                                               ),
-                                                              const SizedBox(
-                                                                width: 12,
-                                                              ),
+                                                              const SizedBox(width: 12),
                                                               const Text(
                                                                 'Confirm Order',
                                                                 style: TextStyle(
-                                                                  fontFamily:
-                                                                      'Unbounded',
-                                                                  fontSize: 20,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w800,
+                                                                  fontFamily: 'Unbounded',
+                                                                  fontSize: 16,
+                                                                  fontWeight: FontWeight.w700,
+                                                                  color: Color(0xFF1A1A1A),
                                                                 ),
                                                               ),
                                                             ],
                                                           ),
-                                                          const SizedBox(
-                                                            height: 16,
-                                                          ),
+                                                          const SizedBox(height: 16),
                                                           Container(
-                                                            padding:
-                                                                const EdgeInsets.all(
-                                                                  16,
-                                                                ),
+                                                            padding: const EdgeInsets.all(16),
                                                             decoration: BoxDecoration(
-                                                              color:
-                                                                  Colors.white,
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    12,
-                                                                  ),
-                                                              border: Border.all(
-                                                                color: Colors
-                                                                    .lime
-                                                                    .shade200,
-                                                              ),
+                                                              color: Colors.grey.shade50,
+                                                              borderRadius: BorderRadius.circular(AppRadius.md),
+                                                              border: Border.all(color: Colors.grey.shade200, width: 1.5),
                                                             ),
                                                             child: Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
+                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                               children: [
-                                                                const Text(
+                                                                Text(
                                                                   'Total to pay:',
                                                                   style: TextStyle(
-                                                                    fontSize:
-                                                                        16,
-                                                                    fontFamily:
-                                                                        'Unbounded',
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600,
+                                                                    fontSize: 11,
+                                                                    fontFamily: 'Unbounded',
+                                                                    fontWeight: FontWeight.w500,
+                                                                    color: Colors.grey.shade500,
                                                                   ),
                                                                 ),
                                                                 Text(
-                                                                  '₹${total.toStringAsFixed(2)}',
-                                                                  style: TextStyle(
-                                                                    fontSize:
-                                                                        22,
-                                                                    fontFamily:
-                                                                        'Unbounded',
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w900,
-                                                                    color: Colors
-                                                                        .lime
-                                                                        .shade900,
+                                                                  '₹${total.toStringAsFixed(0)}',
+                                                                  style: const TextStyle(
+                                                                    fontSize: 20,
+                                                                    fontFamily: 'Unbounded',
+                                                                    fontWeight: FontWeight.w800,
+                                                                    color: AppColors.primary,
                                                                   ),
                                                                 ),
                                                               ],
                                                             ),
                                                           ),
-                                                          const SizedBox(
-                                                            height: 20,
-                                                          ),
+                                                          const SizedBox(height: 20),
                                                           SizedBox(
-                                                            width:
-                                                                double.infinity,
-                                                            height: 56,
+                                                            width: double.infinity,
+                                                            height: 52,
                                                             child: ElevatedButton.icon(
                                                               style: ElevatedButton.styleFrom(
-                                                                backgroundColor:
-                                                                    Colors
-                                                                        .lime
-                                                                        .shade400,
-                                                                foregroundColor:
-                                                                    Colors
-                                                                        .black87,
+                                                                backgroundColor: AppColors.primary,
+                                                                foregroundColor: Colors.white,
+                                                                elevation: 0,
                                                                 shape: RoundedRectangleBorder(
-                                                                  borderRadius:
-                                                                      BorderRadius.circular(
-                                                                        12,
-                                                                      ),
+                                                                  borderRadius: BorderRadius.circular(AppRadius.md),
                                                                 ),
                                                               ),
-                                                              icon: const Icon(
-                                                                Icons.payment,
-                                                              ),
+                                                              icon: const Icon(Icons.payment_rounded, size: 18),
                                                               onPressed: () async {
                                                                 // Start Razorpay payment
                                                                 final paymentService =
@@ -815,16 +587,31 @@ class _CartState extends State<Cart> {
                                                                 if (result
                                                                     .isSuccess) {
                                                                   // Payment successful - place order
-                                                                  await cartProvider
-                                                                      .placeOrder(
-                                                                        cartItems,
-                                                                        paymentResult:
-                                                                            result,
-                                                                      );
-                                                                  Navigator.of(
-                                                                    context,
-                                                                  ).pop();
-                                                                  AppToast.show(context, 'Payment successful! Order placed.');
+                                                                  try {
+                                                                    await cartProvider
+                                                                        .placeOrder(
+                                                                          cartItems,
+                                                                          paymentResult:
+                                                                              result,
+                                                                        );
+                                                                    Navigator.of(
+                                                                      context,
+                                                                    ).pop();
+                                                                    AppToast.show(
+                                                                      context,
+                                                                      'Payment successful! Order placed.',
+                                                                    );
+                                                                  } catch (_) {
+                                                                    Navigator.of(
+                                                                      context,
+                                                                    ).pop();
+                                                                    AppToast.show(
+                                                                      context,
+                                                                      'Payment successful, but order could not be saved. Please contact support.',
+                                                                      isError:
+                                                                          true,
+                                                                    );
+                                                                  }
                                                                 } else {
                                                                   // Payment failed or cancelled
                                                                   final isCancelled =
@@ -832,9 +619,14 @@ class _CartState extends State<Cart> {
                                                                           .isCancelled;
                                                                   AppToast.show(
                                                                     context,
-                                                                    isCancelled ? 'Payment Cancelled' : (result.errorMessage ?? 'Payment failed'),
-                                                                    isError: !isCancelled,
-                                                                    isWarning: isCancelled,
+                                                                    isCancelled
+                                                                        ? 'Payment Cancelled'
+                                                                        : (result.errorMessage ??
+                                                                              'Payment failed'),
+                                                                    isError:
+                                                                        !isCancelled,
+                                                                    isWarning:
+                                                                        isCancelled,
                                                                   );
                                                                 }
                                                               },
@@ -851,44 +643,28 @@ class _CartState extends State<Cart> {
                                                               ),
                                                             ),
                                                           ),
-                                                          const SizedBox(
-                                                            height: 12,
-                                                          ),
+                                                          const SizedBox(height: 10),
                                                           SizedBox(
-                                                            width:
-                                                                double.infinity,
-                                                            height: 56,
+                                                            width: double.infinity,
+                                                            height: 48,
                                                             child: OutlinedButton(
                                                               style: OutlinedButton.styleFrom(
-                                                                foregroundColor:
-                                                                    Colors
-                                                                        .black87,
+                                                                foregroundColor: Colors.grey.shade600,
                                                                 side: BorderSide(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade300,
-                                                                  width: 2,
+                                                                  color: Colors.grey.shade300,
+                                                                  width: 1.5,
                                                                 ),
                                                                 shape: RoundedRectangleBorder(
-                                                                  borderRadius:
-                                                                      BorderRadius.circular(
-                                                                        12,
-                                                                      ),
+                                                                  borderRadius: BorderRadius.circular(AppRadius.md),
                                                                 ),
                                                               ),
-                                                              onPressed: () =>
-                                                                  Navigator.of(
-                                                                    context,
-                                                                  ).pop(),
+                                                              onPressed: () => Navigator.of(context).pop(),
                                                               child: const Text(
                                                                 'Cancel',
                                                                 style: TextStyle(
-                                                                  fontFamily:
-                                                                      'Unbounded',
-                                                                  fontSize: 16,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
+                                                                  fontFamily: 'Unbounded',
+                                                                  fontSize: 12,
+                                                                  fontWeight: FontWeight.w500,
                                                                 ),
                                                               ),
                                                             ),
@@ -897,28 +673,34 @@ class _CartState extends State<Cart> {
                                                       ),
                                                     ),
                                                   );
-                                                },
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    const Icon(
-                                                      Icons
-                                                          .shopping_cart_checkout,
-                                                      size: 24,
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    const Text(
-                                                      'Checkout',
-                                                      style: TextStyle(
-                                                        fontFamily: 'Unbounded',
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.w800,
-                                                      ),
-                                                    ),
-                                                  ],
+                                            },
+                                            child: Container(
+                                              width: double.infinity,
+                                              height: 52,
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  colors: [AppColors.primary, AppColors.primaryLight],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
                                                 ),
+                                                borderRadius: BorderRadius.circular(AppRadius.md),
+                                                boxShadow: [AppShadows.accentGlow(AppColors.primary)],
+                                              ),
+                                              child: const Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(Icons.shopping_cart_checkout_rounded, size: 20, color: Colors.white),
+                                                  SizedBox(width: 10),
+                                                  Text(
+                                                    'Checkout',
+                                                    style: TextStyle(
+                                                      fontFamily: 'Unbounded',
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ),

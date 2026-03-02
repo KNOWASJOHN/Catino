@@ -67,7 +67,11 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 20),
 
                       // Logo and Title
-                      Image.asset('assets/logo/Catino.png', width: 100, height: 100),
+                      Image.asset(
+                        'assets/logo/Catino.png',
+                        width: 100,
+                        height: 100,
+                      ),
                       const SizedBox(height: 10),
                       const Text(
                         'Welcome to Catino',
@@ -110,13 +114,6 @@ class _LoginPageState extends State<LoginPage> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: AppColors.primaryCta,
-                              width: 2,
-                            ),
-                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -154,18 +151,13 @@ class _LoginPageState extends State<LoginPage> {
                                   : Icons.visibility_off,
                             ),
                             onPressed: () {
-                              setState(() => _obscurePassword = !_obscurePassword);
+                              setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              );
                             },
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: AppColors.primaryCta,
-                              width: 2,
-                            ),
                           ),
                         ),
                         validator: (value) {
@@ -343,7 +335,11 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () async {
                         final email = emailController.text.trim();
                         if (email.isEmpty || !email.contains('@')) {
-                          AppToast.show(context, 'Please enter a valid email', isError: true);
+                          AppToast.show(
+                            context,
+                            'Please enter a valid email',
+                            isError: true,
+                          );
                           return;
                         }
 

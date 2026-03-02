@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../utils/toast_helper.dart';
 import '../theme/theme.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import '../services/log.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:http/http.dart' as http;
@@ -14,11 +15,7 @@ class PDFViewerPage extends StatefulWidget {
   final String url;
   final String title;
 
-  const PDFViewerPage({
-    super.key,
-    required this.url,
-    required this.title,
-  });
+  const PDFViewerPage({super.key, required this.url, required this.title});
 
   @override
   State<PDFViewerPage> createState() => _PDFViewerPageState();
@@ -64,9 +61,10 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
 
       // Download the PDF file
       final response = await (_httpClient ?? http.Client()).get(uri);
-      
-      if (kDebugMode) logInfo('PDFViewer: Response status: ${response.statusCode}');
-      
+
+      if (kDebugMode)
+        logInfo('PDFViewer: Response status: ${response.statusCode}');
+
       // For non-200 responses, try to decode error message from JSON
       if (response.statusCode != 200) {
         final contentType = response.headers['content-type'] ?? '';
@@ -74,36 +72,43 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
           // Avoid printing error body which may contain sensitive URLs or tokens
         }
       }
-      
+
       if (response.statusCode == 200) {
         // Validate content type
         if (kDebugMode) logInfo('PDFViewer: Content-Type determined');
-        
+
         // Check if response is actually a PDF
         final bytes = response.bodyBytes;
         if (bytes.isEmpty) {
           throw Exception('Downloaded file is empty');
         }
-        
+
         // Validate PDF magic bytes (%PDF)
-        if (bytes.length < 4 || 
-            bytes[0] != 0x25 || bytes[1] != 0x50 || 
-            bytes[2] != 0x44 || bytes[3] != 0x46) {
-          if (kDebugMode) logInfo('PDFViewer: ERROR - File does not have PDF magic bytes');
-          
+        if (bytes.length < 4 ||
+            bytes[0] != 0x25 ||
+            bytes[1] != 0x50 ||
+            bytes[2] != 0x44 ||
+            bytes[3] != 0x46) {
+          if (kDebugMode)
+            logInfo('PDFViewer: ERROR - File does not have PDF magic bytes');
+
           // Try to decode as string to see if it's an error message
           // Avoid printing response body previews which may contain sensitive info
-          
-          throw Exception('Downloaded file is not a valid PDF. Check if the file exists in storage and the URL is correct.');
+
+          throw Exception(
+            'Downloaded file is not a valid PDF. Check if the file exists in storage and the URL is correct.',
+          );
         }
-        
+
         if (kDebugMode) logInfo('PDFViewer: Valid PDF detected');
-        
+
         // Get application documents directory
         final dir = await getApplicationDocumentsDirectory();
-        
+
         // Extract filename from URL, handling query parameters
-        String fileName = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : 'document.pdf';
+        String fileName = uri.pathSegments.isNotEmpty
+            ? uri.pathSegments.last
+            : 'document.pdf';
         // Remove query parameters from filename
         fileName = fileName.split('?').first;
         // Ensure .pdf extension
@@ -112,25 +117,26 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
         }
         // Sanitize filename
         fileName = fileName.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
-        
+
         final file = File('${dir.path}/$fileName');
         if (kDebugMode) logInfo('PDFViewer: Saving file');
-        
+
         // Write the PDF data to a local file
         await file.writeAsBytes(bytes);
         if (kDebugMode) logInfo('PDFViewer: File saved successfully');
-        
+
         // Verify file was written
         if (!await file.exists()) {
           throw Exception('Failed to save PDF file to disk');
         }
-        
+
         setState(() {
           localFilePath = file.path;
           isLoading = false;
         });
       } else if (response.statusCode == 403) {
-        final errorDetails = 'Access forbidden. The file may have been deleted or access is restricted.';
+        final errorDetails =
+            'Access forbidden. The file may have been deleted or access is restricted.';
         setState(() {
           errorMessage = 'Access Denied (403)\n\n$errorDetails';
           isLoading = false;
@@ -140,30 +146,35 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
         setState(() {
           errorMessage = 'File Not Found (404)\n\n$errorDetails';
           isLoading = false;
-        });      } else if (response.statusCode == 400) {
+        });
+      } else if (response.statusCode == 400) {
         String errorDetails = 'Bad Request. The file path may be invalid.';
-        
+
         setState(() {
           errorMessage = 'Invalid Request (400)\n\n$errorDetails';
           isLoading = false;
-        });      } else {
-        final errorDetails = 'HTTP ${response.statusCode}: ${response.reasonPhrase ?? "Unknown error"}';
+        });
+      } else {
+        final errorDetails =
+            'HTTP ${response.statusCode}: ${response.reasonPhrase ?? "Unknown error"}';
         setState(() {
           errorMessage = 'Failed to download PDF\n\nStatus: $errorDetails';
           isLoading = false;
         });
       }
     } catch (e) {
-      
       String userFriendlyError;
-      if (e.toString().contains('SocketException') || e.toString().contains('Failed host lookup')) {
-        userFriendlyError = 'Network Error\n\nCannot connect to server. Please check your internet connection.';
+      if (e.toString().contains('SocketException') ||
+          e.toString().contains('Failed host lookup')) {
+        userFriendlyError =
+            'Network Error\n\nCannot connect to server. Please check your internet connection.';
       } else if (e.toString().contains('TimeoutException')) {
-        userFriendlyError = 'Download Timeout\n\nThe server took too long to respond. Please try again.';
+        userFriendlyError =
+            'Download Timeout\n\nThe server took too long to respond. Please try again.';
       } else {
         userFriendlyError = 'Error Loading PDF\n\nPlease try again later.';
       }
-      
+
       setState(() {
         errorMessage = userFriendlyError;
         isLoading = false;
@@ -183,7 +194,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
         // For Android 10 and below (API < 30), request storage permission
         // Android 11+ (API 30+) uses scoped storage and doesn't require permission
         // for accessing Downloads folder or app-specific directories
-        
+
         final storageStatus = await Permission.storage.status;
         if (storageStatus.isDenied) {
           final result = await Permission.storage.request();
@@ -213,7 +224,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
 
       // Let user choose download location
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-      
+
       if (selectedDirectory == null) {
         _showMessage('Download cancelled', isError: false);
         return;
@@ -221,15 +232,15 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
 
       // Download the PDF
       final response = await http.get(Uri.parse(widget.url));
-      
+
       if (response.statusCode == 200) {
-        final fileName = widget.title.isNotEmpty 
-            ? '${widget.title}.pdf' 
+        final fileName = widget.title.isNotEmpty
+            ? '${widget.title}.pdf'
             : widget.url.split('/').last;
-        
+
         final file = File('$selectedDirectory/$fileName');
         await file.writeAsBytes(response.bodyBytes);
-        
+
         _showMessage('PDF downloaded', isError: false);
       } else {
         _showMessage('Failed to download PDF', isError: true);
@@ -247,15 +258,15 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
 
       // Download the PDF
       final response = await http.get(Uri.parse(widget.url));
-      
+
       if (response.statusCode == 200) {
-        final fileName = widget.title.isNotEmpty 
-            ? '${widget.title}.pdf' 
+        final fileName = widget.title.isNotEmpty
+            ? '${widget.title}.pdf'
             : widget.url.split('/').last;
-        
+
         Directory? targetDirectory;
         String locationMessage = '';
-        
+
         if (Platform.isAndroid) {
           try {
             // For Android 11+ (API 30+), use app-specific external storage
@@ -273,16 +284,16 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
             print('Error accessing external storage: $e');
           }
         }
-        
+
         // Fallback to app documents directory
         if (targetDirectory == null) {
           targetDirectory = await getApplicationDocumentsDirectory();
           locationMessage = 'app documents folder';
         }
-        
+
         final file = File('${targetDirectory.path}/$fileName');
         await file.writeAsBytes(response.bodyBytes);
-        
+
         _showMessage('PDF saved to $locationMessage', isError: false);
       } else {
         _showMessage('Failed to download PDF', isError: true);
@@ -320,9 +331,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
           ),
           child: Icon(
             icon,
-            color: isEnabled
-                ? AppColors.primary
-                : Colors.grey.withOpacity(0.5),
+            color: isEnabled ? AppColors.primary : Colors.grey.withOpacity(0.5),
             size: 24,
           ),
         ),
@@ -333,7 +342,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
   void _showMoreOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF2C2C2C),
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
@@ -360,7 +369,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                 fontFamily: 'Unbounded',
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: Color(0xFF1A1A1A),
               ),
             ),
             const SizedBox(height: 24),
@@ -424,11 +433,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  icon,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
+                child: Icon(icon, color: AppColors.primary, size: 20),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -441,7 +446,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                         fontFamily: 'Unbounded',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: Color(0xFF1A1A1A),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -450,7 +455,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                       style: TextStyle(
                         fontFamily: 'Unbounded',
                         fontSize: 11,
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.black54,
                       ),
                     ),
                   ],
@@ -458,7 +463,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: Colors.white.withOpacity(0.4),
+                color: Colors.black38,
                 size: 18,
               ),
             ],
@@ -472,21 +477,24 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2C2C2C),
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Document Information',
           style: TextStyle(
             fontFamily: 'Unbounded',
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: Color(0xFF1A1A1A),
           ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildInfoRow('Name', widget.title),
-            _buildInfoRow('Status', localFilePath != null ? 'Loaded' : 'Loading...'),
+            _buildInfoRow(
+              'Status',
+              localFilePath != null ? 'Loaded' : 'Loading...',
+            ),
             if (totalPages > 0) ...[
               _buildInfoRow('Pages', '$totalPages'),
               _buildInfoRow('Current Page', '${currentPage + 1}'),
@@ -523,7 +531,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                 fontFamily: 'Unbounded',
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.black54,
               ),
             ),
           ),
@@ -533,7 +541,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
               style: TextStyle(
                 fontFamily: 'Unbounded',
                 fontSize: 12,
-                color: Colors.white,
+                color: Color(0xFF1A1A1A),
               ),
             ),
           ),
@@ -545,7 +553,9 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: Colors.grey.shade100,
+      extendBodyBehindAppBar: false,
+      extendBody: false,
       appBar: AppBar(
         title: Text(
           widget.title,
@@ -555,18 +565,22 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
             fontSize: 16,
           ),
         ),
-        backgroundColor: const Color(0xFF2C2C2C),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        systemOverlayStyle: SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: Colors.white,
+        ),
         elevation: 0,
         actions: [
           IconButton(
-            icon: isDownloading 
+            icon: isDownloading
                 ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                     ),
                   )
                 : const Icon(Icons.file_download_rounded),
@@ -584,10 +598,10 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
       bottomNavigationBar: totalPages > 0
           ? Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF2C2C2C),
+                color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withOpacity(0.08),
                     blurRadius: 8,
                     offset: const Offset(0, -2),
                   ),
@@ -605,7 +619,10 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                     isEnabled: currentPage > 0,
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(20),
@@ -637,7 +654,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
   Widget _buildBody() {
     if (isLoading) {
       return Container(
-        color: const Color(0xFF1A1A1A),
+        color: Colors.grey.shade100,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -645,8 +662,15 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2C2C2C),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
@@ -654,7 +678,9 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                       width: 50,
                       height: 50,
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.primary,
+                        ),
                         strokeWidth: 3,
                       ),
                     ),
@@ -664,7 +690,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                       style: TextStyle(
                         fontFamily: 'Unbounded',
                         fontSize: 14,
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.black54,
                       ),
                     ),
                   ],
@@ -678,19 +704,30 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
 
     if (errorMessage != null) {
       return Container(
-        color: const Color(0xFF1A1A1A),
+        color: Colors.grey.shade100,
         child: Center(
           child: Container(
             margin: const EdgeInsets.all(24),
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: const Color(0xFF2C2C2C),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.error_outline_rounded, size: 48, color: Colors.red.shade400),
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 48,
+                  color: Colors.red.shade400,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Error Loading PDF',
@@ -708,7 +745,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                   style: TextStyle(
                     fontFamily: 'Unbounded',
                     fontSize: 12,
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.black54,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -735,42 +772,74 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
 
     // Main PDF viewing area
     return Container(
-      color: const Color(0xFF1A1A1A),
+      color: Colors.grey.shade100,
       child: localFilePath != null
-          ? ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-                  child: PDFView(
-                    filePath: localFilePath!,
-                    enableSwipe: true,
-                    swipeHorizontal: false,
-                    autoSpacing: true,
-                    pageSnap: true,
-                    pageFling: true,
-                    backgroundColor: Colors.white,
-                    onRender: (pages) {
-                      setState(() => totalPages = pages!);
-                    },
-                    onViewCreated: (PDFViewController pdfViewController) {
-                      controller = pdfViewController;
-                    },
-                    onPageChanged: (page, total) {
-                      setState(() => currentPage = page!);
-                    },
-                  ),
-                )
-              : Center(
-                  child: Text(
-                    'No PDF to display',
-                    style: TextStyle(
-                      fontFamily: 'Unbounded',
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.7),
+          ? Column(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(24),
+                          topRight: Radius.circular(24),
+                        ),
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.07),
+                            blurRadius: 14,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(23),
+                          topRight: Radius.circular(23),
+                        ),
+                        child: Container(
+                          color: Colors.white,
+                          child: PDFView(
+                            filePath: localFilePath!,
+                            enableSwipe: true,
+                            swipeHorizontal: false,
+                            autoSpacing: true,
+                            pageSnap: true,
+                            pageFling: true,
+                            backgroundColor: Colors.white,
+                            onRender: (pages) {
+                              setState(() => totalPages = pages!);
+                            },
+                            onViewCreated: (PDFViewController pdfViewController) {
+                              controller = pdfViewController;
+                            },
+                            onPageChanged: (page, total) {
+                              setState(() => currentPage = page!);
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
+              ],
+            )
+          : Center(
+              child: Text(
+                'No PDF to display',
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
     );
   }
 }

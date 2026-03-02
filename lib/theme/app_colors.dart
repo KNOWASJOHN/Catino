@@ -9,42 +9,42 @@ abstract class AppColors {
 
   // ── Primary accent family ──────────────────────────────────────────────────
   /// Main brand green — progress indicators, success states, CTA buttons.
-  static const Color primary = Color(0xFF00C853);
+  static const Color primary = Color(0xFFFF6B35); // brand orange
 
-  /// Bright chartreuse — order history accent, empty-state icon.
-  static const Color primaryBright = Color(0xFFCDFF00);
+  /// Bright yellow-amber accent
+  static const Color primaryBright = Color(0xFFFFC107);
 
-  /// Neon lime gradient stop — upload price gradient.
-  static const Color primaryLight = Color(0xFF00E676);
+  /// Neon orange gradient stop
+  static const Color primaryLight = Color(0xFFFF9800);
 
-  /// limeAccent.shade700 — form field focus borders, login/signup buttons,
+  /// deepOrangeAccent.shade400 — form field focus borders, login/signup buttons,
   /// profile interactive controls.
-  static final Color primaryCta = Colors.limeAccent.shade700;
+  static final Color primaryCta = Colors.deepOrangeAccent.shade400;
 
-  /// lime.shade400 — nav-bar bubble fill, cart checkout button.
-  static final Color primaryCtaAlt = Colors.lime.shade400;
+  /// orange.shade500 — nav-bar bubble fill, cart checkout button.
+  static final Color primaryCtaAlt = Colors.orange.shade500;
 
-  /// lime.shade300 — nav-bar bubble gradient start.
-  static final Color primaryCtaGradientStart = Colors.lime.shade300;
+  /// orange.shade300 — nav-bar bubble gradient start.
+  static final Color primaryCtaGradientStart = Colors.orange.shade300;
 
-  /// lime.shade500 — nav-bar bubble gradient end.
-  static final Color primaryCtaGradientEnd = Colors.lime.shade500;
+  /// orange.shade700 — nav-bar bubble gradient end.
+  static final Color primaryCtaGradientEnd = Colors.orange.shade700;
 
-  // ── Cart lime family ───────────────────────────────────────────────────────
-  /// lime.shade900 — cart total amount text, pay-bill amount text.
-  static final Color cartTotalText = Colors.lime.shade900;
+  // ── Cart orange family ───────────────────────────────────────────────────────
+  /// deepOrange.shade900 — cart total amount text, pay-bill amount text.
+  static final Color cartTotalText = Colors.deepOrange.shade900;
 
-  /// lime.shade50 — cart bottom-sheet gradient start, totals box.
-  static final Color cartSurface50 = Colors.lime.shade50;
+  /// orange.shade50 — cart bottom-sheet gradient start, totals box.
+  static final Color cartSurface50 = Colors.orange.shade50;
 
-  /// lime.shade100 — cart bottom-sheet gradient mid.
-  static final Color cartSurface100 = Colors.lime.shade100;
+  /// orange.shade100 — cart bottom-sheet gradient mid.
+  static final Color cartSurface100 = Colors.orange.shade100;
 
-  /// lime.shade200 — cart bottom-sheet gradient end.
-  static final Color cartSurface200 = Colors.lime.shade200;
+  /// orange.shade200 — cart bottom-sheet gradient end.
+  static final Color cartSurface200 = Colors.orange.shade200;
 
-  /// lime.shade600 — cart empty-state icon color.
-  static final Color cartEmptyIcon = Colors.lime.shade600;
+  /// orange.shade600 — cart empty-state icon color.
+  static final Color cartEmptyIcon = Colors.orange.shade600;
 
   // ── Surface / card family ──────────────────────────────────────────────────
   /// Deepest dark surface — page/dialog backgrounds.
@@ -130,8 +130,8 @@ abstract class AppColors {
   /// Unread notification dot.
   static const Color notificationDot = Colors.blue;
 
-  /// Food price text (limeAccent, unshaded).
-  static const Color priceText = Colors.limeAccent;
+  /// Food price text (orangeAccent, unshaded).
+  static const Color priceText = Colors.orangeAccent;
 
   // ── Glass / backdrop layers ───────────────────────────────────────────────
   /// Semi-transparent white used behind the header BackdropFilter.

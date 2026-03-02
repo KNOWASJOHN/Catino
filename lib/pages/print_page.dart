@@ -55,85 +55,126 @@ class _PrintPageState extends State<PrintPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: RefreshIndicator(
+        color: AppColors.primary,
         onRefresh: _loadPrintJobs,
-        child: SingleChildScrollView(
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            children: [
-              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-              Upload(onUploadComplete: _loadPrintJobs),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.6,
-                child: _isLoading
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                AppColors.primary,
-                              ),
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              'Loading print jobs...',
-                              style: TextStyle(
-                                fontFamily: 'Unbounded',
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : _printJobs.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.print_disabled,
-                              size: 64,
-                              color: Colors.grey[300],
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              'No print jobs found',
-                              style: TextStyle(
-                                fontFamily: 'Unbounded',
-                                fontSize: 16,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            ElevatedButton(
-                              onPressed: _loadPrintJobs,
-                              style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              ),
-                              child: Text(
-                                'Retry',
-                                style: TextStyle(
-                                  fontFamily: 'Unbounded',
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : PrintHistory(
-                        printJobs: _printJobs,
-                        onJobTap: (job) {
-                          // Handle when a print job is tapped
-                          _showJobDetails(job);
-                        },
-                      ),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+                  Upload(onUploadComplete: _loadPrintJobs),
+                  const SizedBox(height: 4),
+                ],
               ),
-            ],
-          ),
+            ),
+            _isLoading
+                ? SliverFillRemaining(child: _buildLoadingState())
+                : _printJobs.isEmpty
+                    ? SliverFillRemaining(child: _buildEmptyJobsState())
+                    : SliverFillRemaining(
+                        child: PrintHistory(
+                          printJobs: _printJobs,
+                          onJobTap: _showJobDetails,
+                        ),
+                      ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Loading...',
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontSize: 11,
+              color: Colors.grey[400],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyJobsState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.receipt_long_outlined,
+              size: 34,
+              color: Colors.grey.shade400,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No print jobs yet',
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Upload a document above to get started',
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontSize: 9,
+              color: Colors.grey.shade400,
+            ),
+          ),
+          const SizedBox(height: 24),
+          GestureDetector(
+            onTap: _loadPrintJobs,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.4),
+                  width: 1.2,
+                ),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: const Text(
+                'Refresh',
+                style: TextStyle(
+                  fontFamily: 'Unbounded',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

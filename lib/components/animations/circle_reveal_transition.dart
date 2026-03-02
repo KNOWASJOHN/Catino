@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 
 class CircleRevealTransition extends StatefulWidget {
   final Offset startPosition;
@@ -22,7 +23,7 @@ class _CircleRevealTransitionState extends State<CircleRevealTransition>
   late AnimationController _expandController;
   late Animation<double> _riseAnimation;
   late Animation<double> _expandAnimation;
-  
+
   bool _isRising = false;
   bool _isExpanding = false;
   Offset _currentStartPosition = Offset.zero;
@@ -30,19 +31,20 @@ class _CircleRevealTransitionState extends State<CircleRevealTransition>
   @override
   void initState() {
     super.initState();
-    
+
     // Rise animation: circle moves from navbar to center (500ms)
     _riseController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    _riseAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _riseController, curve: Curves.easeOut),
-    );
+    _riseAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _riseController, curve: Curves.easeOut));
 
     // Expand animation: circle scales to cover screen then wipes away (800ms)
     _expandController = AnimationController(
-      duration: const Duration(milliseconds:800),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
     _expandAnimation = Tween<double>(begin: 0, end: 1).animate(
@@ -74,7 +76,7 @@ class _CircleRevealTransitionState extends State<CircleRevealTransition>
   @override
   void didUpdateWidget(CircleRevealTransition oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     if (widget.isAnimating && !oldWidget.isAnimating) {
       // Start new animation
       _currentStartPosition = widget.startPosition;
@@ -122,10 +124,11 @@ class _CircleRevealTransitionState extends State<CircleRevealTransition>
           // Expand phase: first cover screen (0-0.5), then wipe away as ring (0.5-1.0)
           position = screenCenter;
           final maxDimension = screenSize.longestSide * 1.5;
-          
+
           if (_expandAnimation.value < 0.5) {
             // First half: expand solid circle to cover screen
-            outerSize = 32.0 + (maxDimension - 32.0) * (_expandAnimation.value * 2);
+            outerSize =
+                32.0 + (maxDimension - 32.0) * (_expandAnimation.value * 2);
             innerSize = 0.0; // Keep solid
           } else {
             // Second half: ring wipes outward to reveal page
@@ -169,31 +172,31 @@ class _RingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    
+
     // Create gradient paint
     final paint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.lime.shade300,
-          Colors.lime.shade500,
+          AppColors.primaryCtaGradientStart,
+          AppColors.primaryCtaGradientEnd,
         ],
       ).createShader(Rect.fromCircle(center: center, radius: outerRadius))
       ..style = PaintingStyle.fill;
 
     // Draw shadow
     final shadowPaint = Paint()
-      ..color = Colors.lime.shade400.withValues(alpha: 0.6)
+      ..color = AppColors.primaryCtaAlt.withValues(alpha: 0.6)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, isRing ? 40 : 20);
-    
+
     if (isRing) {
       // Draw ring with hole in the middle
       final path = Path()
         ..addOval(Rect.fromCircle(center: center, radius: outerRadius))
         ..addOval(Rect.fromCircle(center: center, radius: innerRadius))
         ..fillType = PathFillType.evenOdd;
-      
+
       canvas.drawPath(path, shadowPaint);
       canvas.drawPath(path, paint);
     } else {

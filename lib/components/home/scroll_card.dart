@@ -116,7 +116,6 @@ class _ScrollcardState extends State<Scrollcard> {
   }
 
   Future<void> _fallbackToRestApi() async {
-    print('Falling back to REST API polling');
     _cardsSubscription?.cancel();
 
     // Initial fetch
