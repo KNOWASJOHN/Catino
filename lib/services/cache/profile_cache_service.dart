@@ -37,7 +37,7 @@ class ProfileCacheService {
         }
       }
     } catch (e) {
-      print('Error validating user cache: $e');
+      // ...removed print statement...
     }
   }
 
@@ -53,7 +53,7 @@ class ProfileCacheService {
         }
       }
     } catch (e) {
-      print('Error clearing user caches: $e');
+      // ...removed print statement...
     }
   }
   
@@ -66,7 +66,7 @@ class ProfileCacheService {
       final lastUpdateKey = await _getLastUpdateKey();
       
       if (cacheKey == null || lastUpdateKey == null) {
-        print('User not authenticated - cannot cache profile data');
+        // ...removed print statement...
         return;
       }
       
@@ -74,7 +74,7 @@ class ProfileCacheService {
       await prefs.setString(cacheKey, jsonEncode(profileData));
       await prefs.setInt(lastUpdateKey, DateTime.now().millisecondsSinceEpoch);
     } catch (e) {
-      print('Error caching profile data: $e');
+      // ...removed print statement...
     }
   }
 
@@ -85,7 +85,7 @@ class ProfileCacheService {
       
       final cacheKey = await _getCacheKey();
       if (cacheKey == null) {
-        print('User not authenticated - cannot retrieve cached profile data');
+        // ...removed print statement...
         return null;
       }
       
@@ -97,7 +97,7 @@ class ProfileCacheService {
       }
       return null;
     } catch (e) {
-      print('Error retrieving cached profile data: $e');
+      // ...removed print statement...
       return null;
     }
   }
@@ -145,7 +145,7 @@ class ProfileCacheService {
       await prefs.remove(cacheKey);
       await prefs.remove(lastUpdateKey);
     } catch (e) {
-      print('Error clearing cache: $e');
+      // ...removed print statement...
     }
   }
 
@@ -156,7 +156,7 @@ class ProfileCacheService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_userIdKey);
     } catch (e) {
-      print('Error clearing all users profile cache: $e');
+      // ...removed print statement...
     }
   }
 

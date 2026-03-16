@@ -281,7 +281,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
               locationMessage = 'Android/data/cantino/files/Downloads';
             }
           } catch (e) {
-            print('Error accessing external storage: $e');
+            // ...removed print statement...
           }
         }
 
@@ -779,32 +779,24 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(24),
-                          topRight: Radius.circular(24),
-                        ),
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.07),
-                            blurRadius: 14,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(23),
-                          topRight: Radius.circular(23),
-                        ),
-                        child: Container(
+                    child: RepaintBoundary(
+                      child: Container(
+                        decoration: BoxDecoration(
                           color: Colors.white,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(24),
+                            topRight: Radius.circular(24),
+                          ),
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            width: 1.0,
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(23),
+                            topRight: Radius.circular(23),
+                          ),
                           child: PDFView(
                             filePath: localFilePath!,
                             enableSwipe: true,

@@ -70,124 +70,90 @@ class _FoodSectionState extends State<FoodSection> {
   }
 
   Widget foodBox(FoodItem item) {
-    return Container(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Background image with loading/error handling
-            Image.network(
-              item.imageUrl,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  color: Colors.grey[200],
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                          : null,
-                      strokeWidth: 2,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
-                      ),
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Background image with loading/error handling
+              Image.network(
+                item.imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: Colors.grey[200],
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[200],
+                    child: Icon(
+                      Icons.image_not_supported_outlined,
+                      size: 32,
+                      color: Colors.grey[400],
                     ),
+                  );
+                },
+              ),
+              // Dark overlay for better text visibility - Simplified gradient
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.6)],
                   ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.grey[200],
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.image_not_supported_outlined,
-                        size: 32,
-                        color: Colors.grey[400],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-            // Dark overlay for better text visibility
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
                 ),
               ),
-            ),
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.name,
-                    style: TextStyle(
-                      fontFamily: 'Unbounded',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(2, 2),
-                          blurRadius: 5,
-                          color: Colors.black.withValues(alpha: 0.8),
-                        ),
-                      ],
+              // Content
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      style: const TextStyle(
+                        fontFamily: 'Unbounded',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    item.description,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontFamily: 'Unbounded',
-                      fontWeight: FontWeight.w100,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(2, 2),
-                          blurRadius: 5,
-                          color: Colors.black.withValues(alpha: 0.8),
-                        ),
-                      ],
+                    const SizedBox(height: 4),
+                    Text(
+                      item.description,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontFamily: 'Unbounded',
+                        fontWeight: FontWeight.w100,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '₹ ${item.price.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontFamily: 'Unbounded',
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.priceText,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(2, 2),
-                          blurRadius: 5,
-                          color: Colors.black.withValues(alpha: 0.8),
-                        ),
-                      ],
+                    const SizedBox(height: 8),
+                    Text(
+                      '₹ ${item.price.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontFamily: 'Unbounded',
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.priceText,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

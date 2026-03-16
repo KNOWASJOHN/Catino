@@ -38,7 +38,7 @@ class PrintCacheService {
         }
       }
     } catch (e) {
-      print('Error validating user cache: $e');
+      // ...removed print statement...
     }
   }
 
@@ -54,7 +54,7 @@ class PrintCacheService {
         }
       }
     } catch (e) {
-      print('Error clearing user caches: $e');
+      // ...removed print statement...
     }
   }
   
@@ -67,7 +67,7 @@ class PrintCacheService {
       final lastUpdateKey = await _getLastUpdateKey();
       
       if (cacheKey == null || lastUpdateKey == null) {
-        print('User not authenticated - cannot cache print jobs');
+        // ...removed print statement...
         return;
       }
       
@@ -76,7 +76,7 @@ class PrintCacheService {
       await prefs.setString(cacheKey, jsonEncode(jsonList));
       await prefs.setInt(lastUpdateKey, DateTime.now().millisecondsSinceEpoch);
     } catch (e) {
-      print('Error caching print jobs: $e');
+      // ...removed print statement...
     }
   }
 
@@ -87,7 +87,7 @@ class PrintCacheService {
       
       final cacheKey = await _getCacheKey();
       if (cacheKey == null) {
-        print('User not authenticated - cannot retrieve cached print jobs');
+        // ...removed print statement...
         return null;
       }
       
@@ -100,7 +100,7 @@ class PrintCacheService {
       }
       return null;
     } catch (e) {
-      print('Error retrieving cached print jobs: $e');
+      // ...removed print statement...
       return null;
     }
   }
@@ -117,7 +117,7 @@ class PrintCacheService {
         }
       }
     } catch (e) {
-      print('Error updating cached job: $e');
+      // ...removed print statement...
     }
   }
 
@@ -128,7 +128,7 @@ class PrintCacheService {
       cachedJobs.insert(0, newJob); // Add at the beginning
       await cachePrintJobs(cachedJobs);
     } catch (e) {
-      print('Error adding job to cache: $e');
+      // ...removed print statement...
     }
   }
 
@@ -141,7 +141,7 @@ class PrintCacheService {
         await cachePrintJobs(cachedJobs);
       }
     } catch (e) {
-      print('Error removing job from cache: $e');
+      // ...removed print statement...
     }
   }
 
@@ -175,7 +175,7 @@ class PrintCacheService {
       await prefs.remove(cacheKey);
       await prefs.remove(lastUpdateKey);
     } catch (e) {
-      print('Error clearing print cache: $e');
+      // ...removed print statement...
     }
   }
 
@@ -186,7 +186,7 @@ class PrintCacheService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_userIdKey);
     } catch (e) {
-      print('Error clearing all users print cache: $e');
+      // ...removed print statement...
     }
   }
 

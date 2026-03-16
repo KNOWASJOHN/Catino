@@ -237,7 +237,7 @@ class _MainScreenState extends State<MainScreen> {
                 children: [
                   Positioned(
                     right: 5,
-                    top: 30,
+                    top: MediaQuery.of(context).padding.top + 20,
                     child: GestureDetector(
                       onTap: () {
                         // Prevent closing when clicking inside the panel

@@ -23,11 +23,11 @@ enum PrintStatus {
   Color get color {
     switch (this) {
       case PrintStatus.finished:
-        return Colors.green;
+        return const Color(0xFF00C853); // Standard green
       case PrintStatus.pending:
-        return Colors.orange;
+        return const Color(0xFFFFAB00); // Standard amber/orange
       case PrintStatus.cancelled:
-        return Colors.red;
+        return const Color(0xFFD50000); // Standard red
     }
   }
 

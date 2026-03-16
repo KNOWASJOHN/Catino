@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../theme/theme.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -92,7 +91,7 @@ class _UploadState extends State<Upload> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(0, 100, 0, 0),
+      padding: const EdgeInsets.fromLTRB(0, 140, 0, 0),
       alignment: Alignment.topCenter,
       child: Column(
         children: [
@@ -138,7 +137,7 @@ class _UploadState extends State<Upload> {
         children: [
           CircularProgressIndicator(
             value: _uploadProgress,
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
             strokeWidth: 3,
           ),
           SizedBox(height: 8),
@@ -348,7 +347,7 @@ class _UploadState extends State<Upload> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.primary,
+                            Colors.black,
                           ),
                         ),
                       )
@@ -358,7 +357,7 @@ class _UploadState extends State<Upload> {
                           fontFamily: 'Unbounded',
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                          color: Colors.black,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -404,7 +403,7 @@ class _UploadState extends State<Upload> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.primary),
+                      borderSide: BorderSide(color: Colors.black),
                     ),
                   ),
                   style: TextStyle(fontFamily: 'Unbounded', fontSize: 10),
@@ -470,8 +469,24 @@ class _UploadState extends State<Upload> {
               });
             },
             style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+                (Set<WidgetState> states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return Colors.black;
+                  }
+                  return null;
+                },
+              ),
+              foregroundColor: WidgetStateProperty.resolveWith<Color?>(
+                (Set<WidgetState> states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return Colors.white;
+                  }
+                  return Colors.black87;
+                },
+              ),
               textStyle: WidgetStateProperty.all(
-                TextStyle(fontFamily: 'Unbounded', fontSize: 9),
+                const TextStyle(fontFamily: 'Unbounded', fontSize: 9),
               ),
             ),
           ),
@@ -515,8 +530,24 @@ class _UploadState extends State<Upload> {
               });
             },
             style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+                (Set<WidgetState> states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return Colors.black;
+                  }
+                  return null;
+                },
+              ),
+              foregroundColor: WidgetStateProperty.resolveWith<Color?>(
+                (Set<WidgetState> states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return Colors.white;
+                  }
+                  return Colors.black87;
+                },
+              ),
               textStyle: WidgetStateProperty.all(
-                TextStyle(fontFamily: 'Unbounded', fontSize: 9),
+                const TextStyle(fontFamily: 'Unbounded', fontSize: 9),
               ),
             ),
           ),
@@ -530,15 +561,11 @@ class _UploadState extends State<Upload> {
       padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       margin: EdgeInsets.symmetric(horizontal: 50),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryLight],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -617,7 +644,7 @@ class _UploadState extends State<Upload> {
         ElevatedButton(
           onPressed: _isUploading ? null : _uploadAndCreateJob,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
+            backgroundColor: Colors.black,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -707,10 +734,10 @@ class _UploadState extends State<Upload> {
       final now = DateTime.now();
       final jobId = '${now.millisecondsSinceEpoch}_${now.microsecond}';
 
-      print('Creating print job with ID: $jobId');
+        // ...removed print statement...
 
       // Step 1: Process payment first
-      print('Starting payment for ₹${_calculatedPrice.toStringAsFixed(2)}');
+        // ...removed print statement...
       final paymentResult = await _paymentService.startPayment(
         amount: _calculatedPrice,
         description: 'Print Job - ${_selectedFile!.name}',
@@ -858,7 +885,7 @@ class _UploadState extends State<Upload> {
               'Retry',
               style: TextStyle(
                 fontFamily: 'Unbounded',
-                color: AppColors.primary,
+                color: Colors.black,
               ),
             ),
           ),
@@ -901,7 +928,7 @@ class _UploadState extends State<Upload> {
               'OK',
               style: TextStyle(
                 fontFamily: 'Unbounded',
-                color: AppColors.primary,
+                color: Colors.black,
               ),
             ),
           ),
@@ -940,7 +967,7 @@ class _UploadState extends State<Upload> {
               'OK',
               style: TextStyle(
                 fontFamily: 'Unbounded',
-                color: AppColors.primary,
+                color: Colors.black,
               ),
             ),
           ),

@@ -21,14 +21,14 @@ class AppLogger {
     Logger.root.onRecord.listen((record) {
       // Format: [LEVEL] LoggerName: Message
       final emoji = _getEmojiForLevel(record.level);
-      print('$emoji [${record.level.name}] ${record.loggerName}: ${record.message}');
+        // ...removed print statement...
       
       // Print error and stack trace if present
       if (record.error != null) {
-        print('  ↳ Error: ${record.error}');
+          // ...removed print statement...
       }
       if (record.stackTrace != null) {
-        print('  ↳ Stack trace:\n${record.stackTrace}');
+          // ...removed print statement...
       }
     });
     

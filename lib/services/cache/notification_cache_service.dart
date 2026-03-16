@@ -335,7 +335,7 @@ class NotificationCacheService {
       await prefs.remove(unreadCountKey);
       logInfo('Cleared notification cache');
     } catch (e) {
-      print('Error clearing cache: $e');
+      // ...removed print statement...
     }
   }
 
@@ -361,7 +361,7 @@ class NotificationCacheService {
       await prefs.remove(lastUpdateKey);
       logInfo('Invalidated notification cache');
     } catch (e) {
-      print('Error invalidating cache: $e');
+      // ...removed print statement...
     }
   }
 }

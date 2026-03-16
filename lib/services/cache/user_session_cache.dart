@@ -18,8 +18,8 @@ class UserSessionCache {
   Future<String?> getCurrentUserId({bool forceRefresh = false}) async {
     try {
       // Return cached UID if valid and not forcing refresh
-      if (!forceRefresh && 
-          _cachedUserId != null && 
+      if (!forceRefresh &&
+          _cachedUserId != null &&
           _lastUserIdCheck != null &&
           DateTime.now().difference(_lastUserIdCheck!) < _userIdCacheDuration) {
         return _cachedUserId;
@@ -29,7 +29,7 @@ class UserSessionCache {
       final user = _supabase.auth.currentUser;
       _cachedUserId = user?.id;
       _lastUserIdCheck = DateTime.now();
-      
+
       return _cachedUserId;
     } catch (e) {
       _logger.severe('Error getting current user ID', e);

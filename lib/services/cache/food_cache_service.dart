@@ -27,7 +27,7 @@ class FoodCacheService {
         }
       }
     } catch (e) {
-      print('Error validating user session: $e');
+      // ...removed print statement...
     }
   }
   
@@ -41,7 +41,7 @@ class FoodCacheService {
       await prefs.setString(_allFoodCacheKey, jsonEncode(jsonList));
       await prefs.setInt(_lastUpdateKey, DateTime.now().millisecondsSinceEpoch);
     } catch (e) {
-      print('Error caching all food items: $e');
+      // ...removed print statement...
     }
   }
 
@@ -59,7 +59,7 @@ class FoodCacheService {
       }
       return null;
     } catch (e) {
-      print('Error retrieving cached food items: $e');
+      // ...removed print statement...
       return null;
     }
   }
@@ -71,7 +71,7 @@ class FoodCacheService {
       final jsonList = items.map((item) => item.toMap()).toList();
       await prefs.setString('$_categoryPrefix$category', jsonEncode(jsonList));
     } catch (e) {
-      print('Error caching food items for category $category: $e');
+      // ...removed print statement...
     }
   }
 
@@ -87,7 +87,7 @@ class FoodCacheService {
       }
       return null;
     } catch (e) {
-      print('Error retrieving cached food items for category: $e');
+      // ...removed print statement...
       return null;
     }
   }
@@ -99,7 +99,7 @@ class FoodCacheService {
       final jsonList = items.map((item) => item.toMap()).toList();
       await prefs.setString(_vegCacheKey, jsonEncode(jsonList));
     } catch (e) {
-      print('Error caching vegetarian items: $e');
+      // ...removed print statement...
     }
   }
 
@@ -115,7 +115,7 @@ class FoodCacheService {
       }
       return null;
     } catch (e) {
-      print('Error retrieving cached vegetarian items: $e');
+      // ...removed print statement...
       return null;
     }
   }
@@ -150,7 +150,7 @@ class FoodCacheService {
         }
       }
     } catch (e) {
-      print('Error clearing food cache: $e');
+      // ...removed print statement...
     }
   }
 
@@ -161,7 +161,7 @@ class FoodCacheService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_userIdKey);
     } catch (e) {
-      print('Error clearing all users food cache: $e');
+      // ...removed print statement...
     }
   }
 
@@ -180,7 +180,7 @@ class FoodCacheService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_lastUpdateKey, 0);
     } catch (e) {
-      print('Error invalidating cache: $e');
+      // ...removed print statement...
     }
   }
 }

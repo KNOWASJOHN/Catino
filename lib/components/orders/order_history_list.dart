@@ -312,24 +312,9 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
                         )
                       : _orders.isEmpty
                       ? const _EmptyOrdersState()
-                      : ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return const LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.white,
-                                Colors.white,
-                                Colors.transparent,
-                              ],
-                              stops: [0.0, 0.05, 0.9, 1.0],
-                            ).createShader(bounds);
-                          },
-                          blendMode: BlendMode.dstIn,
-                          child: ListView.separated(
+                      : ListView.separated(
                             controller: _scrollController,
-                            padding: const EdgeInsets.only(top: 4, bottom: 24),
+                            padding: const EdgeInsets.only(top: 12, bottom: 24),
                             physics: const ClampingScrollPhysics(),
                             itemCount: _orders.length + (_isLoadingMore ? 1 : 0),
                             separatorBuilder: (_, __) => Divider(
@@ -380,7 +365,6 @@ class _OrderHistoryListState extends State<OrderHistoryList> {
                               );
                             },
                           ),
-                        ),
                 ],
               ),
             ),

@@ -199,7 +199,7 @@ class _FoodListPageState extends State<FoodListPage> {
         _loading = false;
       });
     } catch (e) {
-      print('Error loading food items: $e');
+      // ...removed print statement...
       setState(() => _loading = false);
     }
   }
@@ -289,19 +289,19 @@ class FoodItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: Colors.white,
-      shadowColor: Colors.black.withOpacity(0.25),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final maxH = constraints.maxHeight.isFinite
-              ? constraints.maxHeight
-              : 320.0;
-          final imageHeight = isHorizontalView
-              ? (maxH * 0.42).clamp(70.0, 140.0)
-              : (maxH * 0.30).clamp(90.0, 180.0);
+    return RepaintBoundary(
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        color: Colors.white,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final maxH = constraints.maxHeight.isFinite
+                ? constraints.maxHeight
+                : 320.0;
+            final imageHeight = isHorizontalView
+                ? (maxH * 0.42).clamp(70.0, 140.0)
+                : (maxH * 0.30).clamp(90.0, 180.0);
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -332,15 +332,8 @@ class FoodItemCard extends StatelessWidget {
                               ),
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
-                            return Center(
-                              child: CircularProgressIndicator(
-                                value:
-                                    loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                    : null,
-                                color: theme.colorScheme.primary,
-                              ),
+                            return Container(
+                              color: theme.colorScheme.surfaceContainerHighest,
                             );
                           },
                         ),
@@ -358,13 +351,6 @@ class FoodItemCard extends StatelessWidget {
                                 ? AppColors.primary
                                 : Colors.red.shade700,
                             borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
                           ),
                           child: Text(
                             foodItem.isVegetarian ? 'VEG' : 'NON-VEG',
@@ -485,13 +471,6 @@ class FoodItemCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.4),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
                               ),
                               child: ElevatedButton(
                                 onPressed: onAdd,
@@ -501,13 +480,8 @@ class FoodItemCard extends StatelessWidget {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  fixedSize: Size(8, 8),
-                                  padding: const EdgeInsets.fromLTRB(
-                                    8,
-                                    8,
-                                    8,
-                                    8,
-                                  ),
+                                  fixedSize: const Size(8, 8),
+                                  padding: const EdgeInsets.all(8),
                                 ),
                                 child: const Text(
                                   'ADD',
@@ -525,13 +499,6 @@ class FoodItemCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.4),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -600,6 +567,7 @@ class FoodItemCard extends StatelessWidget {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 }

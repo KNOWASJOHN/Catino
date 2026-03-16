@@ -193,16 +193,18 @@ class UserCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              color: Colors.white,
-              child: QrImageView(
-                data: qrData,
-                version: QrVersions.auto,
-                size: 160,
-                backgroundColor: Colors.white,
+          RepaintBoundary(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                color: Colors.white,
+                child: QrImageView(
+                  data: qrData,
+                  version: QrVersions.auto,
+                  size: 160,
+                  backgroundColor: Colors.white,
+                ),
               ),
             ),
           ),

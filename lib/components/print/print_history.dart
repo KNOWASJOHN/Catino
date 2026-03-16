@@ -7,88 +7,126 @@ import '../../utils/pricing_config.dart';
 class PrintHistory extends StatelessWidget {
   final List<PrintJob> printJobs;
   final Function(PrintJob)? onJobTap;
+  final bool shrinkWrap;
 
-  const PrintHistory({super.key, required this.printJobs, this.onJobTap});
+  const PrintHistory({
+    super.key,
+    required this.printJobs,
+    this.onJobTap,
+    this.shrinkWrap = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (shrinkWrap) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          printJobs.isEmpty ? _buildEmptyState() : _buildSliverCompatibleList(context),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Section header ──
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
-          child: Row(
-            children: [
-              const Text(
-                'History',
-                style: TextStyle(
-                  fontFamily: 'Unbounded',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${printJobs.length}',
-                  style: const TextStyle(
-                    fontFamily: 'Unbounded',
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
+        _buildHeader(),
         // ── List ──
         Expanded(
-          child: printJobs.isEmpty
-              ? _buildEmptyState()
-              : ShaderMask(
-                  shaderCallback: (Rect bounds) {
-                    return const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.white,
-                        Colors.white,
-                        Colors.transparent,
-                      ],
-                      stops: [0.0, 0.06, 0.88, 1.0],
-                    ).createShader(bounds);
-                  },
-                  blendMode: BlendMode.dstIn,
-                  child: ListView.separated(
-                    padding: EdgeInsets.only(
-                      top: 8,
-                      bottom: MediaQuery.of(context).padding.bottom + 24,
-                    ),
-                    itemCount: printJobs.length,
-                    separatorBuilder: (_, __) => Divider(
-                      height: 1,
-                      indent: 72,
-                      endIndent: 20,
-                      color: Colors.grey.shade100,
-                    ),
-                    itemBuilder: (context, index) {
-                      return _buildPrintJobTile(printJobs[index]);
-                    },
-                  ),
-                ),
+          child: printJobs.isEmpty ? _buildEmptyState() : _buildHistoryList(context),
         ),
       ],
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
+      child: Row(
+        children: [
+          const Text(
+            'History',
+            style: TextStyle(
+              fontFamily: 'Unbounded',
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Colors.black87,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${printJobs.length}',
+              style: const TextStyle(
+                fontFamily: 'Unbounded',
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryList(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (Rect bounds) {
+        return const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            Colors.white,
+            Colors.white,
+            Colors.transparent,
+          ],
+          stops: [0.0, 0.06, 0.88, 1.0],
+        ).createShader(bounds);
+      },
+      blendMode: BlendMode.dstIn,
+      child: ListView.separated(
+        padding: EdgeInsets.only(
+          top: 8,
+          bottom: MediaQuery.of(context).padding.bottom + 24,
+        ),
+        itemCount: printJobs.length,
+        separatorBuilder: (_, __) => Divider(
+          height: 1,
+          indent: 72,
+          endIndent: 20,
+          color: Colors.grey.shade100,
+        ),
+        itemBuilder: (context, index) {
+          return _buildPrintJobTile(printJobs[index]);
+        },
+      ),
+    );
+  }
+
+  Widget _buildSliverCompatibleList(BuildContext context) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(top: 8, bottom: 24),
+      itemCount: printJobs.length,
+      separatorBuilder: (_, __) => Divider(
+        height: 1,
+        indent: 72,
+        endIndent: 20,
+        color: Colors.grey.shade100,
+      ),
+      itemBuilder: (context, index) {
+        return _buildPrintJobTile(printJobs[index]);
+      },
     );
   }
 

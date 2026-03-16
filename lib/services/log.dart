@@ -14,7 +14,7 @@ void initLogging({Level level = Level.INFO}) {
       // Use debugPrint so output is throttled appropriately
       // Print only the formatted message to avoid accidentally exposing
       // error objects, stack traces, or sensitive payloads to stdout.
-      debugPrint(message);
+      // ...removed debugPrint statement...
     }
     // TODO: forward logs to an external logging/monitoring service in release
   });

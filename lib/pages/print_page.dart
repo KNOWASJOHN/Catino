@@ -65,22 +65,30 @@ class _PrintPageState extends State<PrintPage> {
             SliverToBoxAdapter(
               child: Column(
                 children: [
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                   Upload(onUploadComplete: _loadPrintJobs),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
-            _isLoading
-                ? SliverFillRemaining(child: _buildLoadingState())
-                : _printJobs.isEmpty
-                    ? SliverFillRemaining(child: _buildEmptyJobsState())
-                    : SliverFillRemaining(
-                        child: PrintHistory(
-                          printJobs: _printJobs,
-                          onJobTap: _showJobDetails,
-                        ),
-                      ),
+            if (_isLoading)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _buildLoadingState(),
+              )
+            else if (_printJobs.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _buildEmptyJobsState(),
+              )
+            else
+              SliverToBoxAdapter(
+                child: PrintHistory(
+                  printJobs: _printJobs,
+                  onJobTap: _showJobDetails,
+                  shrinkWrap: true,
+                ),
+              ),
           ],
         ),
       ),
@@ -742,8 +750,9 @@ class _PrintPageState extends State<PrintPage> {
   Widget _buildStatusChip(String statusText) {
     Color chipColor;
     switch (statusText.toLowerCase()) {
+      case 'finished':
       case 'completed':
-        chipColor = AppColors.primary;
+        chipColor = AppColors.statusSuccess;
         break;
       case 'printing':
         chipColor = Colors.blue;
@@ -751,8 +760,12 @@ class _PrintPageState extends State<PrintPage> {
       case 'ready':
         chipColor = AppColors.statusReady;
         break;
+      case 'cancelled':
       case 'failed':
-        chipColor = AppColors.red;
+        chipColor = AppColors.statusError;
+        break;
+      case 'pending':
+        chipColor = AppColors.statusWarning;
         break;
       default:
         chipColor = AppColors.statusPending;

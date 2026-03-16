@@ -185,10 +185,10 @@ class _RingPainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: center, radius: outerRadius))
       ..style = PaintingStyle.fill;
 
-    // Draw shadow
+    // Draw shadow - significantly reduced blur for performance
     final shadowPaint = Paint()
-      ..color = AppColors.primaryCtaAlt.withValues(alpha: 0.6)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, isRing ? 40 : 20);
+      ..color = AppColors.primaryCtaAlt.withValues(alpha: 0.4)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, isRing ? 10 : 5);
 
     if (isRing) {
       // Draw ring with hole in the middle
@@ -197,6 +197,7 @@ class _RingPainter extends CustomPainter {
         ..addOval(Rect.fromCircle(center: center, radius: innerRadius))
         ..fillType = PathFillType.evenOdd;
 
+      // Draw shadow first (optional, could be removed for even more speed)
       canvas.drawPath(path, shadowPaint);
       canvas.drawPath(path, paint);
     } else {
