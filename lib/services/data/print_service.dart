@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/print_job.dart';
 import '../../utils/logger_config.dart';
-import '../notifications/print_notification_service.dart';
 
 final _logger = AppLogger.getLogger('PrintService');
 
@@ -82,9 +81,7 @@ class PrintService {
         'payment_status': job.paymentStatus,
       });
 
-      // Send notification for new print job
-      await PrintNotificationService().notifyPrintJobAdded(job);
-
+      // New print job notification is handled by Supabase edge/function pipeline
       return true;
     } catch (e) {
       _logger.severe('Error adding print job', e);
@@ -100,7 +97,7 @@ class PrintService {
           .update({'status': status.displayText.toLowerCase()})
           .eq('id', jobId);
 
-      // Get the updated job to send notification
+      // Get the updated job
       final response = await _supabase
           .from('print_jobs')
           .select()
@@ -109,15 +106,11 @@ class PrintService {
 
       final updatedJob = PrintJob.fromSupabaseMap(response);
 
-      // Send appropriate notification based on status
-      if (status == PrintStatus.finished) {
-        await PrintNotificationService().notifyPrintJobCompleted(updatedJob);
-      } else if (status == PrintStatus.cancelled) {
-        await PrintNotificationService().notifyPrintJobCancelled(updatedJob);
+      // Status update handled by Supabase edge/function notifications
+      if (status == PrintStatus.finished || status == PrintStatus.cancelled) {
+        _logger.info('Print job status updated: ${updatedJob.id} -> ${status.displayText}');
       } else {
-        await PrintNotificationService().notifyPrintJobStatusChanged(
-          updatedJob,
-        );
+        _logger.info('Print job status changed: ${updatedJob.id} -> ${status.displayText}');
       }
     } catch (e) {
       _logger.severe('Error updating print job status', e);

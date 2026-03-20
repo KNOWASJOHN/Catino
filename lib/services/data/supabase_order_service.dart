@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/order_model.dart';
 import '../cache/order_cache_service.dart';
-import '../notifications/order_notification_service.dart';
 import '../../utils/logger_config.dart';
 
 final _logger = AppLogger.getLogger('SupabaseOrderService');
@@ -10,8 +9,6 @@ final _logger = AppLogger.getLogger('SupabaseOrderService');
 class SupabaseOrderService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final OrderCacheService _cacheService = OrderCacheService();
-  final OrderNotificationService _notificationService =
-      OrderNotificationService();
   bool _isListening = false;
 
   /// Get current user ID
@@ -76,16 +73,12 @@ class SupabaseOrderService {
           // Check for status changes
           final cachedOrder = cachedOrdersMap[order.id];
           if (cachedOrder != null && cachedOrder.status != order.status) {
-            // Status changed - send immediate notification
+            // Status changed - handled by Supabase edge/function notifications
             _logger.info(
               'Order status changed: ${order.code} - ${cachedOrder.status.displayText} -> ${order.status.displayText}',
             );
-            _notificationService.notifyOrderStatusChanged(
-              order,
-              cachedOrder.status,
-            );
           } else if (cachedOrder == null) {
-            // New order - send confirmation notification
+            // New order - handled by Supabase edge/function notifications
             _logger.info('New order detected: ${order.code}');
           }
         } catch (e) {
@@ -216,9 +209,7 @@ class SupabaseOrderService {
 
       _logger.info('Order added to Supabase: ${order.id}');
 
-      // Send notification for new order (confirmation)
-      await _notificationService.notifyOrderPlaced(order);
-
+      // New order notification is handled by Supabase edge/function pipeline
       return true;
     } catch (e, stackTrace) {
       _logger.severe('Error adding order', e, stackTrace);

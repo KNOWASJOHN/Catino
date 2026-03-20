@@ -2,13 +2,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/order_model.dart';
 import 'package:cantino/services/log.dart';
 import '../cache/order_cache_service.dart';
-import '../notifications/order_notification_service.dart';
 
 /// Service for managing orders in Supabase with real-time status change notifications
 class OrderService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final OrderCacheService _cacheService = OrderCacheService();
-  final OrderNotificationService _notificationService = OrderNotificationService();
   bool _isListening = false;
 
   /// Get current user ID
@@ -71,11 +69,10 @@ class OrderService {
           // Check for status changes
           final cachedOrder = cachedOrdersMap[order.id];
           if (cachedOrder != null && cachedOrder.status != order.status) {
-            // Status changed - send immediate notification
+            // Status changed - handled by Supabase edge/function notifications
             logInfo('Order status changed: ${order.code} - ${cachedOrder.status.displayText} -> ${order.status.displayText}');
-            _notificationService.notifyOrderStatusChanged(order, cachedOrder.status);
           } else if (cachedOrder == null) {
-            // New order - send confirmation notification
+            // New order - handled by Supabase edge/function notifications
             logInfo('New order detected: ${order.code}');
           }
         } catch (e) {
@@ -226,10 +223,7 @@ class OrderService {
       await _supabase.from('order_items').insert(orderItemsData);
 
       logInfo('Order added to Supabase: ${order.id}');
-      
-      // Send notification for new order (confirmation)
-      await _notificationService.notifyOrderPlaced(order);
-      
+      // New order notifications are earned by Supabase edge/function pipeline
       return true;
     } catch (e, stackTrace) {
       logError('Error adding order: $e', e, stackTrace);
