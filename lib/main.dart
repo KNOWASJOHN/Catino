@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logging/logging.dart';
@@ -23,12 +24,14 @@ import 'services/notifications/onesignal_service.dart';
 import 'config/supabase_config.dart';
 import 'providers/cart_provider.dart';
 import 'utils/logger_config.dart';
+import 'utils/system_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final _logger = AppLogger.getLogger('Main');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await configureSystemUi();
 
   // Initialize logger
   AppLogger.initialize(level: Level.INFO);
@@ -81,6 +84,22 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: appLightTheme,
         darkTheme: appDarkTheme,
+        builder: (context, child) {
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value: catinoSystemUiOverlayStyle,
+            child: Stack(
+              children: [
+                child ?? const SizedBox.shrink(),
+                const Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: IgnorePointer(child: _SystemNavigationScrim()),
+                ),
+              ],
+            ),
+          );
+        },
         home: StreamBuilder(
           stream: auth.SupabaseAuthService().authStateChanges,
           builder: (context, snapshot) {
@@ -99,6 +118,34 @@ class MyApp extends StatelessWidget {
             // Show main app if authenticated
             return const MainScreen();
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _SystemNavigationScrim extends StatelessWidget {
+  const _SystemNavigationScrim();
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final height = (bottomInset + 40).clamp(56.0, 96.0).toDouble();
+
+    return SizedBox(
+      height: height,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black.withValues(alpha: 0.18),
+              Colors.black.withValues(alpha: 0.36),
+            ],
+            stops: const [0.0, 0.55, 1.0],
+          ),
         ),
       ),
     );

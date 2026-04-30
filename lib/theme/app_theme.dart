@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_text_styles.dart';
+import '../utils/system_ui.dart';
 
 /// Assembles the [ThemeData] used by [MaterialApp].
 ///
@@ -53,6 +54,7 @@ ThemeData get appLightTheme {
       scrolledUnderElevation: 0,
       titleTextStyle: AppTextStyles.headerAppName,
       iconTheme: IconThemeData(color: Colors.black),
+      systemOverlayStyle: catinoSystemUiOverlayStyle,
     ),
 
     // ── Card ───────────────────────────────────────────────────────────────────
